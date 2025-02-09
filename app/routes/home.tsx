@@ -9,8 +9,8 @@ export function meta({}: Route.MetaArgs) {
 
 export default function Home() {
   return (
-    <div className="h-full flex flex-col justify-center items-center">
-      <h1 className="text-3xl">Welcome to Sanctuary!</h1>
+    <div className="flex-1 flex flex-col justify-center items-center">
+      <h1 className="text-9xl">Sanctuary</h1>
     </div>
   );
 }
