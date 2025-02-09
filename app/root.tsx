@@ -33,7 +33,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="min-h-screen flex flex-col">
+      <body className="m-0 p-0 h-screen flex flex-col">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -45,8 +45,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Layout>
-      <Header/>
-      <main className="flex-1 flex flex-col">
+      <Header />
+      <main className="flex-1 mb-16">
         <Outlet />
       </main>
     </Layout>
