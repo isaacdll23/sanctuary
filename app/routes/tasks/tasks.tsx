@@ -35,6 +35,17 @@ export async function action({ request }: Route.ActionArgs) {
     await db.delete(tasksTable).where(eq(tasksTable.id, taskId));
   }
 
+  // Complete task branch
+  const completeTask = formData.get("completeTask");
+  if (typeof completeTask === "string" && completeTask.trim()) {
+    const taskId = parseInt(completeTask, 10);
+    // Assuming tasksTable has a column 'completedAt'
+    await db
+      .update(tasksTable)
+      .set({ completedAt: new Date() })
+      .where(eq(tasksTable.id, taskId));
+  }
+
   // Create task branch for new tasks
   const title = formData.get("title");
   if (typeof title !== "string" || !title.trim()) {
@@ -67,18 +78,43 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
                 className="flex items-center justify-between border-b-2 border-gray-800 p-4"
               >
                 <div>
-                  <p>{task.title}</p>
-                  <p>{task.createdAt.toLocaleDateString()}</p>
+                  <p className="font-semibold">{task.title}</p>
+                  <p className="text-sm text-gray-400">
+                    Created: {task.createdAt.toLocaleDateString()}
+                  </p>
+                  {task.completedAt && (
+                    <p className="text-sm text-green-500">
+                      Completed:{" "}
+                      {new Date(task.completedAt).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
-                <fetcher.Form method="post">
-                  <input type="hidden" name="deleteTask" value={task.id} />
-                  <button
-                    type="submit"
-                    className="rounded bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700"
-                  >
-                    Delete
-                  </button>
-                </fetcher.Form>
+                <div className="flex gap-2">
+                  {!task.completedAt && (
+                    <fetcher.Form method="post">
+                      <input
+                        type="hidden"
+                        name="completeTask"
+                        value={task.id}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded bg-green-600 text-white px-3 py-1 text-xs hover:bg-green-700"
+                      >
+                        Complete
+                      </button>
+                    </fetcher.Form>
+                  )}
+                  <fetcher.Form method="post">
+                    <input type="hidden" name="deleteTask" value={task.id} />
+                    <button
+                      type="submit"
+                      className="rounded bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700"
+                    >
+                      Delete
+                    </button>
+                  </fetcher.Form>
+                </div>
               </li>
             ))}
           </ul>
