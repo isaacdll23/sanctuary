@@ -1,5 +1,5 @@
 import { redirect } from "react-router";
-import { getSession, destroySession } from "~/sessions.server";
+import { getSession, destroySession } from "~/modules/sessions.server";
 import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import { eq } from "drizzle-orm";

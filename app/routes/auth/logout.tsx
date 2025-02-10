@@ -1,6 +1,6 @@
 import { Form, redirect } from "react-router";
 import type { Route } from "./+types/logout";
-import { getSession, destroySession } from "~/sessions.server";
+import { getSession, destroySession } from "~/modules/sessions.server";
 import { requireAuth } from "~/modules/auth.server";
 
 export function meta({}: Route.MetaArgs) {
