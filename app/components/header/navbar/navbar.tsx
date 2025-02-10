@@ -18,6 +18,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
           </>
         ) : (
           <>
+            <NavLink to="/dashboard">Dashboard</NavLink>
             <NavLink to="/golf">Golf</NavLink>
             <NavLink to="/auth/logout">Logout</NavLink>
           </>

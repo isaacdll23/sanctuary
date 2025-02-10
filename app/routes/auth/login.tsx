@@ -52,7 +52,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   session.set("userId", dbUser[0].id);
 
-  return redirect("/golf", {
+  return redirect("/dashboard", {
     headers: {
       "Set-Cookie": await commitSession(session),
     },

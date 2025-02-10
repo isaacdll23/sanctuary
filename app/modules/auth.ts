@@ -20,7 +20,7 @@ export async function requireNoAuth(request: Request): Promise<void> {
   const session = await getSession(request.headers.get("Cookie"));
 
   if (session.has("userId")) {
-    throw redirect("/golf");
+    throw redirect("/dashboard");
   }
 }
 
