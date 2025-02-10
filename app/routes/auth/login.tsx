@@ -5,7 +5,7 @@ import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { verify } from "argon2";
-import { requireNoAuth } from "~/modules/auth";
+import { requireNoAuth } from "~/modules/auth.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Login" }];

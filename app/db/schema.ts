@@ -7,3 +7,15 @@ export const usersTable = pgTable("users", {
   passwordHash: varchar({ length: 1024 }).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
 });
+
+export const tasksTable = pgTable("tasks", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  title: varchar({ length: 255 }).notNull(),
+  description: varchar({ length: 1024 }),
+  dueDate: timestamp(),
+  completed: timestamp(),
+  createdAt: timestamp().defaultNow().notNull(),
+});

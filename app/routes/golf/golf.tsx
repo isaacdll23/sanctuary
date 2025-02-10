@@ -1,4 +1,4 @@
-import { requireAuth } from "~/modules/auth";
+import { requireAuth } from "~/modules/auth.server";
 import type { Route } from "./+types/golf";
 
 export function meta({}: Route.MetaArgs) {

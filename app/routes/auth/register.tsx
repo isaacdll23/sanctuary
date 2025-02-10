@@ -4,7 +4,7 @@ import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import { eq, or } from "drizzle-orm";
 import { hash } from "argon2";
-import { requireNoAuth } from "~/modules/auth";
+import { requireNoAuth } from "~/modules/auth.server";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Register" }];

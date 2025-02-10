@@ -41,6 +41,12 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
               Golf
             </NavLink>
             <NavLink
+              to="/tasks"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Tasks
+            </NavLink>
+            <NavLink
               to="/auth/logout"
               className="hover:text-blue-600 transition-colors duration-200"
             >

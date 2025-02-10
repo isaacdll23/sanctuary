@@ -8,7 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import { isSessionCreated } from "./modules/auth";
+import { isSessionCreated } from "./modules/auth.server";
 import "./app.css";
 import Header from "./components/header/header";
 
