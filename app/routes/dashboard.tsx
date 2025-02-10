@@ -1,6 +1,10 @@
 import { requireAuth } from "~/modules/auth.server";
 import type { Route } from "./+types/dashboard";
 
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Dashboard" }];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAuth(request);
   return {};
