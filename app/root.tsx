@@ -50,9 +50,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App({ loaderData }: Route.ComponentProps) {
-  let isAuthenticated = !loaderData;
-
+export default function App() {
   return (
     <main className="flex-1 mb-16">
       <Outlet />
