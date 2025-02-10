@@ -1,65 +1,55 @@
-import { Form, Link, redirect, data, useFetcher } from "react-router";
-import type { Route } from "./+types/login";
-import { getSession, commitSession } from "~/sessions.server";
+import { Form, Link, redirect, useFetcher, data } from "react-router";
+import type { Route } from "./+types/register";
 import { db } from "~/db";
 import { usersTable } from "~/db/schema";
-import { eq } from "drizzle-orm";
-import { verify } from "argon2";
+import { eq, or } from "drizzle-orm";
+import { hash } from "argon2";
 import { requireNoAuth } from "~/modules/auth";
 
-export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Sanctuary" },
-    { name: "description", content: "Welcome to Sanctuary!" },
-  ];
-}
-
 export async function action({ request }: Route.ActionArgs) {
-  const session = await getSession(request.headers.get("Cookie"));
-
-  if (session.has("userId")) {
-    return redirect("/golf");
-  }
-
   let formData = await request.formData();
+
   let username = String(formData.get("username"));
+  let email = String(formData.get("email"));
   let password = String(formData.get("password"));
+  let confirmPassword = String(formData.get("confirmPassword"));
 
   const errors = {
-    invalid: "",
+    identity: "",
+    password: "",
   };
 
-  let dbUser = await db
+  if (password.length < 8) {
+    errors.password = "Password must be at least 8 characters";
+    return data({ errors }, { status: 400 });
+  }
+
+  if (password !== confirmPassword) {
+    errors.password = "Passwords do not match";
+    return data({ errors }, { status: 400 });
+  }
+
+  const users = await db
     .select()
     .from(usersTable)
-    .where(eq(usersTable.username, username));
+    .where(or(eq(usersTable.username, username), eq(usersTable.email, email)));
 
-  if (dbUser.length === 0) {
-    errors.invalid = "Invalid username or password";
+  if (users.length > 0) {
+    errors.identity = "Username and/or email is already taken";
     return data({ errors }, { status: 400 });
   }
 
-  // Check password
-  var validPassword = false;
-  try {
-    validPassword = await verify(dbUser[0].passwordHash, password);
-  } catch {
-    errors.invalid = "Invalid username or password";
-    return data({ errors }, { status: 400 });
-  }
+  const hashedPassword = await hash(password);
 
-  if (!validPassword) {
-    errors.invalid = "Invalid username or password";
-    return data({ errors }, { status: 400 });
-  }
+  const newUser: typeof usersTable.$inferInsert = {
+    username: username,
+    email: email,
+    passwordHash: hashedPassword,
+  };
 
-  session.set("userId", dbUser[0].id);
+  await db.insert(usersTable).values(newUser);
 
-  return redirect("/golf", {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  });
+  return redirect("/auth/login");
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -67,46 +57,59 @@ export async function loader({ request }: Route.LoaderArgs) {
   return {};
 }
 
-export default function Login() {
+export default function Register(_: Route.ComponentProps) {
   let fetcher = useFetcher();
   let errors = fetcher.data?.errors;
 
   return (
     <div className="h-full flex items-center justify-center">
       <div className="flex flex-col items-center justify-center bg-gray-800 border-2 border-gray-700 rounded-xl p-8 gap-8 w-1/3">
-        <h1 className="text-2xl">Login</h1>
+        <h1 className="text-2xl">Register</h1>
         <fetcher.Form method="post" className="w-full">
           <div className="w-full flex flex-col items-center justify-center gap-4">
-            {errors?.invalid ? (
-              <p className="text-red-500 text-sm">{errors.invalid}</p>
+            {errors?.identity ? (
+              <p className="text-red-500">{errors.identity}</p>
             ) : null}
             <input
               className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
               type="text"
               placeholder="Username"
               name="username"
-              required
             />
+            <input
+              className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
+              type="text"
+              placeholder="Email"
+              name="email"
+            />
+            {errors?.password ? (
+              <p className="text-red-500">{errors.password}</p>
+            ) : null}
             <input
               className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
               type="password"
               placeholder="Password"
               name="password"
-              required
+            />
+            <input
+              className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
+              type="password"
+              placeholder="Confirm Password"
+              name="confirmPassword"
             />
 
             <button
               type="submit"
               className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login
+              Register
             </button>
           </div>
         </fetcher.Form>
         <p>
-          Not registered?{" "}
-          <Link to="/auth/register" className="text-blue-500 hover:underline">
-            Create account
+          Already registered?{" "}
+          <Link to="/auth/login" className="text-blue-500 hover:underline">
+            Log in
           </Link>
         </p>
       </div>

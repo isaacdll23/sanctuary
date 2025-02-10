@@ -8,6 +8,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
+import { isSessionCreated } from "./modules/auth";
 import "./app.css";
 import Header from "./components/header/header";
 
@@ -24,6 +25,12 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+export async function loader({ request }: Route.LoaderArgs) {
+  let isAuthenticated = await isSessionCreated(request);
+
+  return { isAuthenticated };
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
@@ -34,6 +41,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body className="m-0 p-0 h-screen flex flex-col">
+        <Header />
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -42,14 +50,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+export default function App({ loaderData }: Route.ComponentProps) {
+  let isAuthenticated = !loaderData;
+
   return (
-    <Layout>
-      <Header />
-      <main className="flex-1 mb-16">
-        <Outlet />
-      </main>
-    </Layout>
+    <main className="flex-1 mb-16">
+      <Outlet />
+    </main>
   );
 }
 
