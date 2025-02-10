@@ -1,6 +1,10 @@
 import { requireAuth } from "~/modules/auth";
 import type { Route } from "./+types/golf";
 
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Golf" }];
+}
+
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAuth(request);
   return {};

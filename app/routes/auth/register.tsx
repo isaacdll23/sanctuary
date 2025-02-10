@@ -6,6 +6,10 @@ import { eq, or } from "drizzle-orm";
 import { hash } from "argon2";
 import { requireNoAuth } from "~/modules/auth";
 
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Register" }];
+}
+
 export async function action({ request }: Route.ActionArgs) {
   let formData = await request.formData();
 

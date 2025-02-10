@@ -3,6 +3,10 @@ import type { Route } from "./+types/logout";
 import { getSession, destroySession } from "~/sessions.server";
 import { requireAuth } from "~/modules/auth";
 
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "Logout" }];
+}
+
 export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
 

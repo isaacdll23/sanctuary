@@ -8,10 +8,7 @@ import { verify } from "argon2";
 import { requireNoAuth } from "~/modules/auth";
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Sanctuary" },
-    { name: "description", content: "Welcome to Sanctuary!" },
-  ];
+  return [{ title: "Login" }];
 }
 
 export async function action({ request }: Route.ActionArgs) {
