@@ -13,14 +13,39 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       <div className="flex flex-row space-x-4">
         {!isAuthenticated ? (
           <>
-            <NavLink to="/auth/login">Login</NavLink>
-            <NavLink to="/auth/register">Register</NavLink>
+            <NavLink
+              to="/auth/login"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Login
+            </NavLink>
+            <NavLink
+              to="/auth/register"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Register
+            </NavLink>
           </>
         ) : (
           <>
-            <NavLink to="/dashboard">Dashboard</NavLink>
-            <NavLink to="/golf">Golf</NavLink>
-            <NavLink to="/auth/logout">Logout</NavLink>
+            <NavLink
+              to="/dashboard"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Dashboard
+            </NavLink>
+            <NavLink
+              to="/golf"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Golf
+            </NavLink>
+            <NavLink
+              to="/auth/logout"
+              className="hover:text-blue-600 transition-colors duration-200"
+            >
+              Logout
+            </NavLink>
           </>
         )}
       </div>

@@ -28,7 +28,7 @@ export default function Logout() {
       <p>Are you sure you want to logout?</p>
       <Form method="post">
         <button
-          className="rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-black text-white hover:bg-gray-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-black text-white hover:bg-gray-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           type="submit"
         >
           Logout
