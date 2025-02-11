@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import type { Route } from "./+types/tasks";
 import { db } from "~/db";
@@ -67,11 +68,28 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   let fetcher = useFetcher();
+
+  // Close the modal after successful form submission
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data === undefined) {
+      setIsModalOpen(false);
+    }
+  }, [fetcher.state, fetcher.data]);
 
   return (
     <div className="h-full w-full flex flex-col items-center mt-4">
-      <h1 className="text-3xl mb-4">Tasks</h1>
+      <div className="flex flex-row justify-between items-center w-4/5 mb-8">
+        <h1 className="text-3xl mb-4">Tasks</h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-green-600 text-white hover:bg-green-700 focus:ring-white transition-colors duration-200"
+        >
+          Add Task
+        </button>
+      </div>
+
       {loaderData.userTasks.length === 0 ? (
         <div className="flex flex-col items-center gap-4 w-full">
           <p>No tasks found</p>
@@ -86,31 +104,43 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      <fetcher.Form
-        method="post"
-        className="w-1/2 mb-4 flex flex-col justify-center items-center border-2 border-gray-800 rounded-xl p-4 gap-4 mt-4"
-      >
-        <input
-          type="text"
-          name="title"
-          placeholder="Enter task..."
-          className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
-          required
-        />
-        <input
-          type="text"
-          name="description"
-          placeholder="Enter description..."
-          className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
-          required
-        />
-        <button
-          type="submit"
-          className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-        >
-          Add Task
-        </button>
-      </fetcher.Form>
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-gray-800 rounded-xl p-6 w-1/2 relative">
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-2 right-2 text-white font-bold"
+            >
+              X
+            </button>
+            <fetcher.Form
+              method="post"
+              className="flex flex-col justify-center items-center gap-4"
+            >
+              <input
+                type="text"
+                name="title"
+                placeholder="Enter task..."
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+                required
+              />
+              <input
+                type="text"
+                name="description"
+                placeholder="Enter description..."
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+                required
+              />
+              <button
+                type="submit"
+                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Add Task
+              </button>
+            </fetcher.Form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

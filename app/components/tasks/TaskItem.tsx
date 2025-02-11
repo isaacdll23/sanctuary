@@ -14,7 +14,7 @@ export default function TaskItem({ task }: TaskItemProps) {
     <>
       <li
         onClick={() => setIsModalOpen(true)}
-        className="cursor-pointer flex items-center justify-between border-b-2 border-gray-800 p-4"
+        className="cursor-pointer flex items-center justify-between border-b-2 border-gray-800 p-4 hover:bg-gray-700 transition-colors duration-200"
       >
         <div>
           <p className="font-semibold">{task.title}</p>
@@ -29,11 +29,12 @@ export default function TaskItem({ task }: TaskItemProps) {
           )}
         </div>
         <div className="flex gap-2">
-          {!task.completedAt && (
+        {!task.completedAt && (
             <fetcher.Form method="post">
               <input type="hidden" name="completeTask" value={task.id} />
               <button
                 type="submit"
+                onClick={(e) => e.stopPropagation()}
                 className="rounded bg-green-600 text-white px-3 py-1 text-xs hover:bg-green-700"
               >
                 Complete
@@ -44,6 +45,7 @@ export default function TaskItem({ task }: TaskItemProps) {
             <input type="hidden" name="deleteTask" value={task.id} />
             <button
               type="submit"
+              onClick={(e) => e.stopPropagation()}
               className="rounded bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700"
             >
               Delete
