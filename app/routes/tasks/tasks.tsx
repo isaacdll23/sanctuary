@@ -53,9 +53,15 @@ export async function action({ request }: Route.ActionArgs) {
     return { error: "Invalid task title provided" };
   }
 
+  const description = formData.get("description");
+  if (typeof description !== "string" || !description.trim()) {
+    return { error: "Invalid task description provided" };
+  }
+
   await db.insert(tasksTable).values({
     title: title.trim(),
     userId: user.id,
+    description: description.trim(),
     createdAt: new Date(),
   });
 }
@@ -72,7 +78,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 w-full">
-          <ul className="w-4/5">
+          <ul className="w-4/5 border-2 rounded-xl border-gray-800 divide-y-2 divide-gray-800">
             {loaderData.userTasks.map((task) => (
               <TaskItem key={task.id} task={task} />
             ))}
