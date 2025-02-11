@@ -37,12 +37,12 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       >
         Dashboard
       </NavLink>
-      <NavLink
+      {/* <NavLink
         to="/golf"
         className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
       >
         Golf
-      </NavLink>
+      </NavLink> */}
       <NavLink
         to="/tasks"
         className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
