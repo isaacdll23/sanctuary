@@ -56,7 +56,7 @@ export default function TaskItem({ task }: TaskItemProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-gray-900 p-6 rounded shadow-lg w-80">
+          <div className="bg-gray-900 p-6 rounded shadow-lg w-5/6 md:w-80">
             <h2 className="text-xl font-bold mb-2">{task.title}</h2>
             <p className="text-sm text-gray-600">
               Created: {task.createdAt.toLocaleDateString()}

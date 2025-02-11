@@ -106,7 +106,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-1/2 relative">
+          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-80 relative">
             <button
               onClick={() => setIsModalOpen(false)}
               className="absolute top-2 right-2 text-white font-bold"
