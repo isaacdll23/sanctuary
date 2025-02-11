@@ -84,7 +84,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         <h1 className="text-3xl mb-4">Tasks</h1>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-green-600 text-white hover:bg-green-700 focus:ring-white transition-colors duration-200"
+          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
         >
           Add Task
         </button>
@@ -96,7 +96,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 w-full">
-          <ul className="w-4/5 border-2 rounded-xl border-gray-800 divide-y-2 divide-gray-800">
+          <ul className="w-4/5 border-4 rounded-2xl border-gray-800 divide-y-2 divide-gray-800">
             {loaderData.userTasks.map((task) => (
               <TaskItem key={task.id} task={task} />
             ))}

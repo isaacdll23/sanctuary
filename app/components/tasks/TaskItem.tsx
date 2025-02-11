@@ -14,7 +14,7 @@ export default function TaskItem({ task }: TaskItemProps) {
     <>
       <li
         onClick={() => setIsModalOpen(true)}
-        className="cursor-pointer flex items-center justify-between border-b-2 border-gray-800 p-4 hover:bg-gray-700 transition-colors duration-200"
+        className="cursor-pointer flex items-center justify-between p-4 first:rounded-t-xl last:rounded-b-xl hover:bg-gray-700 transition-colors duration-200"
       >
         <div>
           <p className="font-semibold">{task.title}</p>
@@ -56,7 +56,7 @@ export default function TaskItem({ task }: TaskItemProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-gray-900 p-6 rounded shadow-lg w-5/6 md:w-80">
+          <div className="bg-gray-900 p-6 rounded shadow-lg w5/6 md:w-80">
             <h2 className="text-xl font-bold mb-2">{task.title}</h2>
             <p className="text-sm text-gray-600">
               Created: {task.createdAt.toLocaleDateString()}
