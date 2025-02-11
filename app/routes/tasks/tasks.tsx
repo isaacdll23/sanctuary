@@ -106,13 +106,8 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-80 relative">
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-2 right-2 text-white font-bold"
-            >
-              X
-            </button>
+          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
+          <h2 className="text-2xl font-bold mb-4">Add Task</h2>
             <fetcher.Form
               method="post"
               className="flex flex-col justify-center items-center gap-4"
@@ -136,6 +131,13 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
                 className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Add Task
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Cancel
               </button>
             </fetcher.Form>
           </div>
