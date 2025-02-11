@@ -5,7 +5,7 @@ export default function Header() {
   const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>();
 
   return (
-    <header className="text-white p-4 h-16">
+    <header className="text-white p-4 md:h-16">
       <Navbar isAuthenticated={isAuthenticated} />
     </header>
   );
