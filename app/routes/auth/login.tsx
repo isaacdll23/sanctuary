@@ -70,7 +70,7 @@ export default function Login() {
 
   return (
     <div className="h-full flex items-center justify-center">
-      <div className="flex flex-col items-center justify-center bg-gray-800 border-2 border-gray-700 rounded-xl p-8 gap-8 w-1/3">
+      <div className="flex flex-col items-center justify-center bg-gray-800 border-2 border-gray-700 rounded-xl p-8 gap-8 md:w-1/3 w-5/6">
         <h1 className="text-2xl">Login</h1>
         <fetcher.Form method="post" className="w-full">
           <div className="w-full flex flex-col items-center justify-center gap-4">
