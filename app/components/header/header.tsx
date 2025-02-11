@@ -1,5 +1,5 @@
-import Navbar from "./navbar/navbar";
 import { useLoaderData } from "react-router";
+import Navbar from "./navbar/navbar";
 
 export default function Header() {
   const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>();

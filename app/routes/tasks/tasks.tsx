@@ -4,6 +4,7 @@ import { db } from "~/db";
 import { tasksTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher } from "react-router";
+import TaskItem from "~/components/tasks/TaskItem";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Tasks" }];
@@ -63,7 +64,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
   let fetcher = useFetcher();
 
   return (
-    <div className="h-full flex flex-col items-center mt-4">
+    <div className="h-full w-full flex flex-col items-center mt-4">
       <h1 className="text-3xl mb-4">Tasks</h1>
       {loaderData.userTasks.length === 0 ? (
         <div className="flex flex-col items-center gap-4 w-full">
@@ -71,51 +72,9 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 w-full">
-          <ul className="w-1/3">
+          <ul className="w-4/5">
             {loaderData.userTasks.map((task) => (
-              <li
-                key={task.id}
-                className="flex items-center justify-between border-b-2 border-gray-800 p-4"
-              >
-                <div>
-                  <p className="font-semibold">{task.title}</p>
-                  <p className="text-sm text-gray-400">
-                    Created: {task.createdAt.toLocaleDateString()}
-                  </p>
-                  {task.completedAt && (
-                    <p className="text-sm text-green-500">
-                      Completed:{" "}
-                      {new Date(task.completedAt).toLocaleDateString()}
-                    </p>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {!task.completedAt && (
-                    <fetcher.Form method="post">
-                      <input
-                        type="hidden"
-                        name="completeTask"
-                        value={task.id}
-                      />
-                      <button
-                        type="submit"
-                        className="rounded bg-green-600 text-white px-3 py-1 text-xs hover:bg-green-700"
-                      >
-                        Complete
-                      </button>
-                    </fetcher.Form>
-                  )}
-                  <fetcher.Form method="post">
-                    <input type="hidden" name="deleteTask" value={task.id} />
-                    <button
-                      type="submit"
-                      className="rounded bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700"
-                    >
-                      Delete
-                    </button>
-                  </fetcher.Form>
-                </div>
-              </li>
+              <TaskItem key={task.id} task={task} />
             ))}
           </ul>
         </div>
@@ -123,7 +82,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
 
       <fetcher.Form
         method="post"
-        className="w-1/3 mb-4 flex flex-col justify-center items-center border-2 border-gray-800 rounded-xl p-4 gap-4 mt-4"
+        className="w-1/2 mb-4 flex flex-col justify-center items-center border-2 border-gray-800 rounded-xl p-4 gap-4 mt-4"
       >
         <input
           type="text"

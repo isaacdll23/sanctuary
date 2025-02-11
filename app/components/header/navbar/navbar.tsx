@@ -6,11 +6,11 @@ interface NavbarProps {
 
 export default function Navbar({ isAuthenticated }: NavbarProps) {
   return (
-    <div className="flex flex-row justify-between space-x-4">
+    <div className="flex flex-row justify-between items-center space-x-4">
       <div className="text-2xl">
         <NavLink to="/">Sanctuary</NavLink>
       </div>
-      <div className="flex flex-row space-x-4">
+      <div className="flex flex-row justify-center space-x-4">
         {!isAuthenticated ? (
           <>
             <NavLink
