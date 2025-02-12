@@ -10,7 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import { isSessionCreated } from "./modules/auth.server";
 import "./app.css";
-import Header from "./components/header/header";
+import Header from "./components/header/Header";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },

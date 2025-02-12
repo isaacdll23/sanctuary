@@ -74,7 +74,7 @@ export default function TaskItem({ task }: TaskItemProps) {
                 e.stopPropagation();
                 setIsModalOpen(false);
               }}
-              className="w-1/4 mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-1/4 md:w-1/2 mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               Close
             </button>
