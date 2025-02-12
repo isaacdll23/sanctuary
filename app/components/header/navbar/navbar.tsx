@@ -12,6 +12,8 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  
+
   const menuItemsUnauth = (
     <>
       <NavLink
@@ -60,10 +62,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
 
   return (
     <nav className="w-full">
-      <div className="flex items-center justify-between p-4">
-        <div className="text-2xl">
-          <NavLink to="/">Sanctuary</NavLink>
-        </div>
+      <div className="flex items-center justify-end p-4">
         {/* Desktop Menu */}
         <div className="hidden md:flex md:space-x-4">
           {!isAuthenticated ? menuItemsUnauth : menuItemsAuth}
@@ -85,7 +84,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden px-4 pb-4">
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col items-center space-y-2">
             {!isAuthenticated ? menuItemsUnauth : menuItemsAuth}
           </div>
         </div>
