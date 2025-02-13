@@ -33,38 +33,42 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
         onClick={() => setIsModalOpen(true)}
         className="cursor-pointer first:rounded-t-xl last:rounded-b-xl text-white p-4 hover:bg-gray-700 transition-colors duration-200"
       >
-        <div className="flex flex-row justify-between items-center mb-2">
+        <div className="flex flex-row justify-baseline items-center mb-2">
           {/* Task Information */}
-          <div className="mb-2">
-            <p className="font-semibold text-lg">{task.title}</p>
-            <p className="text-sm text-gray-400">
-              Created: {task.createdAt.toLocaleDateString()}
-            </p>
-            {task.completedAt && (
-              <p className="text-sm text-green-500">
-                Completed: {new Date(task.completedAt).toLocaleDateString()}
+          <div className="w-2/3 md:w-1/3">
+            <p className="text-sm md:text-2xl">{task.title}</p>
+            <div className="hidden md:flex flex-col">
+              <p className="text-sm text-gray-400">
+                Created: {task.createdAt.toLocaleDateString()}
               </p>
+              {task.completedAt && (
+                <p className="text-sm text-green-500">
+                  Completed: {new Date(task.completedAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="md:flex flex-col w-1/3 justify-center items-center hidden">
+            {/* Optional Progress Bar (middle section) */}
+            {totalSteps > 0 && (
+              <>
+                <div className="w-full bg-gray-600 rounded-full h-4">
+                  <div
+                    style={{ width: `${progressPercentage}%` }}
+                    className={`${progressColor} h-4 rounded-full`}
+                  />
+                </div>
+                <p className="text-sm text-center mt-1">
+                  {completedSteps} / {totalSteps} Steps Completed (
+                  {progressPercentage}%)
+                </p>
+              </>
             )}
           </div>
 
-          {/* Optional Progress Bar (middle section) */}
-          {totalSteps > 0 && (
-            <div className="w-1/3">
-              <div className="w-full bg-gray-600 rounded-full h-4">
-                <div
-                  style={{ width: `${progressPercentage}%` }}
-                  className={`${progressColor} h-4 rounded-full`}
-                />
-              </div>
-              <p className="text-sm text-center mt-1">
-                {completedSteps} / {totalSteps} Steps Completed (
-                {progressPercentage}%)
-              </p>
-            </div>
-          )}
-
           {/* Action Buttons */}
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2 w-1/3 justify-end items-center">
             {!task.completedAt && (
               <fetcher.Form method="post">
                 <input type="hidden" name="completeTask" value={task.id} />
