@@ -1,61 +1,98 @@
 import { useState } from "react";
-import { tasksTable } from "~/db/schema";
+import { tasksTable, taskStepsTable } from "~/db/schema";
 import { useFetcher } from "react-router";
 
 interface TaskItemProps {
   task: typeof tasksTable.$inferSelect;
+  taskSteps?: typeof taskStepsTable.$inferSelect[];
 }
 
-export default function TaskItem({ task }: TaskItemProps) {
+export default function TaskItem({ task, taskSteps }: TaskItemProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   let fetcher = useFetcher();
+
+  // Compute progress if steps exist
+  const totalSteps = taskSteps ? taskSteps.length : 0;
+  const completedSteps = taskSteps
+    ? taskSteps.filter((step) => step.completedAt !== null).length
+    : 0;
+  const progressPercentage =
+    totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+  // Determine color based on progress
+  let progressColor = "bg-red-500";
+  if (progressPercentage >= 80) {
+    progressColor = "bg-green-500";
+  } else if (progressPercentage >= 50) {
+    progressColor = "bg-yellow-500";
+  }
 
   return (
     <>
       <li
         onClick={() => setIsModalOpen(true)}
-        className="cursor-pointer flex items-center justify-between p-4 first:rounded-t-xl last:rounded-b-xl hover:bg-gray-700 transition-colors duration-200"
+        className="cursor-pointer first:rounded-t-xl last:rounded-b-xl text-white p-4 hover:bg-gray-700 transition-colors duration-200"
       >
-        <div>
-          <p className="font-semibold">{task.title}</p>
-          <p className="text-sm text-gray-400 hidden md:block">
-            Created: {task.createdAt.toLocaleDateString()}
-          </p>
-          {task.completedAt && (
-            <p className="text-sm text-green-500">
-              Completed:{" "}
-              {new Date(task.completedAt).toLocaleDateString()}
+        <div className="flex flex-row justify-between items-center mb-2">
+          {/* Task Information */}
+          <div className="mb-2">
+            <p className="font-semibold text-lg">{task.title}</p>
+            <p className="text-sm text-gray-400">
+              Created: {task.createdAt.toLocaleDateString()}
             </p>
+            {task.completedAt && (
+              <p className="text-sm text-green-500">
+                Completed: {new Date(task.completedAt).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+
+          {/* Optional Progress Bar (middle section) */}
+          {totalSteps > 0 && (
+            <div className="w-1/3">
+              <div className="w-full bg-gray-600 rounded-full h-4">
+                <div
+                  style={{ width: `${progressPercentage}%` }}
+                  className={`${progressColor} h-4 rounded-full`}
+                />
+              </div>
+              <p className="text-sm text-center mt-1">
+                {completedSteps} / {totalSteps} Steps Completed (
+                {progressPercentage}%)
+              </p>
+            </div>
           )}
-        </div>
-        <div className="flex gap-2">
-        {!task.completedAt && (
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-2">
+            {!task.completedAt && (
+              <fetcher.Form method="post">
+                <input type="hidden" name="completeTask" value={task.id} />
+                <button
+                  type="submit"
+                  onClick={(e) => e.stopPropagation()}
+                  className="rounded bg-green-600 px-3 py-1 text-xs hover:bg-green-700"
+                >
+                  Complete
+                </button>
+              </fetcher.Form>
+            )}
             <fetcher.Form method="post">
-              <input type="hidden" name="completeTask" value={task.id} />
+              <input type="hidden" name="deleteTask" value={task.id} />
               <button
                 type="submit"
                 onClick={(e) => e.stopPropagation()}
-                className="rounded bg-green-600 text-white px-3 py-1 text-xs hover:bg-green-700"
+                className="rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
               >
-                Complete
+                Delete
               </button>
             </fetcher.Form>
-          )}
-          <fetcher.Form method="post">
-            <input type="hidden" name="deleteTask" value={task.id} />
-            <button
-              type="submit"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded bg-red-600 text-white px-3 py-1 text-xs hover:bg-red-700"
-            >
-              Delete
-            </button>
-          </fetcher.Form>
+          </div>
         </div>
       </li>
 
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+        <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/50 z-50 w-full">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
             <h2 className="text-2xl font-bold mb-1">{task.title}</h2>
             <p className="text-sm text-gray-600">
@@ -69,15 +106,85 @@ export default function TaskItem({ task }: TaskItemProps) {
             {task.description && (
               <p className="text-md text-white mt-2">{task.description}</p>
             )}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsModalOpen(false);
-              }}
-              className="w-1/4 md:w-1/2 mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+
+            {/* Optional progress bar if steps exist */}
+            {totalSteps > 0 && (
+              <div className="mt-4">
+                <div className="w-full bg-gray-600 rounded-full h-4">
+                  <div
+                    style={{ width: `${progressPercentage}%` }}
+                    className={`${progressColor} h-4 rounded-full`}
+                  />
+                </div>
+                <p className="text-sm text-white text-center mt-1">
+                  {completedSteps} / {totalSteps} Steps Completed ({progressPercentage}%)
+                </p>
+              </div>
+            )}
+
+            {/* Render task steps if available */}
+            {taskSteps && taskSteps.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-bold text-white mb-2">Steps</h3>
+                <ul className="space-y-2">
+                  {taskSteps.map((step) => (
+                    <li key={step.id} className="flex items-center">
+                      <fetcher.Form method="post" className="flex items-center">
+                        <input type="hidden" name="completeStep" value={step.id} />
+                        <input
+                          type="checkbox"
+                          checked={step.completedAt !== null}
+                          onChange={(e) => {
+                            const isChecked = e.target.checked;
+                            fetcher.submit(
+                              {
+                                completeStep: step.id.toString(),
+                                isChecked: isChecked.toString(),
+                              },
+                              { method: "post" }
+                            );
+                          }}
+                          className="h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-white">
+                          {step.description}
+                        </span>
+                      </fetcher.Form>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <fetcher.Form
+              method="post"
+              className="mt-4 flex items-center gap-2"
             >
-              Close
-            </button>
+              <input type="hidden" name="taskId" value={task.id} />
+              <input
+                type="text"
+                name="stepDescription"
+                placeholder="New step description"
+                className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="rounded bg-blue-600 text-white px-3 py-1 text-xs hover:bg-blue-700"
+              >
+                Add Step
+              </button>
+            </fetcher.Form>
+            <div className="flex justify-center">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsModalOpen(false);
+                }}
+                className="w-1/4 md:w-1/3 mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
