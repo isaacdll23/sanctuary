@@ -42,6 +42,10 @@ export async function action({ request }: Route.ActionArgs) {
   const deleteTask = formData.get("deleteTask");
   if (typeof deleteTask === "string" && deleteTask.trim()) {
     const taskId = parseInt(deleteTask, 10);
+
+    // Delete any task steps associated with the task
+    await db.delete(taskStepsTable).where(eq(taskStepsTable.taskId, taskId));
+
     await db.delete(tasksTable).where(eq(tasksTable.id, taskId));
   }
 
