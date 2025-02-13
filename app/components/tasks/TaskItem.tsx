@@ -68,25 +68,25 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-2 w-1/3 justify-end items-center">
+          <div className="flex flex-col md:flex-row gap-2 w-1/3 justify-end items-center">
             {!task.completedAt && (
-              <fetcher.Form method="post">
+              <fetcher.Form method="post" className="w-full md:w-1/3 flex justify-center text-center">
                 <input type="hidden" name="completeTask" value={task.id} />
                 <button
                   type="submit"
                   onClick={(e) => e.stopPropagation()}
-                  className="rounded bg-green-600 px-3 py-1 text-xs hover:bg-green-700"
+                  className="w-full rounded bg-green-600 px-3 py-1 text-xs hover:bg-green-700"
                 >
                   Complete
                 </button>
               </fetcher.Form>
             )}
-            <fetcher.Form method="post">
+            <fetcher.Form method="post" className="w-full md:w-1/3 flex justify-center text-center">
               <input type="hidden" name="deleteTask" value={task.id} />
               <button
                 type="submit"
                 onClick={(e) => e.stopPropagation()}
-                className="rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
+                className="w-full rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
               >
                 Delete
               </button>
@@ -97,9 +97,9 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
 
       {isModalOpen && (
         <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/50 z-50 w-full">
-          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
+          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-4/6 xl:w-3/6 relative">
             <h2 className="text-2xl font-bold mb-1">{task.title}</h2>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 mb-2">
               Created: {task.createdAt.toLocaleDateString()}
             </p>
             {task.completedAt && (
@@ -108,12 +108,16 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
               </p>
             )}
             {task.description && (
-              <p className="text-md text-white mt-2">{task.description}</p>
+              <div className="flex flex-col">
+                <h3 className="text-lg font-bold text-white mb-2">Description</h3>
+                <p className="text-md text-white">{task.description}</p>
+              </div>
             )}
 
             {/* Optional progress bar if steps exist */}
             {totalSteps > 0 && (
               <div className="mt-4">
+                <h3 className="text-lg font-bold text-white mb-2">Progress</h3>
                 <div className="w-full bg-gray-600 rounded-full h-4">
                   <div
                     style={{ width: `${progressPercentage}%` }}
@@ -162,29 +166,33 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
 
             <fetcher.Form
               method="post"
-              className="mt-4 flex items-center gap-2"
+              className="mt-4 mb-4 flex flex-col items-center gap-2"
             >
+              <div className="flex flex-row justify-start items-center w-full">
+                <h3 className="text-lg font-bold text-white mb-2">Add Step</h3>
+              </div>
               <input type="hidden" name="taskId" value={task.id} />
               <input
                 type="text"
                 name="stepDescription"
-                placeholder="New step.." 
-                className="w-5/6 border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+                placeholder="New step.."
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
               />
               <button
                 type="submit"
-                className="rounded-xl bg-blue-600 text-white px-3 py-1 text-xs hover:bg-blue-700"
+                className="w-full md:w-1/3 rounded-xl bg-blue-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-blue-700 transition-colors duration-200"
               >
                 Add Step
               </button>
             </fetcher.Form>
+
             <div className="flex justify-center items-center">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsModalOpen(false);
                 }}
-                className="mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full md:w-1/3 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Close
               </button>
