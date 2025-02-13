@@ -19,3 +19,16 @@ export const tasksTable = pgTable("tasks", {
   completedAt: timestamp(),
   createdAt: timestamp().defaultNow().notNull(),
 });
+
+export const taskStepsTable = pgTable("task_steps", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  taskId: integer()
+    .notNull()
+    .references(() => tasksTable.id),
+  description: varchar({ length: 1024 }).notNull(),
+  completedAt: timestamp(),
+  createdAt: timestamp().defaultNow().notNull(),
+});

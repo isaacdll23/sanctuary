@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import type { Route } from "./+types/tasks";
 import { db } from "~/db";
-import { tasksTable } from "~/db/schema";
+import { tasksTable, taskStepsTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
 import { ta } from "date-fns/locale";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [{ title: "Tasks" }];
 }
 
@@ -23,7 +23,14 @@ export async function loader({ request }: Route.LoaderArgs) {
     .where(eq(tasksTable.userId, user.id))
     .orderBy(desc(tasksTable.createdAt));
 
-  return { userTasks };
+
+  const userTaskSteps = await db
+    .select()
+    .from(taskStepsTable)
+    .where(eq(taskStepsTable.userId, user.id))
+    .orderBy(desc(taskStepsTable.createdAt));
+
+  return { userTasks, userTaskSteps };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -47,6 +54,71 @@ export async function action({ request }: Route.ActionArgs) {
       .update(tasksTable)
       .set({ completedAt: new Date() })
       .where(eq(tasksTable.id, taskId));
+  }
+
+  // Update step branch (complete/uncomplete)
+  const completeStep = formData.get("completeStep");
+  const isChecked = formData.get("isChecked");
+  if (
+    typeof completeStep === "string" &&
+    completeStep.trim() &&
+    typeof isChecked === "string"
+  ) {
+    const stepId = parseInt(completeStep, 10);
+    if (isChecked === "true") {
+      await db
+        .update(taskStepsTable)
+        .set({ completedAt: new Date() })
+        .where(eq(taskStepsTable.id, stepId));
+    } else {
+      await db
+        .update(taskStepsTable)
+        .set({ completedAt: null })
+        .where(eq(taskStepsTable.id, stepId));
+    }
+
+    // Determine the related task and update its completedAt status
+    const [stepRecord] = await db
+      .select()
+      .from(taskStepsTable)
+      .where(eq(taskStepsTable.id, stepId));
+    if (stepRecord) {
+      const allSteps = await db
+        .select()
+        .from(taskStepsTable)
+        .where(eq(taskStepsTable.taskId, stepRecord.taskId));
+      const allComplete =
+        allSteps.length > 0 && allSteps.every((s) => s.completedAt !== null);
+      if (allComplete) {
+        await db
+          .update(tasksTable)
+          .set({ completedAt: new Date() })
+          .where(eq(tasksTable.id, stepRecord.taskId));
+      } else {
+        await db
+          .update(tasksTable)
+          .set({ completedAt: null })
+          .where(eq(tasksTable.id, stepRecord.taskId));
+      }
+    }
+    return null;
+  }
+  // Create a new task step branch
+  const stepDescription = formData.get("stepDescription");
+  const taskIdForStep = formData.get("taskId");
+  if (
+    typeof stepDescription === "string" &&
+    stepDescription.trim() &&
+    typeof taskIdForStep === "string"
+  ) {
+    const taskId = parseInt(taskIdForStep, 10);
+    await db.insert(taskStepsTable).values({
+      taskId,
+      userId: user.id,
+      description: stepDescription.trim(),
+      createdAt: new Date(),
+    });
+    return null;
   }
 
   // Create task branch for new tasks
@@ -104,7 +176,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
           <input
             type="checkbox"
             className="sr-only peer"
-            onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
+            onChange={() => setHideCompletedTasks(!hideCompletedTasks)}
             checked={hideCompletedTasks}
           />
           <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
@@ -122,7 +194,9 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         <div className="flex flex-col items-center gap-4 w-full">
           <ul className="w-4/5 border-4 rounded-2xl border-gray-800 divide-y-2 divide-gray-800">
             {filteredTasks.map((task) => (
-              <TaskItem key={task.id} task={task} />
+              <TaskItem key={task.id} task={task} taskSteps={loaderData.userTaskSteps.filter((step) => {
+                return step.taskId === task.id;
+              })} />
             ))}
           </ul>
         </div>
