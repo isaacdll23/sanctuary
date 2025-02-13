@@ -6,6 +6,7 @@ import { tasksTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
+import { ta } from "date-fns/locale";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Tasks" }];
@@ -69,7 +70,15 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hideCompletedTasks, setHideCompletedTasks] = useState(true);
   let fetcher = useFetcher();
+
+  const filteredTasks = loaderData.userTasks.filter((task) => {
+    if (hideCompletedTasks) {
+      return task.completedAt === null;
+    }
+    return true;
+  });
 
   // Close the modal after successful form submission
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="h-full w-full flex flex-col items-center mt-4">
-      <div className="flex flex-row justify-between items-center w-4/5 mb-8">
+      <div className="flex flex-row justify-between items-center w-4/5 mb-2">
         <h1 className="text-3xl mb-4">Tasks</h1>
         <button
           onClick={() => setIsModalOpen(true)}
@@ -90,14 +99,29 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </button>
       </div>
 
-      {loaderData.userTasks.length === 0 ? (
+      <div className="flex flex-row justify-end items-center w-4/5 mb-8">
+        <label className="inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            className="sr-only peer"
+            onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
+            checked={hideCompletedTasks}
+          />
+          <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+          <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">
+            Hide Completed Tasks
+          </span>
+        </label>
+      </div>
+
+      {filteredTasks.length === 0 ? (
         <div className="flex flex-col items-center gap-4 w-full">
           <p>No tasks found</p>
         </div>
       ) : (
         <div className="flex flex-col items-center gap-4 w-full">
           <ul className="w-4/5 border-4 rounded-2xl border-gray-800 divide-y-2 divide-gray-800">
-            {loaderData.userTasks.map((task) => (
+            {filteredTasks.map((task) => (
               <TaskItem key={task.id} task={task} />
             ))}
           </ul>
@@ -107,7 +131,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
-          <h2 className="text-2xl font-bold mb-4">Add Task</h2>
+            <h2 className="text-2xl font-bold mb-4">Add Task</h2>
             <fetcher.Form
               method="post"
               className="flex flex-col justify-center items-center gap-4"
