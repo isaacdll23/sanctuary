@@ -168,23 +168,23 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
               <input
                 type="text"
                 name="stepDescription"
-                placeholder="New step description"
-                className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-white focus:outline-none"
+                placeholder="New step.." 
+                className="w-5/6 border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
               />
               <button
                 type="submit"
-                className="rounded bg-blue-600 text-white px-3 py-1 text-xs hover:bg-blue-700"
+                className="rounded-xl bg-blue-600 text-white px-3 py-1 text-xs hover:bg-blue-700"
               >
                 Add Step
               </button>
             </fetcher.Form>
-            <div className="flex justify-center">
+            <div className="flex justify-center items-center">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsModalOpen(false);
                 }}
-                className="w-1/4 md:w-1/3 mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="mt-4 rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Close
               </button>
