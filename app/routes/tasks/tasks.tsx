@@ -6,7 +6,6 @@ import { tasksTable, taskStepsTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
-import { ta } from "date-fns/locale";
 
 export function meta({ }: Route.MetaArgs) {
   return [{ title: "Tasks" }];
