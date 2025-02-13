@@ -36,7 +36,7 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
         <div className="flex flex-row justify-baseline items-center mb-2">
           {/* Task Information */}
           <div className="w-2/3 md:w-1/3">
-            <p className="text-sm md:text-2xl">{task.title}</p>
+            <p className="text-sm md:text-xl">{task.title}</p>
             <div className="hidden md:flex flex-col">
               <p className="text-sm text-gray-400">
                 Created: {task.createdAt.toLocaleDateString()}
