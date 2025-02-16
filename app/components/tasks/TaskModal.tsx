@@ -29,9 +29,20 @@ export default function TaskModal({
           Created: {task.createdAt.toLocaleDateString()}
         </p>
         {task.completedAt && (
-          <p className="text-sm text-green-600">
-            Completed: {new Date(task.completedAt).toLocaleDateString()}
-          </p>
+          <div className="flex flex-col">
+            <p className="text-sm text-green-600">
+              Completed: {new Date(task.completedAt).toLocaleDateString()}
+            </p>
+            <fetcher.Form method="post">
+              <input type="hidden" name="incompleteTask" value={task.id} />
+              <button
+                type="submit"
+                className="mt-1 text-xs text-red-500 hover:underline"
+              >
+                Mark as Incomplete
+              </button>
+            </fetcher.Form>
+          </div>
         )}
         {task.description && (
           <div className="flex flex-col mt-4">

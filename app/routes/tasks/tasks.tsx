@@ -6,8 +6,9 @@ import { tasksTable, taskStepsTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
+import { handleTaskAction } from "~/modules/services/TaskService";
 
-export function meta({ }: Route.MetaArgs) {
+export function meta({}: Route.MetaArgs) {
   return [{ title: "Tasks" }];
 }
 
@@ -22,7 +23,6 @@ export async function loader({ request }: Route.LoaderArgs) {
     .where(eq(tasksTable.userId, user.id))
     .orderBy(desc(tasksTable.createdAt));
 
-
   const userTaskSteps = await db
     .select()
     .from(taskStepsTable)
@@ -33,114 +33,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
-  const user = await getUserFromSession(request);
-  const formData = await request.formData();
-
-  // Delete task branch
-  const deleteTask = formData.get("deleteTask");
-  if (typeof deleteTask === "string" && deleteTask.trim()) {
-    const taskId = parseInt(deleteTask, 10);
-
-    // Delete any task steps associated with the task
-    await db.delete(taskStepsTable).where(eq(taskStepsTable.taskId, taskId));
-
-    await db.delete(tasksTable).where(eq(tasksTable.id, taskId));
-  }
-
-  // Complete task branch
-  const completeTask = formData.get("completeTask");
-  if (typeof completeTask === "string" && completeTask.trim()) {
-    const taskId = parseInt(completeTask, 10);
-    // Assuming tasksTable has a column 'completedAt'
-    await db
-      .update(tasksTable)
-      .set({ completedAt: new Date() })
-      .where(eq(tasksTable.id, taskId));
-  }
-
-  // Update step branch (complete/uncomplete)
-  const completeStep = formData.get("completeStep");
-  const isChecked = formData.get("isChecked");
-  if (
-    typeof completeStep === "string" &&
-    completeStep.trim() &&
-    typeof isChecked === "string"
-  ) {
-    const stepId = parseInt(completeStep, 10);
-    if (isChecked === "true") {
-      await db
-        .update(taskStepsTable)
-        .set({ completedAt: new Date() })
-        .where(eq(taskStepsTable.id, stepId));
-    } else {
-      await db
-        .update(taskStepsTable)
-        .set({ completedAt: null })
-        .where(eq(taskStepsTable.id, stepId));
-    }
-
-    // Determine the related task and update its completedAt status
-    const [stepRecord] = await db
-      .select()
-      .from(taskStepsTable)
-      .where(eq(taskStepsTable.id, stepId));
-    if (stepRecord) {
-      const allSteps = await db
-        .select()
-        .from(taskStepsTable)
-        .where(eq(taskStepsTable.taskId, stepRecord.taskId));
-      const allComplete =
-        allSteps.length > 0 && allSteps.every((s) => s.completedAt !== null);
-      if (allComplete) {
-        await db
-          .update(tasksTable)
-          .set({ completedAt: new Date() })
-          .where(eq(tasksTable.id, stepRecord.taskId));
-      } else {
-        await db
-          .update(tasksTable)
-          .set({ completedAt: null })
-          .where(eq(tasksTable.id, stepRecord.taskId));
-      }
-    }
-    return null;
-  }
-  // Create a new task step branch
-  const stepDescription = formData.get("stepDescription");
-  const taskIdForStep = formData.get("taskId");
-  if (
-    typeof stepDescription === "string" &&
-    stepDescription.trim() &&
-    typeof taskIdForStep === "string"
-  ) {
-    const taskId = parseInt(taskIdForStep, 10);
-    await db.insert(taskStepsTable).values({
-      taskId,
-      userId: user.id,
-      description: stepDescription.trim(),
-      createdAt: new Date(),
-    });
-    return null;
-  }
-
-  // Create task branch for new tasks
-  const title = formData.get("title");
-  if (typeof title !== "string" || !title.trim()) {
-    return { error: "Invalid task title provided" };
-  }
-
-  const description = formData.get("description");
-  if (typeof description !== "string" || !description.trim()) {
-    return { error: "Invalid task description provided" };
-  }
-
-  await db.insert(tasksTable).values({
-    title: title.trim(),
-    userId: user.id,
-    description: description.trim(),
-    createdAt: new Date(),
-  });
+  await handleTaskAction(request);
 }
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
@@ -197,9 +90,13 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         <div className="flex flex-col items-center gap-4 w-full">
           <ul className="w-4/5 border-4 rounded-2xl border-gray-800 divide-y-2 divide-gray-800">
             {filteredTasks.map((task) => (
-              <TaskItem key={task.id} task={task} taskSteps={loaderData.userTaskSteps.filter((step) => {
-                return step.taskId === task.id;
-              })} />
+              <TaskItem
+                key={task.id}
+                task={task}
+                taskSteps={loaderData.userTaskSteps.filter((step) => {
+                  return step.taskId === task.id;
+                })}
+              />
             ))}
           </ul>
         </div>
