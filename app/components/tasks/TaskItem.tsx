@@ -7,7 +7,7 @@ import ProgressBar from "./ProgressBar";
 
 interface TaskItemProps {
   task: typeof tasksTable.$inferSelect;
-  taskSteps?: typeof taskStepsTable.$inferSelect[];
+  taskSteps?: (typeof taskStepsTable.$inferSelect)[];
 }
 
 export default function TaskItem({ task, taskSteps }: TaskItemProps) {
@@ -52,8 +52,8 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
             </div>
           </div>
 
-          {totalSteps > 0 && (
-            <div className="w-1/3 hidden md:flex flex-col items-center"> 
+          {totalSteps > 0 ? (
+            <div className="w-1/3 hidden md:flex flex-col items-center">
               <ProgressBar
                 progressPercentage={progressPercentage}
                 progressColor={progressColor}
@@ -61,6 +61,8 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
                 totalSteps={totalSteps}
               />
             </div>
+          ) : (
+            <div className="w-1/3 hidden md:flex flex-col items-center"></div>
           )}
 
           <TaskActions task={task} fetcher={fetcher} />
