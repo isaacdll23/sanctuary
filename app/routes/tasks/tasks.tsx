@@ -38,7 +38,7 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hideCompletedTasks, setHideCompletedTasks] = useState(true);
+  const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
   let fetcher = useFetcher();
 
   const filteredTasks = loaderData.userTasks.filter((task) => {
