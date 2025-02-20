@@ -161,11 +161,9 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
       </div>
 
       {/* Total monthly cost */}
-      <div className="mt-4 text-xl font-semibold">
-        Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}
-      </div>
-      <div className="mt-4 text-xl font-semibold">
-        Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}
+      <div className="mt-4 text-xl flex flex-col md:flex-row gap-6">
+        <p>Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}</p>
+        <p>Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}</p>
       </div>
 
       <button
