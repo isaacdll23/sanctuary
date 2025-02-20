@@ -12,7 +12,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  
+
 
   const menuItemsUnauth = (
     <>
@@ -45,6 +45,12 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       >
         Golf
       </NavLink> */}
+      <NavLink
+        to="/finance"
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Finance
+      </NavLink>
       <NavLink
         to="/tasks"
         className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"

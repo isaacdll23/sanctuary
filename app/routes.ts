@@ -4,6 +4,8 @@ export default [
   index("routes/home.tsx"),
   route("golf", "routes/golf/golf.tsx"),
   route("dashboard", "routes/dashboard.tsx"),
+  route('finance', 'routes/finance/finance.tsx'),
+  route('finance/subscriptions', 'routes/finance/subscriptions.tsx'),
   route("tasks", "routes/tasks/tasks.tsx"),
   route("auth/login", "routes/auth/login.tsx"),
   route("auth/logout", "routes/auth/logout.tsx"),

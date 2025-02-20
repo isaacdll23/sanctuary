@@ -32,3 +32,14 @@ export const taskStepsTable = pgTable("task_steps", {
   completedAt: timestamp(),
   createdAt: timestamp().defaultNow().notNull(),
 });
+
+export const financeSubscriptionsTable = pgTable("finance_subscriptions", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  name: varchar({ length: 255 }).notNull(),
+  monthlyCost: integer().notNull(),
+  chargeDay: integer().notNull(), // now only storing the day of charge
+  createdAt: timestamp().defaultNow().notNull(),
+});
