@@ -12,8 +12,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-
-
+  // Desktop menu items (no onClick needed)
   const menuItemsUnauth = (
     <>
       <NavLink
@@ -66,6 +65,59 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
     </>
   );
 
+  // Mobile menu items with onClick to close the menu immediately
+  const mobileMenuItemsUnauth = (
+    <>
+      <NavLink
+        to="/auth/login"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Login
+      </NavLink>
+      <NavLink
+        to="/auth/register"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Register
+      </NavLink>
+    </>
+  );
+
+  const mobileMenuItemsAuth = (
+    <>
+      <NavLink
+        to="/dashboard"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Dashboard
+      </NavLink>
+      <NavLink
+        to="/finance"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Finance
+      </NavLink>
+      <NavLink
+        to="/tasks"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Tasks
+      </NavLink>
+      <NavLink
+        to="/auth/logout"
+        onClick={() => setIsMobileMenuOpen(false)}
+        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+      >
+        Logout
+      </NavLink>
+    </>
+  );
+
   return (
     <nav className="w-full">
       <div className="flex items-center justify-end p-4">
@@ -76,7 +128,12 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
         {/* Mobile Hamburger Icon */}
         <div className="md:hidden">
           <button onClick={toggleMobileMenu} className="focus:outline-none">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -91,7 +148,7 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       {isMobileMenuOpen && (
         <div className="md:hidden px-4 pb-4">
           <div className="flex flex-col items-center space-y-2">
-            {!isAuthenticated ? menuItemsUnauth : menuItemsAuth}
+            {!isAuthenticated ? mobileMenuItemsUnauth : mobileMenuItemsAuth}
           </div>
         </div>
       )}
