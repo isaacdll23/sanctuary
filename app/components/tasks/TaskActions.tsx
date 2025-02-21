@@ -23,7 +23,7 @@ export default function TaskActions({
             <button
               type="submit"
               onClick={(e) => e.stopPropagation()}
-              className="w-full rounded bg-green-600 px-3 py-1 text-xs hover:bg-green-700"
+              className="w-full rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-700"
             >
               Complete
             </button>

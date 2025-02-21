@@ -79,7 +79,7 @@ export async function action({ request }: Route.ActionArgs) {
     return {};
   }
 }
-  
+
 export default function Subscriptions({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubscription, setEditingSubscription] = useState<any>(null);
@@ -138,7 +138,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
                     <button
                       type="button"
                       onClick={() => setEditingSubscription(subscription)}
-                      className="rounded-xl border-2 border-gray-800 px-3 py-1 text-sm bg-green-600 text-white hover:bg-green-700 transition-colors"
+                      className="rounded-xl border-2 border-gray-800 px-3 py-1 text-sm bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
                     >
                       Edit
                     </button>
@@ -236,11 +236,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               className="flex flex-col justify-center items-center gap-4"
             >
               <input type="hidden" name="_action" value="update" />
-              <input
-                type="hidden"
-                name="id"
-                value={editingSubscription.id}
-              />
+              <input type="hidden" name="id" value={editingSubscription.id} />
               <input
                 type="text"
                 name="name"
@@ -253,7 +249,9 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
                 type="number"
                 step="0.01"
                 name="monthlyCost"
-                defaultValue={(editingSubscription.monthlyCost / 100).toFixed(2)}
+                defaultValue={(editingSubscription.monthlyCost / 100).toFixed(
+                  2
+                )}
                 placeholder="Monthly Cost (in dollars)"
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
                 required
@@ -271,7 +269,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               <button
                 type="submit"
                 disabled={fetcher.state === "submitting"}
-                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-green-700 text-white hover:bg-green-800 transition-colors duration-200"
+                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-emerald-700 text-white hover:bg-emerald-800 transition-colors duration-200"
               >
                 Update Subscription
               </button>

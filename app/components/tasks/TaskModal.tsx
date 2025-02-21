@@ -78,7 +78,7 @@ export default function TaskModal({
             </datalist>
             <button
               type="submit"
-              className="w-full rounded-xl bg-green-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-green-700 transition-colors duration-200"
+              className="w-full rounded-xl bg-emerald-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-emerald-700 transition-colors duration-200"
             >
               Save Category
             </button>

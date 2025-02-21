@@ -65,7 +65,12 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">New Tasks</h2>
@@ -79,12 +84,17 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             {/* Icon for completed tasks */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-8 w-8 text-green-600"
+              className="h-8 w-8 text-emerald-600"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 13l4 4L19 7"
+              />
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Completed Tasks</h2>
