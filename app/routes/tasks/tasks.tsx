@@ -76,7 +76,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         </button>
       </div>
 
-      <div className="flex flex-row justify-end items-center w-4/5 mb-8">
+      <div className="flex flex-col md:flex-row justify-end items-center w-full md:w-4/5 mb-8 gap-4">
         <label className="inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
@@ -93,7 +93,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="ml-4 border-2 border-gray-500 rounded-xl p-2 text-xs bg-gray-600 text-white"
+          className="border-2 border-gray-500 rounded-xl p-2 text-xs bg-gray-600 text-white"
         >
           <option value="">All Categories</option>
           {distinctCategories
