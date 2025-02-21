@@ -20,7 +20,9 @@ export default function Finance() {
       <main className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">
           <h2 className="text-2xl font-bold mb-4">Subscriptions</h2>
-          <p className="text-gray-600">Manage your subscriptions and view costs.</p>
+          <p className="text-gray-600">
+            Manage your subscriptions and view costs.
+          </p>
           <a
             href="/finance/subscriptions"
             className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
@@ -37,13 +39,12 @@ export default function Finance() {
         </div>
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">
           <h2 className="text-2xl font-bold mb-4">Summary</h2>
-          <p className="text-gray-600">Get an overview of your spending and savings.</p>
-          <a
-            href="/finance/summary"
-            className="mt-4 inline-block bg-gray-300 text-gray-700 px-4 py-2 rounded "
-          >
+          <p className="text-gray-600">
+            Get an overview of your spending and savings.
+          </p>
+          <span className="mt-4 inline-block bg-gray-300 text-gray-700 px-4 py-2 rounded ">
             Coming Soon
-          </a>
+          </span>
         </div>
       </main>
     </div>
