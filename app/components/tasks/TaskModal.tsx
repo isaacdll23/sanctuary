@@ -11,6 +11,7 @@ export default function TaskModal({
   totalSteps,
   fetcher,
   onClose,
+  distinctCategories = [],
 }: {
   task: typeof tasksTable.$inferSelect;
   taskSteps?: (typeof taskStepsTable.$inferSelect)[];
@@ -20,6 +21,7 @@ export default function TaskModal({
   totalSteps: number;
   fetcher: any;
   onClose: () => void;
+  distinctCategories?: string[];
 }) {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/50 z-50 w-full">
@@ -51,6 +53,38 @@ export default function TaskModal({
           </div>
         )}
 
+        {/* Category Section */}
+        <div className="mt-4 w-full">
+          <h3 className="text-lg font-bold text-white mb-2">Category</h3>
+          {task.category ? (
+            <p className="text-md text-white mb-2">Current: {task.category}</p>
+          ) : (
+            <p className="text-md text-gray-400 mb-2">No category set.</p>
+          )}
+          <fetcher.Form method="post" className="flex flex-col gap-2">
+            <input type="hidden" name="updateCategory" value={task.id} />
+            <input
+              type="text"
+              name="category"
+              placeholder="Enter or select category..."
+              defaultValue={task.category || ""}
+              list="categories"
+              className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+            />
+            <datalist id="categories">
+              {distinctCategories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-green-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-green-700 transition-colors duration-200"
+            >
+              Save Category
+            </button>
+          </fetcher.Form>
+        </div>
+
         {totalSteps > 0 && (
           <div className="flex flex-col mt-4">
             <h3 className="text-lg font-bold text-white mb-2">Progress</h3>
@@ -68,7 +102,7 @@ export default function TaskModal({
             <h3 className="text-lg font-bold text-white mb-2">Steps</h3>
             <ul className="space-y-2">
               {taskSteps.map((step) => (
-                <TaskStep taskStep={step} fetcher={fetcher} />
+                <TaskStep key={step.id} taskStep={step} fetcher={fetcher} />
               ))}
             </ul>
           </div>

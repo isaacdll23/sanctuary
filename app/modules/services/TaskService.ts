@@ -8,6 +8,17 @@ export async function handleTaskAction(request: Request) {
   const user = await getUserFromSession(request);
   const formData = await request.formData();
 
+  // Update category branch
+  if (formData.get("updateCategory")) {
+    const taskId = Number(formData.get("updateCategory"));
+    const category = (formData.get("category") as string) || null;
+    await db
+      .update(tasksTable)
+      .set({ category })
+      .where(eq(tasksTable.id, taskId));
+    return;
+  }
+
   // Delete task branch
   const deleteTask = formData.get("deleteTask");
   if (typeof deleteTask === "string" && deleteTask.trim()) {

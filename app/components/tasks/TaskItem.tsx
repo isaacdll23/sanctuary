@@ -8,9 +8,14 @@ import ProgressBar from "./ProgressBar";
 interface TaskItemProps {
   task: typeof tasksTable.$inferSelect;
   taskSteps?: (typeof taskStepsTable.$inferSelect)[];
+  distinctCategories: string[];
 }
 
-export default function TaskItem({ task, taskSteps }: TaskItemProps) {
+export default function TaskItem({
+  task,
+  taskSteps,
+  distinctCategories,
+}: TaskItemProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fetcher = useFetcher();
 
@@ -40,7 +45,12 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
           {/* Task Information */}
           <div className="w-2/3 md:w-1/3">
             <p className="text-sm md:text-xl">{task.title}</p>
-            <div className="hidden md:flex flex-col">
+            {task.category && (
+              <p className="text-xs md:text-sm text-gray-300 mt-1">
+                Category: {task.category}
+              </p>
+            )}
+            <div className="hidden md:flex flex-col mt-1">
               <p className="text-sm text-gray-400">
                 Created: {task.createdAt.toLocaleDateString()}
               </p>
@@ -79,6 +89,7 @@ export default function TaskItem({ task, taskSteps }: TaskItemProps) {
           totalSteps={totalSteps}
           fetcher={fetcher}
           onClose={() => setIsModalOpen(false)}
+          distinctCategories={distinctCategories}
         />
       )}
     </>

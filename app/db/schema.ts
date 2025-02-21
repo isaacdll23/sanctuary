@@ -17,6 +17,7 @@ export const tasksTable = pgTable("tasks", {
   description: varchar({ length: 1024 }),
   dueDate: timestamp(),
   completedAt: timestamp(),
+  category: varchar({ length: 255 }),
   createdAt: timestamp().defaultNow().notNull(),
 });
 

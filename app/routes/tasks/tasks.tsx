@@ -39,11 +39,20 @@ export async function action({ request }: Route.ActionArgs) {
 export default function Tasks({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
+  const [filterCategory, setFilterCategory] = useState("");
   let fetcher = useFetcher();
 
+  // Compute distinct categories from the current tasks
+  const distinctCategories = Array.from(
+    new Set(loaderData.userTasks.map((task) => task.category).filter(Boolean))
+  );
+
   const filteredTasks = loaderData.userTasks.filter((task) => {
-    if (hideCompletedTasks) {
-      return task.completedAt === null;
+    if (hideCompletedTasks && task.completedAt !== null) {
+      return false;
+    }
+    if (filterCategory && task.category !== filterCategory) {
+      return false;
     }
     return true;
   });
@@ -80,6 +89,21 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
           </span>
           <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
         </label>
+        {/* Category Filter Dropdown */}
+        <select
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+          className="ml-4 border-2 border-gray-500 rounded-xl p-2 text-xs bg-gray-600 text-white"
+        >
+          <option value="">All Categories</option>
+          {distinctCategories
+            .filter((cat): cat is string => cat !== null)
+            .map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+        </select>
       </div>
 
       {filteredTasks.length === 0 ? (
@@ -93,9 +117,12 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
               <TaskItem
                 key={task.id}
                 task={task}
-                taskSteps={loaderData.userTaskSteps.filter((step) => {
-                  return step.taskId === task.id;
-                })}
+                taskSteps={loaderData.userTaskSteps.filter(
+                  (step) => step.taskId === task.id
+                )}
+                distinctCategories={distinctCategories.filter(
+                  (cat): cat is string => cat !== null
+                )}
               />
             ))}
           </ul>
