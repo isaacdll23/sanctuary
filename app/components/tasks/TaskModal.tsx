@@ -85,6 +85,8 @@ export default function TaskModal({
           </fetcher.Form>
         </div>
 
+        {/* Progress Section */}
+
         {totalSteps > 0 && (
           <div className="flex flex-col mt-4">
             <h3 className="text-lg font-bold text-white mb-2">Progress</h3>
@@ -130,6 +132,7 @@ export default function TaskModal({
           </button>
         </fetcher.Form>
 
+        {/* Close Button */}
         <div className="flex justify-center items-center">
           <button
             onClick={(e) => {

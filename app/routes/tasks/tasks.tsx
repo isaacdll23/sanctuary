@@ -64,6 +64,12 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     }
   }, [fetcher.state, fetcher.data]);
 
+  const error = fetcher.data?.error;
+
+  if (error) {
+    console.error(error);
+  }
+
   return (
     <div className="h-full w-full flex flex-col items-center mt-4">
       <div className="flex flex-row justify-between items-center w-4/5 mb-2">
@@ -149,8 +155,22 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
                 name="description"
                 placeholder="Enter description..."
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
-                required
               />
+              <input
+                type="text"
+                name="category"
+                placeholder="Enter or select category..."
+                defaultValue={filterCategory || ""}
+                list="categories"
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+              />
+              <datalist id="categories">
+                {distinctCategories
+                  .filter((cat): cat is string => cat !== null)
+                  .map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+              </datalist>
               <button
                 type="submit"
                 className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"

@@ -105,6 +105,8 @@ export async function handleTaskAction(request: Request) {
     return;
   }
 
+  console.log("formData", formData);
+  console.log("Here");
   // Create a new task step branch
   const stepDescription = formData.get("stepDescription");
   const taskIdForStep = formData.get("taskId");
@@ -130,14 +132,13 @@ export async function handleTaskAction(request: Request) {
   }
 
   const description = formData.get("description");
-  if (typeof description !== "string" || !description.trim()) {
-    return { error: "Invalid task description provided" };
-  }
+  const taskCategory = formData.get("category");
 
   await db.insert(tasksTable).values({
     title: title.trim(),
     userId: user.id,
-    description: description.trim(),
+    description: String(description)?.trim(),
+    category: String(taskCategory)?.trim(),
     createdAt: new Date(),
   });
 }
