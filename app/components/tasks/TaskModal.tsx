@@ -61,7 +61,10 @@ export default function TaskModal({
           ) : (
             <p className="text-md text-gray-400 mb-2">No category set.</p>
           )}
-          <fetcher.Form method="post" className="flex flex-col gap-2">
+          <fetcher.Form
+            method="post"
+            className="flex flex-col items-center gap-2"
+          >
             <input type="hidden" name="updateCategory" value={task.id} />
             <input
               type="text"
@@ -78,7 +81,7 @@ export default function TaskModal({
             </datalist>
             <button
               type="submit"
-              className="w-full rounded-xl bg-emerald-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-emerald-700 transition-colors duration-200"
+              className="w-full md:w-1/3 rounded-xl bg-emerald-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-emerald-700 transition-colors duration-200"
             >
               Save Category
             </button>
@@ -86,7 +89,6 @@ export default function TaskModal({
         </div>
 
         {/* Progress Section */}
-
         {totalSteps > 0 && (
           <div className="flex flex-col mt-4">
             <h3 className="text-lg font-bold text-white mb-2">Progress</h3>
