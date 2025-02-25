@@ -19,6 +19,14 @@ export async function handleTaskAction(request: Request) {
     return;
   }
 
+  // Delete step branch
+  const deleteStep = formData.get("deleteStep");
+  if (typeof deleteStep === "string" && deleteStep.trim()) {
+    const stepId = parseInt(deleteStep, 10);
+    await db.delete(taskStepsTable).where(eq(taskStepsTable.id, stepId));
+    return;
+  }
+
   // Delete task branch
   const deleteTask = formData.get("deleteTask");
   if (typeof deleteTask === "string" && deleteTask.trim()) {
