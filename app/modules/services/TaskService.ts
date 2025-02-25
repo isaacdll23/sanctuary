@@ -113,8 +113,6 @@ export async function handleTaskAction(request: Request) {
     return;
   }
 
-  console.log("formData", formData);
-  console.log("Here");
   // Create a new task step branch
   const stepDescription = formData.get("stepDescription");
   const taskIdForStep = formData.get("taskId");

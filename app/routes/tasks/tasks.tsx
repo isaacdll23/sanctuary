@@ -4,7 +4,7 @@ import type { Route } from "./+types/tasks";
 import { db } from "~/db";
 import { tasksTable, taskStepsTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { useFetcher } from "react-router";
+import { useFetcher, useSearchParams } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
 import { handleTaskAction } from "~/modules/services/TaskService";
 
@@ -37,9 +37,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialHide = searchParams.get("hideCompletedTasks") === "true";
+  const initialCategory = searchParams.get("filterCategory") || "";
+  const [hideCompletedTasks, setHideCompletedTasks] = useState(initialHide);
+  const [filterCategory, setFilterCategory] = useState(initialCategory);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hideCompletedTasks, setHideCompletedTasks] = useState(false);
-  const [filterCategory, setFilterCategory] = useState("");
   let fetcher = useFetcher();
 
   // Compute distinct categories from the current tasks
@@ -57,18 +60,20 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     return true;
   });
 
+  // Update URL search params when filter changes
+  useEffect(() => {
+    setSearchParams({
+      hideCompletedTasks: hideCompletedTasks.toString(),
+      filterCategory: filterCategory,
+    });
+  }, [hideCompletedTasks, filterCategory]);
+
   // Close the modal after successful form submission
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
       setIsModalOpen(false);
     }
   }, [fetcher.state, fetcher.data]);
-
-  const error = fetcher.data?.error;
-
-  if (error) {
-    console.error(error);
-  }
 
   return (
     <div className="h-full w-full flex flex-col items-center mt-4">
