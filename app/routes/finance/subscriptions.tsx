@@ -131,7 +131,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
                 >
                   <td className="px-6 py-3">{subscription.name}</td>
                   <td className="px-6 py-3">
-                    ${(subscription.monthlyCost / 100).toFixed(2)}
+                    ${(subscription.monthlyCost / 100).toFixed(2)} ({(subscription.monthlyCost / (totalMonthlyCost / 100)).toFixed(2)}%)
                   </td>
                   <td className="px-6 py-3">{subscription.chargeDay}</td>
                   <td className="px-6 py-3 flex gap-2">
