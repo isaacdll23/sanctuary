@@ -60,6 +60,8 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     return true;
   });
 
+  const openTasks = loaderData.userTasks.filter((task) => task.completedAt === null);
+
   // Update URL search params when filter changes
   useEffect(() => {
     setSearchParams({
@@ -88,6 +90,9 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
       </div>
 
       <div className="flex flex-col md:flex-row justify-end items-center w-full md:w-4/5 mb-8 gap-4">
+        <p className="md:mr-auto text-sm text-gray-900 dark:text-gray-300">
+          {openTasks.length} Open Tasks
+        </p>
         <label className="inline-flex items-center cursor-pointer">
           <input
             type="checkbox"
