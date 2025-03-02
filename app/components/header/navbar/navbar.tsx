@@ -7,10 +7,42 @@ interface NavbarProps {
 
 export default function Navbar({ isAuthenticated }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!isProfileDropdownOpen);
+  };
+
+  const DefaultAvatar = ({ size = 8 }: { size?: number }) => (
+    <div className={`w-${size} h-${size} rounded-full bg-gray-200 flex items-center justify-center`}>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className={`w-${size === 8 ? 6 : 6} h-${size === 8 ? 6 : 6} text-gray-500`}
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        {/* Head */}
+        <path 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth={2} 
+          d="M12 12a5 5 0 100-10 5 5 0 000 10z" 
+        />
+        {/* Shoulders */}
+        <path 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          strokeWidth={2} 
+          d="M4 21v-2a4 4 0 014-4h8a4 4 0 014 4v2" 
+        />
+      </svg>
+    </div>
+  );
 
   // Desktop menu items (no onClick needed)
   const menuItemsUnauth = (
@@ -56,12 +88,43 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       >
         Tasks
       </NavLink>
-      <NavLink
-        to="/auth/logout"
-        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
-      >
-        Logout
-      </NavLink>
+
+      <div className="relative inline-block">
+        <button
+          onClick={toggleProfileDropdown}
+          className="flex items-center space-x-1 focus:outline-none"
+        >
+          <DefaultAvatar size={8} />
+          {/* Down Arrow */}
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {isProfileDropdownOpen && (
+          <div className="absolute right-0 mt-2 w-32 bg-gray-700 border rounded-lg shadow-lg z-10">
+            <NavLink
+              to="/profile"
+              onClick={() => setProfileDropdownOpen(false)}
+              className="block px-4 py-2 hover:bg-gray-800 rounded-t-lg"
+            >
+              Profile
+            </NavLink>
+            <NavLink
+              to="/auth/logout"
+              onClick={() => setProfileDropdownOpen(false)}
+              className="block px-4 py-2 hover:bg-gray-800 rounded-b-lg"
+            >
+              Logout
+            </NavLink>
+          </div>
+        )}
+      </div>
     </>
   );
 
