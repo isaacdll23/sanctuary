@@ -51,12 +51,8 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
   );
 
   const filteredTasks = loaderData.userTasks.filter((task) => {
-    if (hideCompletedTasks && task.completedAt !== null) {
-      return false;
-    }
-    if (filterCategory && task.category !== filterCategory) {
-      return false;
-    }
+    if (hideCompletedTasks && task.completedAt !== null) return false;
+    if (filterCategory && task.category !== filterCategory) return false;
     return true;
   });
 
