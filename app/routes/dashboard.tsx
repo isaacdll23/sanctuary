@@ -3,7 +3,7 @@ import type { Route } from "./+types/dashboard";
 import { db } from "~/db";
 import { tasksTable } from "~/db/schema";
 import { and, gte, eq } from "drizzle-orm";
-import { startOfMonth, startOfWeek } from "date-fns";
+import { startOfDay, subDays } from "date-fns";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Dashboard" }];
@@ -14,73 +14,37 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   const user = await getUserFromSession(request);
 
-  // Get number of tasks created this week
-  const newTasksThisWeek = await db
+  const userTasks = await db
     .select()
     .from(tasksTable)
-    .where(
-      and(
-        eq(tasksTable.userId, user.id),
-        gte(tasksTable.createdAt, startOfWeek(new Date()))
-      )
-    )
+    .where(eq(tasksTable.userId, user.id))
     .execute();
 
-  // Get number of tasks completed this week
-  const completedTasksThisWeek = await db
-    .select()
-    .from(tasksTable)
-    .where(
-      and(
-        eq(tasksTable.userId, user.id),
-        gte(tasksTable.completedAt, startOfWeek(new Date()))
-      )
-    )
-    .execute();
+  const newTasksLast7Days = userTasks.filter(task => task.createdAt >= startOfDay(subDays(new Date(), 7)));
+  const completedTasksLast7Days = userTasks.filter(task => task.completedAt != null && task.completedAt >= startOfDay(subDays(new Date(), 7)));
 
-  // Get number of tasks created this month
-  const newTasksThisMonth = await db
-    .select()
-    .from(tasksTable)
-    .where(
-      and(
-        eq(tasksTable.userId, user.id),
-        gte(tasksTable.createdAt, startOfMonth(new Date()))
-      )
-    )
-    .execute();
-
-  // Get number of tasks completed this month
-  const completedTasksThisMonth = await db
-    .select()
-    .from(tasksTable)
-    .where(
-      and(
-        eq(tasksTable.userId, user.id),
-        gte(tasksTable.completedAt, startOfMonth(new Date()))
-      )
-    )
-    .execute();
+  const newTasksLast30Days = userTasks.filter(task => task.createdAt >= startOfDay(subDays(new Date(), 30)));
+  const completedTasksLast30Days = userTasks.filter(task => task.completedAt != null && task.completedAt >= startOfDay(subDays(new Date(), 30)));
 
   return {
-    newTasksThisWeek: newTasksThisWeek.length,
-    completedTasksThisWeek: completedTasksThisWeek.length,
-    newTasksThisMonth: newTasksThisMonth.length,
-    completedTasksThisMonth: completedTasksThisMonth.length,
+    newTasksLast7Days: newTasksLast7Days.length,
+    completedTasksLast7Days: completedTasksLast7Days.length,
+    newTasksLast30Days: newTasksLast30Days.length,
+    completedTasksLast30Days: completedTasksLast30Days.length,
   };
 }
 
 export default function Dashboard({ loaderData }: Route.ComponentProps) {
   const {
-    newTasksThisWeek,
-    completedTasksThisWeek,
-    newTasksThisMonth,
-    completedTasksThisMonth,
+    newTasksLast7Days,
+    completedTasksLast7Days,
+    newTasksLast30Days,
+    completedTasksLast30Days,
   } = loaderData as {
-    newTasksThisWeek: number;
-    completedTasksThisWeek: number;
-    newTasksThisMonth: number;
-    completedTasksThisMonth: number;
+    newTasksLast7Days: number;
+    completedTasksLast7Days: number;
+    newTasksLast30Days: number;
+    completedTasksLast30Days: number;
   };
 
   return (
@@ -107,8 +71,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">New Tasks</h2>
-          <p className="text-3xl font-bold">{newTasksThisWeek}</p>
-          <p className="mt-2 text-gray-500">This week</p>
+          <p className="text-3xl font-bold">{newTasksLast7Days}</p>
+          <p className="mt-2 text-gray-500">Last 7 days</p>
         </div>
 
         <div className="bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col items-center">
@@ -130,8 +94,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">New Tasks</h2>
-          <p className="text-3xl font-bold">{newTasksThisMonth}</p>
-          <p className="mt-2 text-gray-500">This Month</p>
+          <p className="text-3xl font-bold">{newTasksLast30Days}</p>
+          <p className="mt-2 text-gray-500">Last 30 days</p>
         </div>
 
         {/* Card for Completed Tasks */}
@@ -154,8 +118,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Completed Tasks</h2>
-          <p className="text-3xl font-bold">{completedTasksThisWeek}</p>
-          <p className="mt-2 text-gray-500">This week</p>
+          <p className="text-3xl font-bold">{completedTasksLast7Days}</p>
+          <p className="mt-2 text-gray-500">Last 7 days</p>
         </div>
 
         <div className="bg-gray-800 shadow-lg rounded-lg p-6 flex flex-col items-center">
@@ -177,8 +141,8 @@ export default function Dashboard({ loaderData }: Route.ComponentProps) {
             </svg>
           </div>
           <h2 className="text-xl font-semibold mb-2">Completed Tasks</h2>
-          <p className="text-3xl font-bold">{completedTasksThisMonth}</p>
-          <p className="mt-2 text-gray-500">This Month</p>
+          <p className="text-3xl font-bold">{completedTasksLast30Days}</p>
+          <p className="mt-2 text-gray-500">Last 30 days</p>
         </div>
       </div>
     </div>
