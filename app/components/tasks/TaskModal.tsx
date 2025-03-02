@@ -134,6 +134,22 @@ export default function TaskModal({
           </button>
         </fetcher.Form>
 
+        {/* Complete Button */}
+        {!task.completedAt && (        
+          <fetcher.Form
+            method="post"
+            className="flex flex-col items-center gap-2"
+          >
+            <input type="hidden" name="completeTask" value={task.id} />
+            <button
+              type="submit"
+              className="w-full md:w-1/3 rounded-xl bg-emerald-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-emerald-700 transition-colors duration-200"
+            >
+              Complete Task
+            </button>
+          </fetcher.Form>
+        )}
+
 
         {/* Close Button */}
         <div className="flex justify-center items-center">
