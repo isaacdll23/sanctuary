@@ -25,7 +25,7 @@ export default function TaskModal({
 }) {
   return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-black/50 z-50 w-full">
-      <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-4/6 xl:w-3/6 relative">
+      <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-4/6 xl:w-3/6 relative max-h-[90vh] overflow-y-auto">
         <h2 className="text-2xl font-bold mb-1">{task.title}</h2>
         <p className="text-sm text-gray-600 mb-2">
           Created: {task.createdAt.toLocaleDateString()}
