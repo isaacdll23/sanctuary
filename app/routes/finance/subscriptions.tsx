@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { useFetcher } from "react-router";
+import { useState, useEffect } from "react";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import type { Route } from "./+types/subscriptions";
 import { db } from "~/db";
@@ -104,22 +104,41 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
   const totalYearlyCost = totalMonthlyCost * 12;
 
   return (
-    <div className="h-full flex flex-col items-center p-4">
-      <h1 className="text-3xl mb-6">Subscriptions</h1>
+    <div className="h-full flex flex-col items-center p-4 gap-4">
+      <div className="flex flex-col md:flex-row gap-2 justify-between items-center w-5/6">
+        <h1 className="text-3xl">Subscriptions</h1>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
+        >
+          Add Subscription
+        </button>
+      </div>
+
+      <div className="w-5/6 flex flex-col md:flex-row gap-4 justify-between items-center mt-4">
+        <p className="text-lg">
+          Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}
+        </p>
+        <p className="text-lg">
+          Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}
+        </p>
+      </div>
+
       <div className="w-full max-w-4xl overflow-x-auto">
-        <table className="min-w-full bg-gray-800 rounded-lg shadow-lg">
+        <table className="min-w-full border-4 border-gray-800 shadow-lg">
           <thead className="bg-gray-700 text-white">
             <tr>
-              <th className="px-6 py-3 text-left">Name</th>
+              <th className="px-6 py-3 text-left rounded-tl-xl">Name</th>
               <th className="px-6 py-3 text-left">Monthly Cost</th>
               <th className="px-6 py-3 text-left">Charge Day</th>
-              <th className="px-6 py-3 text-left">Actions</th>
+              <th className="px-6 py-3 text-left rounded-tr-xl">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
             {subscriptions.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-4">
+                <td colSpan={4} className="text-center py-4 rounded-b-xl">
                   No subscriptions found.
                 </td>
               </tr>
@@ -127,27 +146,31 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               subscriptions.map((subscription: any) => (
                 <tr
                   key={subscription.id}
-                  className="hover:bg-gray-700 transition-colors"
                 >
                   <td className="px-6 py-3">{subscription.name}</td>
                   <td className="px-6 py-3">
-                    ${(subscription.monthlyCost / 100).toFixed(2)} ({(subscription.monthlyCost / (totalMonthlyCost / 100)).toFixed(2)}%)
+                    ${(subscription.monthlyCost / 100).toFixed(2)} (
+                    {(
+                      subscription.monthlyCost /
+                      (totalMonthlyCost / 100)
+                    ).toFixed(2)}
+                    %)
                   </td>
                   <td className="px-6 py-3">{subscription.chargeDay}</td>
                   <td className="px-6 py-3 flex gap-2">
                     <button
                       type="button"
                       onClick={() => setEditingSubscription(subscription)}
-                      className="rounded-xl border-2 border-gray-800 px-3 py-1 text-sm bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                      className="w-1/2 rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-700"
                     >
                       Edit
                     </button>
-                    <fetcher.Form method="post">
+                    <fetcher.Form method="post" className="w-1/2">
                       <input type="hidden" name="_action" value="delete" />
                       <input type="hidden" name="id" value={subscription.id} />
                       <button
                         type="submit"
-                        className="rounded-xl border-2 border-gray-800 px-3 py-1 text-sm bg-red-600 text-white hover:bg-red-700 transition-colors"
+                        className="w-full rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
                       >
                         Delete
                       </button>
@@ -159,19 +182,6 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
           </tbody>
         </table>
       </div>
-
-      {/* Total monthly cost */}
-      <div className="mt-4 text-xl flex flex-col md:flex-row gap-6">
-        <p>Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}</p>
-        <p>Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}</p>
-      </div>
-
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="mt-6 mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
-      >
-        Add Subscription
-      </button>
 
       {/* Add Subscription Modal */}
       {isModalOpen && (
