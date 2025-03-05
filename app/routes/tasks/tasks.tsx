@@ -56,7 +56,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     return true;
   });
 
-  const openTasks = loaderData.userTasks.filter((task) => task.completedAt === null);
+  const openTasks = loaderData.userTasks.filter((task) => task.completedAt === null && (filterCategory === "" || task.category === filterCategory));
 
   // Update URL search params when filter changes
   useEffect(() => {
