@@ -34,7 +34,7 @@ export const taskStepsTable = pgTable("task_steps", {
   createdAt: timestamp().defaultNow().notNull(),
 });
 
-export const financeSubscriptionsTable = pgTable("finance_subscriptions", {
+export const financeExpensesTable = pgTable("finance_expenses", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: integer()
     .notNull()

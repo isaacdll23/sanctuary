@@ -19,15 +19,15 @@ export default function Finance() {
       </header>
       <main className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">
-          <h2 className="text-2xl font-bold mb-4">Subscriptions</h2>
+          <h2 className="text-2xl font-bold mb-4">Expenses</h2>
           <p className="text-gray-600">
-            Manage your subscriptions and view costs.
+            Manage your expenses and view costs.
           </p>
           <a
-            href="/finance/subscriptions"
+            href="/finance/expenses"
             className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
           >
-            View Subscriptions
+            View Expenses
           </a>
         </div>
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">

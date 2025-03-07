@@ -1,26 +1,26 @@
 import { useFetcher } from "react-router";
 import { useState, useEffect } from "react";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import type { Route } from "./+types/subscriptions";
+import type { Route } from "./+types/expenses";
 import { db } from "~/db";
-import { financeSubscriptionsTable } from "~/db/schema";
+import { financeExpensesTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Subscriptions" }];
+  return [{ title: "Expenses" }];
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireAuth(request);
   const user = await getUserFromSession(request);
 
-  const userSubscriptions = await db
+  const userExpenses = await db
     .select()
-    .from(financeSubscriptionsTable)
-    .where(eq(financeSubscriptionsTable.userId, user.id))
-    .orderBy(desc(financeSubscriptionsTable.createdAt));
+    .from(financeExpensesTable)
+    .where(eq(financeExpensesTable.userId, user.id))
+    .orderBy(desc(financeExpensesTable.createdAt));
 
-  return { userSubscriptions };
+  return { userExpenses };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -31,8 +31,8 @@ export async function action({ request }: Route.ActionArgs) {
   if (_action === "delete") {
     const id = formData.get("id") as string;
     await db
-      .delete(financeSubscriptionsTable)
-      .where(eq(financeSubscriptionsTable.id, Number(id)));
+      .delete(financeExpensesTable)
+      .where(eq(financeExpensesTable.id, Number(id)));
     return {};
   } else if (_action === "update") {
     const id = formData.get("id") as string;
@@ -49,12 +49,11 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     await db
-      .update(financeSubscriptionsTable)
+      .update(financeExpensesTable)
       .set({ name, monthlyCost, chargeDay })
-      .where(eq(financeSubscriptionsTable.id, Number(id)));
+      .where(eq(financeExpensesTable.id, Number(id)));
     return {};
   } else {
-    // Default is add new subscription
     const name = formData.get("name") as string;
     const monthlyCostStr = formData.get("monthlyCost") as string;
     const chargeDayStr = formData.get("chargeDay") as string;
@@ -69,7 +68,7 @@ export async function action({ request }: Route.ActionArgs) {
 
     const user = await getUserFromSession(request);
 
-    await db.insert(financeSubscriptionsTable).values({
+    await db.insert(financeExpensesTable).values({
       userId: user.id,
       name,
       monthlyCost,
@@ -80,24 +79,22 @@ export async function action({ request }: Route.ActionArgs) {
   }
 }
 
-export default function Subscriptions({ loaderData }: Route.ComponentProps) {
+export default function Expenses({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
   const fetcher = useFetcher();
 
-  // Close modals after successful submissions.
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
       setIsModalOpen(false);
-      setEditingSubscription(null);
+      setEditingExpense(null);
     }
   }, [fetcher.state, fetcher.data]);
 
-  const subscriptions = loaderData.userSubscriptions;
+  const expenses = loaderData.userExpenses;
 
-  // Calculate total monthly cost in cents, then convert to dollars.
-  const totalMonthlyCost = subscriptions.reduce(
-    (acc: number, subscription: any) => acc + subscription.monthlyCost,
+  const totalMonthlyCost = expenses.reduce(
+    (acc: number, expense: any) => acc + expense.monthlyCost,
     0
   );
 
@@ -106,13 +103,13 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
   return (
     <div className="h-full flex flex-col items-center p-4 gap-4">
       <div className="flex flex-col md:flex-row gap-2 justify-between items-center w-5/6">
-        <h1 className="text-3xl">Subscriptions</h1>
+        <h1 className="text-3xl">Expenses</h1>
 
         <button
           onClick={() => setIsModalOpen(true)}
           className="rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
         >
-          Add Subscription
+          Add Expense
         </button>
       </div>
 
@@ -136,14 +133,14 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {subscriptions.length === 0 ? (
+            {expenses.length === 0 ? (
               <tr>
                 <td colSpan={4} className="text-center py-4 rounded-b-xl">
                   No subscriptions found.
                 </td>
               </tr>
             ) : (
-              subscriptions.map((subscription: any) => (
+              expenses.map((subscription: any) => (
                 <tr
                   key={subscription.id}
                 >
@@ -160,7 +157,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
                   <td className="px-6 py-3 flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setEditingSubscription(subscription)}
+                      onClick={() => setEditingExpense(subscription)}
                       className="w-1/2 rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-700"
                     >
                       Edit
@@ -237,7 +234,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
       )}
 
       {/* Edit Subscription Modal */}
-      {editingSubscription && (
+      {editingExpense && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
             <h2 className="text-2xl font-bold mb-4">Edit Subscription</h2>
@@ -246,11 +243,11 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               className="flex flex-col justify-center items-center gap-4"
             >
               <input type="hidden" name="_action" value="update" />
-              <input type="hidden" name="id" value={editingSubscription.id} />
+              <input type="hidden" name="id" value={editingExpense.id} />
               <input
                 type="text"
                 name="name"
-                defaultValue={editingSubscription.name}
+                defaultValue={editingExpense.name}
                 placeholder="Subscription Name"
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
                 required
@@ -259,7 +256,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
                 type="number"
                 step="0.01"
                 name="monthlyCost"
-                defaultValue={(editingSubscription.monthlyCost / 100).toFixed(
+                defaultValue={(editingExpense.monthlyCost / 100).toFixed(
                   2
                 )}
                 placeholder="Monthly Cost (in dollars)"
@@ -269,7 +266,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               <input
                 type="number"
                 name="chargeDay"
-                defaultValue={editingSubscription.chargeDay}
+                defaultValue={editingExpense.chargeDay}
                 placeholder="Day of Charge (1-31)"
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
                 min="1"
@@ -285,7 +282,7 @@ export default function Subscriptions({ loaderData }: Route.ComponentProps) {
               </button>
               <button
                 type="button"
-                onClick={() => setEditingSubscription(null)}
+                onClick={() => setEditingExpense(null)}
                 className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 transition-colors duration-200"
               >
                 Cancel
