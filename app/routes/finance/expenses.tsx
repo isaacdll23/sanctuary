@@ -180,11 +180,11 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </table>
       </div>
 
-      {/* Add Subscription Modal */}
+      {/* Add Expense Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
-            <h2 className="text-2xl font-bold mb-4">Add Subscription</h2>
+            <h2 className="text-2xl font-bold mb-4">Add Expense</h2>
             <fetcher.Form
               method="post"
               className="flex flex-col justify-center items-center gap-4"
@@ -193,7 +193,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <input
                 type="text"
                 name="name"
-                placeholder="Subscription Name"
+                placeholder="Expense Name"
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
                 required
               />
@@ -219,7 +219,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 disabled={fetcher.state === "submitting"}
                 className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 transition-colors duration-200"
               >
-                Add Subscription
+                Add Expense
               </button>
               <button
                 type="button"
@@ -237,7 +237,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
       {editingExpense && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
-            <h2 className="text-2xl font-bold mb-4">Edit Subscription</h2>
+            <h2 className="text-2xl font-bold mb-4">Edit Expense</h2>
             <fetcher.Form
               method="post"
               className="flex flex-col justify-center items-center gap-4"
@@ -278,7 +278,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 disabled={fetcher.state === "submitting"}
                 className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-emerald-700 text-white hover:bg-emerald-800 transition-colors duration-200"
               >
-                Update Subscription
+                Update Expense
               </button>
               <button
                 type="button"
