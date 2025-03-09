@@ -33,6 +33,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  await requireAuth(request);
   await handleTaskAction(request);
 }
 
@@ -56,7 +57,11 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     return true;
   });
 
-  const openTasks = loaderData.userTasks.filter((task) => task.completedAt === null && (filterCategory === "" || task.category === filterCategory));
+  const openTasks = loaderData.userTasks.filter(
+    (task) =>
+      task.completedAt === null &&
+      (filterCategory === "" || task.category === filterCategory)
+  );
 
   // Update URL search params when filter changes
   useEffect(() => {

@@ -4,7 +4,6 @@ import { eq } from "drizzle-orm";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 
 export async function handleTaskAction(request: Request) {
-  await requireAuth(request);
   const user = await getUserFromSession(request);
   const formData = await request.formData();
 

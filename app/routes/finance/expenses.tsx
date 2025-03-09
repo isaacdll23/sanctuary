@@ -33,12 +33,13 @@ export async function action({ request }: Route.ActionArgs) {
     await db
       .delete(financeExpensesTable)
       .where(eq(financeExpensesTable.id, Number(id)));
-    return {};
+    return;
   } else if (_action === "update") {
     const id = formData.get("id") as string;
     const name = formData.get("name") as string;
     const monthlyCostStr = formData.get("monthlyCost") as string;
     const chargeDayStr = formData.get("chargeDay") as string;
+    const category = formData.get("category") as string;
 
     const monthlyCostFloat = parseFloat(monthlyCostStr);
     const monthlyCost = Math.round(monthlyCostFloat * 100);
@@ -50,13 +51,14 @@ export async function action({ request }: Route.ActionArgs) {
 
     await db
       .update(financeExpensesTable)
-      .set({ name, monthlyCost, chargeDay })
+      .set({ name, monthlyCost, chargeDay, category })
       .where(eq(financeExpensesTable.id, Number(id)));
-    return {};
+    return;
   } else {
     const name = formData.get("name") as string;
     const monthlyCostStr = formData.get("monthlyCost") as string;
     const chargeDayStr = formData.get("chargeDay") as string;
+    const category = formData.get("category") as string;
 
     const monthlyCostFloat = parseFloat(monthlyCostStr);
     const monthlyCost = Math.round(monthlyCostFloat * 100);
@@ -73,9 +75,8 @@ export async function action({ request }: Route.ActionArgs) {
       name,
       monthlyCost,
       chargeDay,
+      category,
     });
-
-    return {};
   }
 }
 
@@ -83,6 +84,14 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<any>(null);
   const fetcher = useFetcher();
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const distinctCategories = Array.from(
+    new Set(
+      loaderData.userExpenses.map((expense) => expense.category).filter(Boolean)
+    )
+  );
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data === undefined) {
@@ -91,14 +100,31 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
     }
   }, [fetcher.state, fetcher.data]);
 
-  const expenses = loaderData.userExpenses;
+  const filteredExpenses = filterCategories.length
+    ? loaderData.userExpenses.filter((expense) =>
+        filterCategories.includes(expense.category)
+      )
+    : loaderData.userExpenses;
 
-  const totalMonthlyCost = expenses.reduce(
-    (acc: number, expense: any) => acc + expense.monthlyCost,
-    0
+  const expenses = filteredExpenses.sort((e1, e2) =>
+    e1.monthlyCost > e2.monthlyCost ? -1 : 1
   );
 
+  const totalMonthlyCost = expenses.reduce(
+    (acc: number, expense: typeof financeExpensesTable.$inferSelect) =>
+      acc + expense.monthlyCost,
+    0
+  );
   const totalYearlyCost = totalMonthlyCost * 12;
+
+  // Toggle category selection
+  const toggleCategory = (cat: string) => {
+    setFilterCategories((current) =>
+      current.includes(cat)
+        ? current.filter((x) => x !== cat)
+        : [...current, cat]
+    );
+  };
 
   return (
     <div className="h-full flex flex-col items-center p-4 gap-4">
@@ -122,14 +148,67 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </p>
       </div>
 
-      <div className="w-full max-w-4xl overflow-x-auto">
+      <div className="w-5/6 relative">
+        <button
+          type="button"
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white text-left flex justify-between items-center"
+        >
+          {filterCategories.length > 0
+            ? filterCategories.join(", ")
+            : "Filter by Category..."}
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d={showDropdown ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
+            />
+          </svg>
+        </button>
+        {showDropdown && (
+          <div className="absolute z-10 w-full mt-1 bg-gray-600 rounded-xl shadow-lg max-h-60 overflow-auto">
+            {distinctCategories.map((cat) => (
+              <label
+                key={cat}
+                className="flex items-center px-4 py-2 hover:bg-gray-700 cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  value={cat}
+                  checked={filterCategories.includes(cat)}
+                  onChange={() => toggleCategory(cat)}
+                  className="mr-2"
+                />
+                {cat}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="w-5/6 overflow-x-auto">
         <table className="min-w-full border-4 border-gray-800 shadow-lg">
           <thead className="bg-gray-700 text-white">
             <tr>
-              <th className="px-6 py-3 text-left rounded-tl-xl">Name</th>
-              <th className="px-6 py-3 text-left">Monthly Cost</th>
-              <th className="px-6 py-3 text-left">Charge Day</th>
-              <th className="px-6 py-3 text-left rounded-tr-xl">Actions</th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tl-xl">
+                Name
+              </th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left">
+                Monthly Cost
+              </th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left">
+                Charge Day
+              </th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left">Category</th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tr-xl">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -140,41 +219,47 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 </td>
               </tr>
             ) : (
-              expenses.map((subscription: any) => (
-                <tr
-                  key={subscription.id}
-                >
-                  <td className="px-6 py-3">{subscription.name}</td>
-                  <td className="px-6 py-3">
-                    ${(subscription.monthlyCost / 100).toFixed(2)} (
-                    {(
-                      subscription.monthlyCost /
-                      (totalMonthlyCost / 100)
-                    ).toFixed(2)}
-                    %)
-                  </td>
-                  <td className="px-6 py-3">{subscription.chargeDay}</td>
-                  <td className="px-6 py-3 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditingExpense(subscription)}
-                      className="w-1/2 rounded bg-emerald-600 px-3 py-1 text-xs hover:bg-emerald-700"
-                    >
-                      Edit
-                    </button>
-                    <fetcher.Form method="post" className="w-1/2">
-                      <input type="hidden" name="_action" value="delete" />
-                      <input type="hidden" name="id" value={subscription.id} />
+              expenses.map(
+                (expense: typeof financeExpensesTable.$inferSelect) => (
+                  <tr key={expense.id}>
+                    <td className="px-2 py-1 md:px-6 md:py-3">
+                      {expense.name}
+                    </td>
+                    <td className="px-2 py-1 md:px-6 md:py-3">
+                      ${(expense.monthlyCost / 100).toFixed(2)} (
+                      {(expense.monthlyCost / (totalMonthlyCost / 100)).toFixed(
+                        2
+                      )}
+                      %)
+                    </td>
+                    <td className="px-2 py-1 md:px-6 md:py-3">
+                      {expense.chargeDay}
+                    </td>
+                    <td className="px-2 py-1 md:px-6 md:py-3">
+                      {expense.category}
+                    </td>
+                    <td className="px-2 py-1 md:px-6 md:py-3 flex gap-2">
                       <button
-                        type="submit"
-                        className="w-full rounded bg-red-600 px-3 py-1 text-xs hover:bg-red-700"
+                        type="button"
+                        onClick={() => setEditingExpense(expense)}
+                        className="w-1/2 rounded bg-emerald-600 px-3 text-xs hover:bg-emerald-700"
                       >
-                        Delete
+                        Edit
                       </button>
-                    </fetcher.Form>
-                  </td>
-                </tr>
-              ))
+                      <fetcher.Form method="post" className="w-1/2">
+                        <input type="hidden" name="_action" value="delete" />
+                        <input type="hidden" name="id" value={expense.id} />
+                        <button
+                          type="submit"
+                          className="w-full rounded bg-red-600 px-3 py-2 text-xs hover:bg-red-700"
+                        >
+                          Delete
+                        </button>
+                      </fetcher.Form>
+                    </td>
+                  </tr>
+                )
+              )
             )}
           </tbody>
         </table>
@@ -214,6 +299,22 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 max="31"
                 required
               />
+              <input
+                type="text"
+                name="category"
+                placeholder="Enter or select category..."
+                defaultValue={""}
+                list="categories"
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+                required
+              />
+              <datalist id="categories">
+                {distinctCategories
+                  .filter((cat): cat is string => cat !== null)
+                  .map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+              </datalist>
               <button
                 type="submit"
                 disabled={fetcher.state === "submitting"}
@@ -233,7 +334,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
       )}
 
-      {/* Edit Subscription Modal */}
+      {/* Edit Expense Modal */}
       {editingExpense && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
@@ -254,11 +355,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               />
               <input
                 type="number"
-                step="0.01"
+                step="1"
                 name="monthlyCost"
-                defaultValue={(editingExpense.monthlyCost / 100).toFixed(
-                  2
-                )}
+                defaultValue={(editingExpense.monthlyCost / 100).toFixed(2)}
                 placeholder="Monthly Cost (in dollars)"
                 className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
                 required
@@ -273,6 +372,22 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 max="31"
                 required
               />
+              <input
+                type="text"
+                name="category"
+                placeholder="Enter or select category..."
+                defaultValue={editingExpense.category}
+                list="categories"
+                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
+              />
+              <datalist id="categories">
+                {distinctCategories
+                  .filter((cat): cat is string => cat !== null)
+                  .map((cat) => (
+                    <option key={cat} value={cat} />
+                  ))}
+              </datalist>
+
               <button
                 type="submit"
                 disabled={fetcher.state === "submitting"}

@@ -41,6 +41,7 @@ export const financeExpensesTable = pgTable("finance_expenses", {
     .references(() => usersTable.id),
   name: varchar({ length: 255 }).notNull(),
   monthlyCost: integer().notNull(),
-  chargeDay: integer().notNull(), // now only storing the day of charge
+  chargeDay: integer().notNull(),
+  category: varchar({ length: 255 }).notNull().default("Subscription"),
   createdAt: timestamp().defaultNow().notNull(),
 });
