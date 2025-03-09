@@ -251,7 +251,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                         <input type="hidden" name="id" value={expense.id} />
                         <button
                           type="submit"
-                          className="w-full rounded bg-red-600 px-3 py-2 text-xs hover:bg-red-700"
+                          className="w-full rounded bg-red-600 px-3 py-2 text-xs hover:bg-red-800"
                         >
                           Delete
                         </button>
