@@ -45,3 +45,11 @@ export const financeExpensesTable = pgTable("finance_expenses", {
   category: varchar({ length: 255 }).notNull().default("Subscription"),
   createdAt: timestamp().defaultNow().notNull(),
 });
+
+export const financeIncomeTable = pgTable("finance_income", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer().notNull().references(() => usersTable.id),
+  annualGrossIncome: integer().notNull(),
+  taxDeductionPercentage: integer().notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+});

@@ -27,15 +27,18 @@ export default function Finance() {
             href="/finance/expenses"
             className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
           >
-            View Expenses
+            Manage Expenses
           </a>
         </div>
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">
-          <h2 className="text-2xl font-bold mb-4">Transactions</h2>
-          <p className="text-gray-600">Track your transactions. Coming soon.</p>
-          <span className="mt-4 inline-block bg-gray-300 text-gray-700 px-4 py-2 rounded">
-            Coming Soon
-          </span>
+          <h2 className="text-2xl font-bold mb-4">Income</h2>
+          <p className="text-gray-600">Track your Income</p>
+          <a
+            href="/finance/income"
+            className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+          >
+            Manage Income
+          </a>
         </div>
         <div className="bg-gray-800 shadow-lg rounded-xl p-6">
           <h2 className="text-2xl font-bold mb-4">Summary</h2>
