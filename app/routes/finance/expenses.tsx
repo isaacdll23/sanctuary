@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import type { Route } from "./+types/expenses";
 import { db } from "~/db";
-import { financeExpensesTable } from "~/db/schema";
+import { financeExpensesTable, financeIncomeTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export function meta({}: Route.MetaArgs) {
@@ -20,7 +20,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     .where(eq(financeExpensesTable.userId, user.id))
     .orderBy(desc(financeExpensesTable.createdAt));
 
-  return { userExpenses };
+  const userIncomeRecords = await db
+    .select()
+    .from(financeIncomeTable)
+    .where(eq(financeIncomeTable.userId, user.id))
+    .orderBy(desc(financeIncomeTable.createdAt));
+
+  // Check if user has any income
+  if (userIncomeRecords.length === 0) {
+    return { userExpenses: userExpenses, userIncome: undefined };
+  }
+
+  return { userExpenses: userExpenses, userIncome: userIncomeRecords[0] };
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -30,9 +41,7 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (_action === "delete") {
     const id = formData.get("id") as string;
-    await db
-      .delete(financeExpensesTable)
-      .where(eq(financeExpensesTable.id, Number(id)));
+    await db.delete(financeExpensesTable).where(eq(financeExpensesTable.id, Number(id)));
     return;
   } else if (_action === "update") {
     const id = formData.get("id") as string;
@@ -88,9 +97,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const distinctCategories = Array.from(
-    new Set(
-      loaderData.userExpenses.map((expense) => expense.category).filter(Boolean)
-    )
+    new Set(loaderData.userExpenses.map((expense) => expense.category).filter(Boolean))
   );
 
   useEffect(() => {
@@ -101,29 +108,26 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   }, [fetcher.state, fetcher.data]);
 
   const filteredExpenses = filterCategories.length
-    ? loaderData.userExpenses.filter((expense) =>
-        filterCategories.includes(expense.category)
-      )
+    ? loaderData.userExpenses.filter((expense) => filterCategories.includes(expense.category))
     : loaderData.userExpenses;
 
-  const expenses = filteredExpenses.sort((e1, e2) =>
-    e1.monthlyCost > e2.monthlyCost ? -1 : 1
-  );
+  const expenses = filteredExpenses.sort((e1, e2) => (e1.monthlyCost > e2.monthlyCost ? -1 : 1));
 
   const totalMonthlyCost = expenses.reduce(
-    (acc: number, expense: typeof financeExpensesTable.$inferSelect) =>
-      acc + expense.monthlyCost,
+    (acc: number, expense: typeof financeExpensesTable.$inferSelect) => acc + expense.monthlyCost,
     0
   );
   const totalYearlyCost = totalMonthlyCost * 12;
 
+  const annualGrossIncome = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
+  const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
+  const annualIncomeAfterTax = annualGrossIncome * (1 - (taxDeductionPercentage / 100));
+  const netRemainingYearly = annualIncomeAfterTax - totalYearlyCost;
+  const netRemainingMonthly = netRemainingYearly / 12;
+
   // Toggle category selection
   const toggleCategory = (cat: string) => {
-    setFilterCategories((current) =>
-      current.includes(cat)
-        ? current.filter((x) => x !== cat)
-        : [...current, cat]
-    );
+    setFilterCategories((current) => (current.includes(cat) ? current.filter((x) => x !== cat) : [...current, cat]));
   };
 
   return (
@@ -140,12 +144,18 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
       </div>
 
       <div className="w-5/6 flex flex-col md:flex-row gap-4 justify-between items-center mt-4">
-        <p className="text-lg">
-          Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}
-        </p>
-        <p className="text-lg">
-          Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}
-        </p>
+        <div>
+          <p className="text-lg">Total Monthly Cost: ${(totalMonthlyCost / 100).toFixed(2)}</p>
+          {annualGrossIncome !== 0 && (
+            <p className="text-lg">Net Remaining Monthly: ${(netRemainingMonthly / 100).toFixed(2)}</p>
+          )}
+        </div>
+        <div>
+        <p className="text-lg">Total Yearly Cost: ${(totalYearlyCost / 100).toFixed(2)}</p>
+          {annualGrossIncome !== 0 && (
+            <p className="text-lg">Net Remaining Yearly: ${(netRemainingYearly / 100).toFixed(2)}</p>
+          )}
+        </div>
       </div>
 
       <div className="w-5/6 relative">
@@ -154,15 +164,8 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
           onClick={() => setShowDropdown(!showDropdown)}
           className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white text-left flex justify-between items-center"
         >
-          {filterCategories.length > 0
-            ? filterCategories.join(", ")
-            : "Filter by Category..."}
-          <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+          {filterCategories.length > 0 ? filterCategories.join(", ") : "Filter by Category..."}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -174,10 +177,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         {showDropdown && (
           <div className="absolute z-10 w-full mt-1 bg-gray-600 rounded-xl shadow-lg max-h-60 overflow-auto">
             {distinctCategories.map((cat) => (
-              <label
-                key={cat}
-                className="flex items-center px-4 py-2 hover:bg-gray-700 cursor-pointer"
-              >
+              <label key={cat} className="flex items-center px-4 py-2 hover:bg-gray-700 cursor-pointer">
                 <input
                   type="checkbox"
                   value={cat}
@@ -196,19 +196,11 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         <table className="min-w-full border-4 border-gray-800 shadow-lg">
           <thead className="bg-gray-700 text-white">
             <tr>
-              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tl-xl">
-                Name
-              </th>
-              <th className="px-2 py-1 md:px-6 md:py-3 text-left">
-                Monthly Cost
-              </th>
-              <th className="px-2 py-1 md:px-6 md:py-3 text-left">
-                Charge Day
-              </th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tl-xl">Name</th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left">Monthly Cost</th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left">Charge Day</th>
               <th className="px-2 py-1 md:px-6 md:py-3 text-left">Category</th>
-              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tr-xl">
-                Actions
-              </th>
+              <th className="px-2 py-1 md:px-6 md:py-3 text-left rounded-tr-xl">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
@@ -219,47 +211,34 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 </td>
               </tr>
             ) : (
-              expenses.map(
-                (expense: typeof financeExpensesTable.$inferSelect) => (
-                  <tr key={expense.id}>
-                    <td className="px-2 py-1 md:px-6 md:py-3">
-                      {expense.name}
-                    </td>
-                    <td className="px-2 py-1 md:px-6 md:py-3">
-                      ${(expense.monthlyCost / 100).toFixed(2)} (
-                      {(expense.monthlyCost / (totalMonthlyCost / 100)).toFixed(
-                        2
-                      )}
-                      %)
-                    </td>
-                    <td className="px-2 py-1 md:px-6 md:py-3">
-                      {expense.chargeDay}
-                    </td>
-                    <td className="px-2 py-1 md:px-6 md:py-3">
-                      {expense.category}
-                    </td>
-                    <td className="px-2 py-1 md:px-6 md:py-3 flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setEditingExpense(expense)}
-                        className="w-1/2 rounded bg-emerald-600 px-3 text-xs hover:bg-emerald-700"
-                      >
-                        Edit
+              expenses.map((expense: typeof financeExpensesTable.$inferSelect) => (
+                <tr key={expense.id}>
+                  <td className="px-2 py-1 md:px-6 md:py-3">{expense.name}</td>
+                  <td className="px-2 py-1 md:px-6 md:py-3">
+                    ${(expense.monthlyCost / 100).toFixed(2)} (
+                    {(expense.monthlyCost / (totalMonthlyCost / 100)).toFixed(2)}
+                    %)
+                  </td>
+                  <td className="px-2 py-1 md:px-6 md:py-3">{expense.chargeDay}</td>
+                  <td className="px-2 py-1 md:px-6 md:py-3">{expense.category}</td>
+                  <td className="px-2 py-1 md:px-6 md:py-3 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingExpense(expense)}
+                      className="w-1/2 rounded bg-emerald-600 px-3 text-xs hover:bg-emerald-700"
+                    >
+                      Edit
+                    </button>
+                    <fetcher.Form method="post" className="w-1/2">
+                      <input type="hidden" name="_action" value="delete" />
+                      <input type="hidden" name="id" value={expense.id} />
+                      <button type="submit" className="w-full rounded bg-red-600 px-3 py-2 text-xs hover:bg-red-800">
+                        Delete
                       </button>
-                      <fetcher.Form method="post" className="w-1/2">
-                        <input type="hidden" name="_action" value="delete" />
-                        <input type="hidden" name="id" value={expense.id} />
-                        <button
-                          type="submit"
-                          className="w-full rounded bg-red-600 px-3 py-2 text-xs hover:bg-red-800"
-                        >
-                          Delete
-                        </button>
-                      </fetcher.Form>
-                    </td>
-                  </tr>
-                )
-              )
+                    </fetcher.Form>
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -270,10 +249,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
             <h2 className="text-2xl font-bold mb-4">Add Expense</h2>
-            <fetcher.Form
-              method="post"
-              className="flex flex-col justify-center items-center gap-4"
-            >
+            <fetcher.Form method="post" className="flex flex-col justify-center items-center gap-4">
               <input type="hidden" name="_action" value="add" />
               <input
                 type="text"
@@ -339,10 +315,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
           <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
             <h2 className="text-2xl font-bold mb-4">Edit Expense</h2>
-            <fetcher.Form
-              method="post"
-              className="flex flex-col justify-center items-center gap-4"
-            >
+            <fetcher.Form method="post" className="flex flex-col justify-center items-center gap-4">
               <input type="hidden" name="_action" value="update" />
               <input type="hidden" name="id" value={editingExpense.id} />
               <input
