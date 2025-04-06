@@ -253,7 +253,7 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
           Add Command
         </button>
       </div>
-      <div className="flex flex-col items-center gap-4 w-full">
+      <div className="flex flex-col items-center gap-2 w-full">
         {loaderData.userCommands.map((command) => (
           <div
             key={command.id}
