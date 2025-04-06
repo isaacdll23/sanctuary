@@ -79,7 +79,7 @@ export const utilitiesCommandsVersionsTable = pgTable(
     commandId: integer()
       .notNull()
       .references(() => utilitiesCommandsTable.id),
-    version: varchar({ length: 255 }).notNull(),
+    version: integer().notNull(),
     command: varchar({ length: 4096 }).notNull(),
     createdAt: timestamp().defaultNow().notNull(),
   }

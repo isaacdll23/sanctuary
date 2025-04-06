@@ -225,13 +225,42 @@ export default function Navbar({ isAuthenticated }: NavbarProps) {
       >
         Tasks
       </NavLink>
-      <NavLink
-        to="/utilities"
-        onClick={() => setIsMobileMenuOpen(false)}
-        className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
-      >
-        Utilities
-      </NavLink>
+      {/* Updated Mobile Utilities dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => setUtilitiesDropdownOpen(!isUtilitiesDropdownOpen)}
+          className="w-full text-left block px-2 py-1 hover:text-blue-600 transition-colors duration-200 focus:outline-none"
+        >
+          Utilities
+          <svg
+            className="w-4 h-4 inline ml-1"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+        {isUtilitiesDropdownOpen && (
+          <div className="mt-1 pl-4">
+            <NavLink
+              to="/utilities/commands"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setUtilitiesDropdownOpen(false);
+              }}
+              className="block px-2 py-1 hover:text-blue-600 transition-colors duration-200"
+            >
+              Commands
+            </NavLink>
+          </div>
+        )}
+      </div>
       <NavLink
         to="/auth/logout"
         onClick={() => setIsMobileMenuOpen(false)}
