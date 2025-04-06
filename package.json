@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@react-router/express": "^7.5.0",
-    "@react-router/node": "^7.1.5",
+    "@react-router/node": "^7.5.0",
     "@react-router/serve": "^7.5.0",
     "argon2": "^0.41.1",
     "date-fns": "^4.1.0",
@@ -24,7 +24,7 @@
     "react-router": "^7.5.0"
   },
   "devDependencies": {
-    "@react-router/dev": "^7.1.5",
+    "@react-router/dev": "^7.5.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/node": "^20",
     "@types/pg": "^8.11.11",
