@@ -113,7 +113,12 @@ export async function action({ request }: Route.ActionArgs) {
     const currentVersion = versionRecords.length > 0 ? versionRecords[0].version : 0;
     const newVersion = currentVersion + 1;
 
-    // Insert a new version record with the updated command
+    // If the command is the same as the latest version, do not create a new version record
+    if (versionRecords.length > 0 && versionRecords[0].command === command) {
+      return { newVersion: currentVersion };
+    }
+    // Otherwise, create a new version record  with the updated command
+
     await db.insert(utilitiesCommandsVersionsTable).values({
       userId: user.id,
       commandId: Number(id),
