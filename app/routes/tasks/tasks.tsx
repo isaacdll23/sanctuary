@@ -7,6 +7,7 @@ import { eq, desc } from "drizzle-orm";
 import { useFetcher, useSearchParams } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
 import { handleTaskAction } from "~/modules/services/TaskService";
+import { PlusIcon, AdjustmentsHorizontalIcon, EyeSlashIcon, EyeIcon } from "@heroicons/react/24/outline";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Tasks" }];
@@ -49,7 +50,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
   // Compute distinct categories from the current tasks
   const distinctCategories = Array.from(
     new Set(loaderData.userTasks.map((task) => task.category).filter(Boolean))
-  );
+  ) as string[];
 
   const filteredTasks = loaderData.userTasks.filter((task) => {
     if (hideCompletedTasks && task.completedAt !== null) return false;
@@ -69,67 +70,104 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
       hideCompletedTasks: hideCompletedTasks.toString(),
       filterCategory: filterCategory,
     });
-  }, [hideCompletedTasks, filterCategory]);
+  }, [hideCompletedTasks, filterCategory, setSearchParams]); // Added setSearchParams to dependencies
 
   // Close the modal after successful form submission
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data === undefined) {
+    // Assuming the action returns no specific data (i.e., fetcher.data is undefined) on successful creation
+    if (fetcher.state === "idle" && fetcher.data === undefined && isModalOpen) {
       setIsModalOpen(false);
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, isModalOpen]); // Corrected dependencies
 
   return (
-    <div className="h-full w-full flex flex-col items-center mt-4">
-      <div className="flex flex-row justify-between items-center w-4/5 mb-2">
-        <h1 className="text-3xl mb-4">Tasks</h1>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200"
-        >
-          Add Task
-        </button>
-      </div>
+    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <header className="mb-8 md:mb-12 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center sm:text-left">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                My Tasks
+              </span>
+            </h1>
+            <p className="mt-2 text-lg text-slate-400 text-center sm:text-left">
+              Organize, track, and complete your work.
+            </p>
+          </div>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75"
+          >
+            <PlusIcon className="h-5 w-5" />
+            Add New Task
+          </button>
+        </header>
 
-      <div className="flex flex-col md:flex-row justify-end items-center w-full md:w-4/5 mb-8 gap-4">
-        <p className="md:mr-auto text-sm text-gray-900 dark:text-gray-300">
-          {openTasks.length} Open Tasks
-        </p>
-        <label className="inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            className="sr-only peer"
-            onChange={() => setHideCompletedTasks(!hideCompletedTasks)}
-            checked={hideCompletedTasks}
-          />
-          <span className="me-3 text-xs text-gray-900 dark:text-gray-300">
-            Hide Completed Tasks
-          </span>
-          <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-600"></div>
-        </label>
-        {/* Category Filter Dropdown */}
-        <select
-          value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
-          className="border-2 border-gray-500 rounded-xl p-2 text-xs bg-gray-600 text-white"
-        >
-          <option value="">All Categories</option>
-          {distinctCategories
-            .filter((cat): cat is string => cat !== null)
-            .map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-        </select>
-      </div>
-
-      {filteredTasks.length === 0 ? (
-        <div className="flex flex-col items-center gap-4 w-full">
-          <p>No tasks found</p>
+        {/* Filters and Open Tasks Count */}
+        <div className="mb-8 p-4 bg-slate-800/60 backdrop-blur-md border border-slate-700 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm text-slate-300 font-medium">
+            {openTasks.length}{" "}
+            <span className="font-normal text-slate-400">
+              Open Task{openTasks.length !== 1 ? "s" : ""}
+            </span>
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button
+              onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
+              className="flex items-center gap-2 text-xs sm:text-sm text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-600/50 px-4 py-2 rounded-lg transition-colors duration-200"
+            >
+              {hideCompletedTasks ? (
+                <EyeIcon className="h-4 w-4" />
+              ) : (
+                <EyeSlashIcon className="h-4 w-4" />
+              )}
+              {hideCompletedTasks ? "Show Completed" : "Hide Completed"}
+            </button>
+            <div className="relative">
+              <AdjustmentsHorizontalIcon className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <select
+                value={filterCategory}
+                onChange={(e) => setFilterCategory(e.target.value)}
+                className="pl-10 pr-4 py-2 text-xs sm:text-sm bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors duration-200 appearance-none"
+              >
+                <option value="">All Categories</option>
+                {distinctCategories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="flex flex-col items-center gap-4 w-full">
-          <ul className="w-4/5 border-4 rounded-2xl border-gray-800 divide-y-2 divide-gray-800">
+
+        {/* Task List */}
+        {filteredTasks.length === 0 ? (
+          <div className="text-center py-10">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+              className="w-16 h-16 text-slate-500 mx-auto mb-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"
+              />
+            </svg>
+            <p className="text-slate-400 text-lg">
+              No tasks match your current filters.
+            </p>
+            <p className="text-slate-500 text-sm">
+              Try adjusting your filters or adding a new task.
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-4 md:space-y-6">
             {filteredTasks.map((task) => (
               <TaskItem
                 key={task.id}
@@ -137,64 +175,111 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
                 taskSteps={loaderData.userTaskSteps.filter(
                   (step) => step.taskId === task.id
                 )}
-                distinctCategories={distinctCategories.filter(
-                  (cat): cat is string => cat !== null
-                )}
+                distinctCategories={distinctCategories}
               />
             ))}
           </ul>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Add Task Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-gray-800 rounded-xl p-6 w-5/6 md:w-1/3 relative">
-            <h2 className="text-2xl font-bold mb-4">Add Task</h2>
-            <fetcher.Form
-              method="post"
-              className="flex flex-col justify-center items-center gap-4"
-            >
-              <input
-                type="text"
-                name="title"
-                placeholder="Enter task..."
-                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
-                required
-              />
-              <input
-                type="text"
-                name="description"
-                placeholder="Enter description..."
-                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
-              />
-              <input
-                type="text"
-                name="category"
-                placeholder="Enter or select category..."
-                defaultValue={filterCategory || ""}
-                list="categories"
-                className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600 text-white"
-              />
-              <datalist id="categories">
-                {distinctCategories
-                  .filter((cat): cat is string => cat !== null)
-                  .map((cat) => (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                Add New Task
+              </h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-slate-200 transition-colors"
+                aria-label="Close modal"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                  className="w-6 h-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <fetcher.Form method="post" className="space-y-4">
+              <div>
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-slate-300 mb-1"
+                >
+                  Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  id="title"
+                  placeholder="What needs to be done?"
+                  className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                  required
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-slate-300 mb-1"
+                >
+                  Description (Optional)
+                </label>
+                <textarea
+                  name="description"
+                  id="description"
+                  placeholder="Add more details..."
+                  rows={3}
+                  className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-slate-300 mb-1"
+                >
+                  Category (Optional)
+                </label>
+                <input
+                  type="text"
+                  name="category"
+                  id="category"
+                  placeholder="e.g., Work, Personal, Project X"
+                  defaultValue={filterCategory || ""}
+                  list="categories-datalist"
+                  className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors"
+                />
+                <datalist id="categories-datalist">
+                  {distinctCategories.map((cat) => (
                     <option key={cat} value={cat} />
                   ))}
-              </datalist>
-              <button
-                type="submit"
-                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Add Task
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-gray-700 text-white hover:bg-gray-900 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              >
-                Cancel
-              </button>
+                </datalist>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="w-full flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75"
+                >
+                  Add Task
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="w-full flex-1 bg-slate-600 hover:bg-slate-500 text-slate-100 font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-opacity-75"
+                >
+                  Cancel
+                </button>
+              </div>
             </fetcher.Form>
           </div>
         </div>
@@ -202,3 +287,21 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     </div>
   );
 }
+
+// Add this to your app.css or a global stylesheet for the modal animation
+/*
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-pop-in {
+  animation: modal-pop-in 0.3s ease-out forwards;
+}
+*/

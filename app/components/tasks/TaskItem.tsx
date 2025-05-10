@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { tasksTable, taskStepsTable } from "~/db/schema";
 import { useFetcher } from "react-router";
-import TaskActions from "~/components/tasks/TaskActions";
-import TaskModal from "~/components/tasks/TaskModal";
+import TaskModal from "~/components/tasks/TaskModal"; // This will be the updated View/Edit modal
 import ProgressBar from "./ProgressBar";
+import { CalendarDaysIcon, TagIcon, CheckCircleIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { format } from 'date-fns'; // For date formatting
 
 interface TaskItemProps {
   task: typeof tasksTable.$inferSelect;
@@ -39,55 +40,81 @@ export default function TaskItem({
     <>
       <li
         onClick={() => setIsModalOpen(true)}
-        className="cursor-pointer first:rounded-t-xl last:rounded-b-xl text-white p-4 hover:bg-gray-700 transition-colors duration-200"
+        className={`
+          bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-5 md:p-6 
+          transition-all duration-300 ease-in-out cursor-pointer group
+          hover:border-purple-500/70 hover:shadow-purple-500/20 hover:shadow-xl hover:scale-[1.02]
+          ${task.completedAt ? 'opacity-60 hover:opacity-80' : ''}
+        `}
       >
-        <div className="flex flex-row justify-baseline items-center mb-2">
-          {/* Task Information */}
-          <div className="w-2/3 md:w-1/3">
-            <p className="text-sm md:text-xl">{task.title}</p>
+        <div className="flex flex-col h-full">
+          {/* Task Header: Title and Category */}
+          <div className="mb-3">
+            <h3 className="text-lg sm:text-xl font-semibold text-slate-100 group-hover:text-purple-400 transition-colors duration-300 truncate">
+              {task.title}
+            </h3>
             {task.category && (
-              <p className="text-xs md:text-sm text-gray-300 mt-1">
-                Category: {task.category}
-              </p>
+              <div className="flex items-center text-xs text-purple-400 group-hover:text-purple-300 mt-1">
+                <TagIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                <span className="truncate">{task.category}</span>
+              </div>
             )}
-            <div className="hidden md:flex flex-col mt-1">
-              <p className="text-sm text-gray-400">
-                Created: {task.createdAt.toLocaleDateString()}
-              </p>
-              {task.completedAt && (
-                <p className="text-sm text-green-500">
-                  Completed: {new Date(task.completedAt).toLocaleDateString()}
-                </p>
-              )}
-            </div>
           </div>
 
-          {totalSteps > 0 ? (
-            <div className="w-1/3 hidden md:flex flex-col items-center">
-              <ProgressBar
-                progressPercentage={progressPercentage}
-                progressColor={progressColor}
-                completedSteps={completedSteps}
-                totalSteps={totalSteps}
-              />
-            </div>
-          ) : (
-            <div className="w-1/3 hidden md:flex flex-col items-center"></div>
+          {/* Task Description (truncated) */}
+          {task.description && (
+            <p className="text-sm text-slate-400 mb-4 line-clamp-2">
+              {task.description}
+            </p>
           )}
 
-          <TaskActions task={task} fetcher={fetcher} />
+          {/* Spacer to push content below to the bottom if description is short */}
+          {!task.description && <div className="mb-4"></div>}
+
+          {/* Progress Bar (if applicable) */}
+          {totalSteps > 0 && (
+            <div className="mb-4">
+              <ProgressBar
+                progressPercentage={progressPercentage}
+                // progressColor will be handled by ProgressBar based on percentage
+                completedSteps={completedSteps}
+                totalSteps={totalSteps}
+                size="small"
+              />
+            </div>
+          )}
+
+          <div className="mt-auto"> {/* Pushes content below to the bottom */}
+            {/* Dates and Status */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 mb-4">
+              <div className="flex items-center mb-1 sm:mb-0">
+                <CalendarDaysIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-slate-400" />
+                <span>Created: {format(new Date(task.createdAt), "MMM d, yyyy")}</span>
+              </div>
+              {task.completedAt && (
+                <div className="flex items-center text-green-500">
+                  <CheckCircleIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                  <span>Completed: {format(new Date(task.completedAt), "MMM d, yyyy")}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions: Simplified to a "View Details" prompt */}
+            <div className="flex justify-end items-center pt-2 border-t border-slate-700/50">
+                <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center">
+                    View Details <EllipsisHorizontalIcon className="h-5 w-5 ml-1" />
+                </span>
+            </div>
+          </div>
         </div>
       </li>
 
       {isModalOpen && (
         <TaskModal
           task={task}
-          taskSteps={taskSteps}
-          progressPercentage={progressPercentage}
-          progressColor={progressColor}
-          completedSteps={completedSteps}
-          totalSteps={totalSteps}
-          fetcher={fetcher}
+          taskSteps={taskSteps || []} // Ensure taskSteps is not undefined
+          // progressPercentage, progressColor, completedSteps, totalSteps are derived in TaskModal or passed if needed
+          fetcher={fetcher} // Pass the fetcher
           onClose={() => setIsModalOpen(false)}
           distinctCategories={distinctCategories}
         />

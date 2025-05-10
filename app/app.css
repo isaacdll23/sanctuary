@@ -13,3 +13,34 @@ body {
     color-scheme: dark;
   }
 }
+
+/* Custom Animations */
+@keyframes modal-pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Apply the animation using a utility class if preferred, or directly */
+.animate-modal-pop-in {
+  animation: modal-pop-in 0.2s ease-out forwards;
+}
+
+/* You can define custom base styles or component layers here if needed, for example: */
+/*
+@layer base {
+  body {
+    @apply bg-slate-900 text-slate-100; 
+  }
+}
+*/
+
+/* Ensure your tailwind.config.ts is set up correctly for v4,
+   and the @tailwindcss/vite plugin is in use if you're using Vite.
+   The basic @tailwind directives are generally not needed in app.css for v4.
+*/
