@@ -5,10 +5,12 @@ import {
   CogIcon,
   HomeIcon,
   UserCircleIcon,
-  CurrencyDollarIcon, // Example for Finance
-  ClipboardDocumentListIcon, // Example for Tasks
-  ArrowRightOnRectangleIcon // Example for Login
-} from '@heroicons/react/24/outline'; // Using outline icons, you can choose solid if preferred
+  CurrencyDollarIcon,
+  ClipboardDocumentListIcon,
+  ArrowRightOnRectangleIcon,
+  ChevronDoubleLeftIcon, // For collapse button
+  ChevronDoubleRightIcon // For expand button
+} from '@heroicons/react/24/outline';
 
 interface SidebarProps {
   isAuthenticated: boolean;
@@ -16,24 +18,26 @@ interface SidebarProps {
 
 const navItemsUnauth = [
   { to: '/auth/login', label: 'Login', icon: ArrowRightOnRectangleIcon },
-  { to: '/auth/register', label: 'Register', icon: UserCircleIcon }, // Example, choose a more appropriate icon
+  { to: '/auth/register', label: 'Register', icon: UserCircleIcon },
 ];
 
 const navItemsAuth = [
   { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
   { to: '/finance', label: 'Finance', icon: CurrencyDollarIcon },
   { to: '/tasks', label: 'Tasks', icon: ClipboardDocumentListIcon },
-  // Example for Profile and Settings - you'll need to add these routes if they exist
-  // { to: '/profile', label: 'Profile', icon: UserCircleIcon },
-  // { to: '/settings', label: 'Settings', icon: CogIcon },
   { to: '/auth/logout', label: 'Logout', icon: ArrowLeftOnRectangleIcon },
 ];
 
 export default function Sidebar({ isAuthenticated }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false); // New state for desktop collapse
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const toggleDesktopCollapse = () => {
+    setIsDesktopCollapsed(!isDesktopCollapsed);
   };
 
   const navItems = isAuthenticated ? navItemsAuth : navItemsUnauth;
@@ -43,7 +47,7 @@ export default function Sidebar({ isAuthenticated }: SidebarProps) {
       {/* Hamburger Menu - Mobile */}
       <button
         onClick={toggleMobileMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
         aria-controls="sidebar"
         aria-expanded={isMobileMenuOpen}
         aria-label="Open sidebar"
@@ -56,26 +60,55 @@ export default function Sidebar({ isAuthenticated }: SidebarProps) {
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed top-0 left-0 z-40 h-screen bg-gray-900 text-white transition-transform transform ${
+        className={`fixed top-0 left-0 z-40 h-screen bg-indigo-700 text-white transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:w-64 w-64 md:sticky md:flex md:flex-col`}
+        } md:translate-x-0 ${
+          isDesktopCollapsed ? 'md:w-20' : 'md:w-64' // Dynamic width for desktop
+        } w-64 md:sticky md:flex md:flex-col`}
       >
-        <div className="flex justify-between items-center p-4 md:hidden">
-          <span className="text-xl font-semibold">Menu</span>
+        {/* Sidebar Header (for mobile close and desktop collapse) */}
+        <div className="flex items-center justify-between p-4 h-16">
+          {/* Logo or Title - visible when expanded on desktop, or on mobile */}
+          <span className={`text-xl font-semibold ${isDesktopCollapsed && !isMobileMenuOpen ? 'md:hidden' : ''}`}>
+            {!isMobileMenuOpen ? 'Sanctuary' : 'Menu'}
+          </span>
+          
+          {/* Mobile Close Button */}
           <button
             onClick={toggleMobileMenu}
-            className="p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            className="md:hidden p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
             aria-label="Close sidebar"
           >
             <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          {/* Desktop Collapse/Expand Button */}
+          <button 
+            onClick={toggleDesktopCollapse}
+            className="hidden md:block p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            aria-label={isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!isDesktopCollapsed}
+          >
+            {isDesktopCollapsed ? (
+              <ChevronDoubleRightIcon className="h-6 w-6" />
+            ) : (
+              <ChevronDoubleLeftIcon className="h-6 w-6" />
+            )}
+          </button>
         </div>
 
-        <nav className="flex-1 px-2 py-4 space-y-1">
+        <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
-            <SidebarLink key={item.to} to={item.to} label={item.label} icon={item.icon} onClick={isMobileMenuOpen ? toggleMobileMenu : undefined} />
+            <SidebarLink 
+              key={item.to} 
+              to={item.to} 
+              label={item.label} 
+              icon={item.icon} 
+              isCollapsed={isDesktopCollapsed && !isMobileMenuOpen} // Pass collapsed state
+              onClick={isMobileMenuOpen ? toggleMobileMenu : undefined} 
+            />
           ))}
         </nav>
       </aside>
