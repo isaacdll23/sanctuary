@@ -6,6 +6,31 @@ import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 export async function handleTaskAction(request: Request) {
   const user = await getUserFromSession(request);
   const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  // Handle 'updateTaskDetails' intent
+  if (intent === "updateTaskDetails") {
+    const taskId = Number(formData.get("taskId"));
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string | null;
+    const category = formData.get("category") as string | null;
+
+    if (!taskId || !title) {
+      // Or handle more gracefully
+      throw new Error("Task ID and Title are required for updating.");
+    }
+
+    await db
+      .update(tasksTable)
+      .set({
+        title: title.trim(),
+        description: description?.trim() || null,
+        category: category?.trim() || null,
+        // Potentially add updatedAt: new Date() here if you have such a field
+      })
+      .where(eq(tasksTable.id, taskId));
+    return { success: true, message: "Task details updated." }; // Optional: return a response
+  }
 
   // Update category branch
   if (formData.get("updateCategory")) {
@@ -131,19 +156,19 @@ export async function handleTaskAction(request: Request) {
   }
 
   // Create task branch for new tasks
-  const title = formData.get("title");
-  if (typeof title !== "string" || !title.trim()) {
+  const titleFromForm = formData.get("title"); // Renamed to avoid conflict with title in updateTaskDetails
+  if (typeof titleFromForm !== "string" || !titleFromForm.trim()) {
     return { error: "Invalid task title provided" };
   }
 
-  const description = formData.get("description");
-  const taskCategory = formData.get("category");
+  const descriptionFromForm = formData.get("description"); // Renamed
+  const taskCategoryFromForm = formData.get("category"); // Renamed
 
   await db.insert(tasksTable).values({
-    title: title.trim(),
+    title: titleFromForm.trim(),
     userId: user.id,
-    description: String(description)?.trim(),
-    category: String(taskCategory)?.trim(),
+    description: String(descriptionFromForm)?.trim(),
+    category: String(taskCategoryFromForm)?.trim(),
     createdAt: new Date(),
   });
 }
