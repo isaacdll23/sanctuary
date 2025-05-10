@@ -134,7 +134,7 @@ export default function TaskModal({
           />
           <button
             type="submit"
-            className="w-full md:w-1/3 rounded-xl bg-blue-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-blue-700 transition-colors duration-200"
+            className="w-full md:w-1/3 rounded-xl bg-indigo-600 text-white px-3 p-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white hover:bg-indigo-700 transition-colors duration-200"
           >
             Add Step
           </button>

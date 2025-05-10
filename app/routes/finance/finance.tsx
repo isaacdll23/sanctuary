@@ -25,7 +25,7 @@ export default function Finance() {
           </p>
           <a
             href="/finance/expenses"
-            className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+            className="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors"
           >
             Manage Expenses
           </a>
@@ -35,7 +35,7 @@ export default function Finance() {
           <p className="text-gray-600">Track your Income</p>
           <a
             href="/finance/income"
-            className="mt-4 inline-block bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
+            className="mt-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition-colors"
           >
             Manage Income
           </a>

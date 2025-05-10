@@ -126,7 +126,7 @@ export default function Income({ loaderData }: Route.ComponentProps) {
         />
         <button
           type="submit"
-          className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 transition-colors duration-200"
+          className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-700 text-white hover:bg-blue-800 transition-colors duration-200"
         >
           {fetcher.state === "submitting" ? (
             "Saving..."

@@ -253,7 +253,7 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
         <h1 className="text-3xl mb-4">Commands</h1>
         <button
           onClick={handleAddCommand}
-          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-600 text-white hover:bg-blue-700 transition-colors duration-200"
+          className="mb-4 rounded-xl border-2 px-5 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-600 text-white hover:bg-indigo-700 transition-colors duration-200"
         >
           Add Command
         </button>
@@ -334,7 +334,7 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                 <button
                   type="submit"
                   disabled={fetcher.state === "submitting"}
-                  className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-blue-700 text-white hover:bg-blue-800 transition-colors duration-200"
+                  className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-700 text-white hover:bg-blue-800 transition-colors duration-200"
                 >
                   {editingCommand ? "Update Command" : "Add Command"}
                 </button>
