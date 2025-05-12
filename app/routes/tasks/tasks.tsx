@@ -3,7 +3,7 @@ import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import type { Route } from "./+types/tasks";
 import { db } from "~/db";
 import { tasksTable, taskStepsTable } from "~/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, ConsoleLogWriter } from "drizzle-orm";
 import { useFetcher, useSearchParams } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
 import { handleTaskAction } from "~/modules/services/TaskService";
@@ -35,7 +35,8 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
   await requireAuth(request);
-  await handleTaskAction(request);
+  // Ensure the result of handleTaskAction is returned
+  return await handleTaskAction(request);
 }
 
 export default function Tasks({ loaderData }: Route.ComponentProps) {
@@ -47,7 +48,6 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   let fetcher = useFetcher();
 
-  // Compute distinct categories from the current tasks
   const distinctCategories = Array.from(
     new Set(loaderData.userTasks.map((task) => task.category).filter(Boolean))
   ) as string[];
@@ -64,21 +64,26 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
       (filterCategory === "" || task.category === filterCategory)
   );
 
-  // Update URL search params when filter changes
   useEffect(() => {
     setSearchParams({
       hideCompletedTasks: hideCompletedTasks.toString(),
       filterCategory: filterCategory,
     });
-  }, [hideCompletedTasks, filterCategory, setSearchParams]); // Added setSearchParams to dependencies
+  }, [hideCompletedTasks, filterCategory, setSearchParams]);
 
-  // Close the modal after successful form submission
+
   useEffect(() => {
-    // Assuming the action returns no specific data (i.e., fetcher.data is undefined) on successful creation
-    if (fetcher.state === "idle" && fetcher.data === undefined && isModalOpen) {
+    console.log("Fetcher object: ", fetcher);
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data && // Check that fetcher.data is not null/undefined
+      (fetcher.data as any).success === true && // Check for the success flag from your service
+      isModalOpen
+    ) {
+      console.log("Closing modal due to successful fetcher action:", fetcher.data);
       setIsModalOpen(false);
     }
-  }, [fetcher.state, fetcher.data, isModalOpen]); // Corrected dependencies
+  }, [fetcher.state, fetcher.data, isModalOpen]);
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">

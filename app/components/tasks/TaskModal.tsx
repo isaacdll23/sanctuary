@@ -248,7 +248,6 @@ export default function TaskModal({
         {/* Modal Footer - Actions */}
         <div className="p-5 md:p-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-800/50 rounded-b-2xl">
           <fetcher.Form method="post" className="w-full sm:w-auto">
-            {/* Removed intent field, TaskService expects 'deleteTask' as the field name */}
             <input type="hidden" name="deleteTask" value={task.id} />
             <button
               type="submit"
@@ -265,7 +264,6 @@ export default function TaskModal({
 
           <fetcher.Form
             method="post"
-            // Remove onSubmit console.log as it's no longer needed for diagnostics
             className="w-full"
           >
             {/* Correctly structure the hidden input for complete/incomplete actions */}
