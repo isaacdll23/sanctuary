@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import SidebarLink from './SidebarLink';
 import {
-  ArrowLeftOnRectangleIcon,
-  CogIcon,
   HomeIcon,
   UserCircleIcon,
   CurrencyDollarIcon,
   ClipboardDocumentListIcon,
-  ArrowRightOnRectangleIcon,
-  ChevronDoubleLeftIcon, // For collapse button
-  ChevronDoubleRightIcon // For expand button
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ArrowRightEndOnRectangleIcon,
+  ArrowLeftEndOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
@@ -17,7 +16,7 @@ interface SidebarProps {
 }
 
 const navItemsUnauth = [
-  { to: '/auth/login', label: 'Login', icon: ArrowRightOnRectangleIcon },
+  { to: '/auth/login', label: 'Login', icon: ArrowRightEndOnRectangleIcon },
   { to: '/auth/register', label: 'Register', icon: UserCircleIcon },
 ];
 
@@ -25,18 +24,18 @@ const navItemsAuth = [
   { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
   { to: '/finance', label: 'Finance', icon: CurrencyDollarIcon },
   { to: '/tasks', label: 'Tasks', icon: ClipboardDocumentListIcon },
-  { to: '/auth/logout', label: 'Logout', icon: ArrowLeftOnRectangleIcon },
+  { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon },
 ];
 
 export default function Sidebar({ isAuthenticated }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false); // New state for desktop collapse
 
-  const toggleMobileMenu = () => {
+  function toggleMobileMenu() {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const toggleDesktopCollapse = () => {
+  function toggleDesktopCollapse() {
     setIsDesktopCollapsed(!isDesktopCollapsed);
   };
 

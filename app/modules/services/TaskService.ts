@@ -40,7 +40,7 @@ export async function handleTaskAction(request: Request) {
       .update(tasksTable)
       .set({ category })
       .where(eq(tasksTable.id, taskId));
-    return;
+    return { success: true, message: "Category updated." };
   }
 
   // Delete step branch
@@ -48,7 +48,7 @@ export async function handleTaskAction(request: Request) {
   if (typeof deleteStep === "string" && deleteStep.trim()) {
     const stepId = parseInt(deleteStep, 10);
     await db.delete(taskStepsTable).where(eq(taskStepsTable.id, stepId));
-    return;
+    return { success: true, message: "Step deleted." };
   }
 
   // Delete task branch
@@ -58,7 +58,7 @@ export async function handleTaskAction(request: Request) {
     // Delete any task steps associated with the task
     await db.delete(taskStepsTable).where(eq(taskStepsTable.taskId, taskId));
     await db.delete(tasksTable).where(eq(tasksTable.id, taskId));
-    return;
+    return { success: true, message: "Task deleted." };
   }
 
   // Complete task branch
@@ -69,7 +69,7 @@ export async function handleTaskAction(request: Request) {
       .update(tasksTable)
       .set({ completedAt: new Date() })
       .where(eq(tasksTable.id, taskId));
-    return;
+    return { success: true, message: "Task marked as complete." };
   }
 
   // Incomplete task branch
@@ -86,7 +86,7 @@ export async function handleTaskAction(request: Request) {
       .update(taskStepsTable)
       .set({ completedAt: null })
       .where(eq(taskStepsTable.taskId, taskId));
-    return;
+    return { success: true, message: "Task marked as incomplete." };
   }
 
   // Update step branch (complete/uncomplete)
@@ -134,7 +134,7 @@ export async function handleTaskAction(request: Request) {
           .where(eq(tasksTable.id, stepRecord.taskId));
       }
     }
-    return;
+    return { success: true, message: "Step updated." };
   }
 
   // Create a new task step branch
@@ -152,23 +152,56 @@ export async function handleTaskAction(request: Request) {
       description: stepDescription.trim(),
       createdAt: new Date(),
     });
-    return;
+    return { success: true, message: "Step added." };
   }
 
-  // Create task branch for new tasks
-  const titleFromForm = formData.get("title"); // Renamed to avoid conflict with title in updateTaskDetails
-  if (typeof titleFromForm !== "string" || !titleFromForm.trim()) {
-    return { error: "Invalid task title provided" };
+  // This is the fallback create task logic if no specific intent matches for other actions.
+  // It is also hit if the "Add New Task" form (from tasks.tsx) is submitted,
+  // assuming it sends an "intent=createTask" or similar, or if it's the only remaining action.
+  // Given the previous changes, tasks.tsx sends intent=createTask.
+  // We should ensure this block correctly handles that or that there's an explicit intent === 'createTask' block.
+
+  // For now, let's assume this is the intended creation path if `intent` was `createTask` or not handled above.
+  if (intent === "createTask") { // Explicitly check for createTask intent
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string | null;
+    const category = formData.get("category") as string | null;
+
+    if (!title || !title.trim()) {
+      return { success: false, error: "Invalid task title provided" };
+    }
+
+    await db.insert(tasksTable).values({
+      title: title.trim(),
+      userId: user.id,
+      description: description?.trim() || null,
+      category: category?.trim() || null,
+      createdAt: new Date(),
+    });
+    return { success: true, type: "taskCreation", message: "Task created." };
+  }
+  
+  // Fallback for the original create task logic if no intent matched and it wasn't createTask
+  // This part might be redundant if all actions are intent-driven.
+  const titleFromForm = formData.get("title");
+  if (typeof titleFromForm === "string" && titleFromForm.trim()) {
+    // This will only be hit if no other condition was met, and there was no 'createTask' intent,
+    // but a 'title' was still present. This maintains previous behavior for any non-intent based submissions
+    // that might have only sent a title.
+    const descriptionFromForm = formData.get("description"); 
+    const taskCategoryFromForm = formData.get("category"); 
+
+    await db.insert(tasksTable).values({
+      title: titleFromForm.trim(),
+      userId: user.id,
+      description: String(descriptionFromForm)?.trim() || null,
+      category: String(taskCategoryFromForm)?.trim() || null,
+      createdAt: new Date(),
+    });
+    // This specific return helps differentiate if needed, but generally, a success is a success.
+    return { success: true, type: "taskCreation_fallback", message: "Task created (fallback)." };
   }
 
-  const descriptionFromForm = formData.get("description"); // Renamed
-  const taskCategoryFromForm = formData.get("category"); // Renamed
-
-  await db.insert(tasksTable).values({
-    title: titleFromForm.trim(),
-    userId: user.id,
-    description: String(descriptionFromForm)?.trim(),
-    category: String(taskCategoryFromForm)?.trim(),
-    createdAt: new Date(),
-  });
+  // If no action was taken, and no title for fallback creation, return a generic response or error
+  return { success: false, error: "No action taken or invalid request." };
 }
