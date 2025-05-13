@@ -69,40 +69,50 @@ export default function Login() {
   let errors = fetcher.data?.errors;
 
   return (
-    <div className="h-full flex items-center justify-center">
-      <div className="flex flex-col items-center justify-center bg-gray-800 border-2 border-gray-700 rounded-xl p-8 gap-8 md:w-1/3 w-5/6">
-        <h1 className="text-2xl">Login</h1>
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-8 md:p-10 flex flex-col items-center gap-8 w-full max-w-md md:w-96">
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-600 mb-6">
+          Login
+        </h1>
         <fetcher.Form method="post" className="w-full">
-          <div className="w-full flex flex-col items-center justify-center gap-4">
+          <div className="w-full flex flex-col items-center justify-center gap-6">
             {errors?.invalid ? (
-              <p className="text-red-500 text-sm">{errors.invalid}</p>
+              <p className="text-red-400 text-sm self-start -mb-2">
+                {errors.invalid}
+              </p>
             ) : null}
             <input
-              className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
+              className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
               type="text"
               placeholder="Username"
               name="username"
               required
+              aria-label="Username"
             />
             <input
-              className="w-full border-2 border-gray-500 rounded-xl p-2 text-sm bg-gray-600"
+              className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
               type="password"
               placeholder="Password"
               name="password"
               required
+              aria-label="Password"
             />
 
             <button
               type="submit"
-              className="w-full rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-700 text-white hover:bg-blue-800 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75 disabled:opacity-70 disabled:cursor-not-allowed"
+              disabled={fetcher.state === "submitting"}
             >
-              Login
+              {fetcher.state === "submitting" ? "Logging in..." : "Login"}
             </button>
           </div>
         </fetcher.Form>
-        <p>
+        <p className="text-sm text-slate-400">
           Not registered?{" "}
-          <Link to="/auth/register" className="text-blue-500 hover:underline">
+          <Link
+            to="/auth/register"
+            className="font-medium text-indigo-400 hover:text-indigo-300 hover:underline transition-colors"
+          >
             Create account
           </Link>
         </p>
