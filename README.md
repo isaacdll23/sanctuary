@@ -1,24 +1,22 @@
-# Welcome to React Router!
+# Sanctuary
 
-A modern, production-ready template for building full-stack React applications using React Router.
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/remix-run/react-router-templates/tree/main/default)
+Sanctuary is a modern, full-stack productivity and personal management app built with React Router, TypeScript, Drizzle ORM, and Tailwind CSS. It provides a robust platform for managing tasks, finances, utilities, and more—all with a beautiful, responsive UI and a focus on user experience.
 
 ## Features
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+- 📝 **Task Management**: Organize, track, and complete your work with categories, steps, and filtering.
+- 💸 **Finance Tracking**: Manage your income and expenses with secure, user-specific dashboards.
+- ⚡ **Utilities & Commands**: Save, version, and manage custom utility commands with full version history.
+- 🔒 **Authentication**: Secure user authentication and session management.
+- 🛠️ **TypeScript & Drizzle ORM**: Type-safe backend and database access.
+- 🎨 **Tailwind CSS**: Modern, responsive, and customizable UI.
+- 🚀 **Production-Ready**: Docker support, SSR, asset optimization, and more.
 
 ## Getting Started
 
 ### Installation
 
-Install the dependencies:
+Install dependencies:
 
 ```bash
 npm install
@@ -32,9 +30,9 @@ Start the development server with HMR:
 npm run dev
 ```
 
-Your application will be available at `http://localhost:5173`.
+App will be available at [http://localhost:5173](http://localhost:5173).
 
-## Building for Production
+### Building for Production
 
 Create a production build:
 
@@ -44,57 +42,53 @@ npm run build
 
 ## Deployment
 
-### Docker Deployment
+### Docker
 
-This template includes three Dockerfiles optimized for different package managers:
-
-- `Dockerfile` - for npm
-- `Dockerfile.pnpm` - for pnpm
-- `Dockerfile.bun` - for bun
-
-To build and run using Docker:
+Sanctuary includes a Dockerfile for easy containerization:
 
 ```bash
-# For npm
-docker build -t my-app .
-
-# For pnpm
-docker build -f Dockerfile.pnpm -t my-app .
-
-# For bun
-docker build -f Dockerfile.bun -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+docker build -t sanctuary .
+docker run -p 3000:3000 sanctuary
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+You can deploy the container to any platform that supports Docker (AWS, GCP, Azure, Railway, etc).
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
+### Manual Deployment
 
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
+Deploy the output of `npm run build`:
 
 ```
 ├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
+├── package-lock.json
 ├── build/
 │   ├── client/    # Static assets
 │   └── server/    # Server-side code
 ```
 
+## Project Structure
+
+- `app/` — Main application code
+  - `components/` — Reusable UI components
+  - `db/` — Database schema and access
+  - `modules/` — Auth, session, and service logic
+  - `routes/` — Route modules for tasks, finance, utilities, etc.
+- `public/` — Static assets
+- `Dockerfile` — Containerization
+- `drizzle.config.ts` — Drizzle ORM config
+- `vite.config.ts` — Vite build config
+
+## Tech Stack
+
+- **Frontend**: React 19, React Router 7, Tailwind CSS
+- **Backend**: Node.js, Drizzle ORM, PostgreSQL
+- **Auth**: Custom authentication with Argon2
+- **Build**: Vite, TypeScript
+- **Containerization**: Docker
+
 ## Styling
 
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
+Sanctuary uses [Tailwind CSS](https://tailwindcss.com/) for rapid, utility-first styling. You can customize the look and feel easily.
 
 ---
 
-Built with ❤️ using React Router.
+Built with ❤️ by Isaac.
