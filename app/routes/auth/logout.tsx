@@ -24,16 +24,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export default function Logout() {
   return (
-    <div className="h-full flex flex-col items-center justify-center gap-4">
-      <p>Are you sure you want to logout?</p>
-      <Form method="post">
-        <button
-          className="rounded-xl border-2 px-8 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 border-gray-800 bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-          type="submit"
-        >
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-8 md:p-10 flex flex-col items-center gap-8 w-full max-w-md md:w-96">
+        <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-600 mb-4">
           Logout
-        </button>
-      </Form>
+        </h1>
+        <p className="text-slate-300 text-center">
+          Are you sure you want to logout?
+        </p>
+        <Form method="post" className="w-full">
+          <button
+            className="w-full bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 disabled:opacity-70 disabled:cursor-not-allowed"
+            type="submit"
+          >
+            Confirm Logout
+          </button>
+        </Form>
+      </div>
     </div>
   );
 }
