@@ -8,7 +8,8 @@ import {
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
   ArrowRightEndOnRectangleIcon,
-  ArrowLeftEndOnRectangleIcon
+  ArrowLeftEndOnRectangleIcon,
+  CommandLineIcon
 } from '@heroicons/react/24/outline';
 
 interface SidebarProps {
@@ -24,6 +25,7 @@ const navItemsAuth = [
   { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
   { to: '/finance', label: 'Finance', icon: CurrencyDollarIcon },
   { to: '/tasks', label: 'Tasks', icon: ClipboardDocumentListIcon },
+  { to: '/utilities/commands', label: 'Commands', icon: CommandLineIcon },
   { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon },
 ];
 
