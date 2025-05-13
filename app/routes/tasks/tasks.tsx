@@ -82,6 +82,7 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
     ) {
       console.log("Closing modal due to successful fetcher action:", fetcher.data);
       setIsModalOpen(false);
+      fetcher.data = null; // Reset fetcher data to prevent re-triggering
     }
   }, [fetcher.state, fetcher.data, isModalOpen]);
 
