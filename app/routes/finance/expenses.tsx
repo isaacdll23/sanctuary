@@ -271,7 +271,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Category Filter */}
-        <div className="mb-6 bg-slate-800/60 backdrop-blur-md border border-slate-700 rounded-xl shadow-lg p-4">
+        <div className="relative z-20 mb-6 bg-slate-800/60 backdrop-blur-md border border-slate-700 rounded-xl shadow-lg p-4">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
             <label className="text-sm font-medium text-slate-300 min-w-[120px]">
               Filter by Category:
