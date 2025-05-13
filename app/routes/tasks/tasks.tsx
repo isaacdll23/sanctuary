@@ -73,14 +73,12 @@ export default function Tasks({ loaderData }: Route.ComponentProps) {
 
 
   useEffect(() => {
-    console.log("Fetcher object: ", fetcher);
     if (
       fetcher.state === "idle" &&
       fetcher.data && // Check that fetcher.data is not null/undefined
       (fetcher.data as any).success === true && // Check for the success flag from your service
       isModalOpen
     ) {
-      console.log("Closing modal due to successful fetcher action:", fetcher.data);
       setIsModalOpen(false);
       fetcher.data = null; // Reset fetcher data to prevent re-triggering
     }
