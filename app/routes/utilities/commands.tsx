@@ -9,46 +9,6 @@ import { eq, desc } from "drizzle-orm";
 // Add custom styles
 import "~/app.css";
 
-// Define animation styles for this component
-const styles = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-    opacity: 0;
-  }
-
-  @keyframes modalPopIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  
-  .animate-modal-pop-in {
-    animation: modalPopIn 0.3s ease-out forwards;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(30, 41, 59, 0.5);
-    border-radius: 10px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(99, 102, 241, 0.5);
-    border-radius: 10px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(99, 102, 241, 0.7);
-  }
-`;
-
 function VersionTimelineItem({
   version,
   isActive,
@@ -216,17 +176,6 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Add the styles to the page
-  useEffect(() => {
-    const styleElement = document.createElement("style");
-    styleElement.textContent = styles;
-    document.head.appendChild(styleElement);
-    
-    return () => {
-      document.head.removeChild(styleElement);
-    };
-  }, []);
-
   // if editingCommand is set, we are in update mode (otherwise add mode)
   const [editingCommand, setEditingCommand] = useState<any>(null);
   const [commandTitle, setCommandTitle] = useState("");
