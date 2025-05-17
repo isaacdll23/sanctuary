@@ -8,6 +8,7 @@ export default [
   route("finance/expenses", "routes/finance/expenses.tsx"),
   route("finance/income", "routes/finance/income.tsx"),
   route("tasks", "routes/tasks/tasks.tsx"),
+  route("principles", "routes/principles/principles.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
   route("auth/login", "routes/auth/login.tsx"),
   route("auth/logout", "routes/auth/logout.tsx"),
