@@ -3,6 +3,8 @@ import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import type { Route } from "./+types/admin";
+import { handlePageAccessAction } from "~/modules/services/PageAccessService";
+import PageAccessManager from "~/components/admin/PageAccessManager";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Admin Portal" }];
@@ -28,6 +30,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     .orderBy(usersTable.username);
   
   return { users, currentUser: user };
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  // Ensure the user is authenticated and has admin role
+  await requireAuth(request);
+  const currentUser = await getUserFromSession(request);
+  if (currentUser.role !== 'admin') {
+    throw new Response('Unauthorized', { status: 403 });
+  }
+  
+  // Handle page access actions (grant/revoke permissions)
+  return handlePageAccessAction(request);
 }
 
 export default function Admin({ loaderData }: Route.ComponentProps) {
@@ -91,9 +105,7 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
                 </tbody>
               </table>
             </div>
-          </section>
-
-          {/* System Status section */}
+          </section>          {/* System Status section */}
           <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-6">System Status</h2>
             <div className="grid md:grid-cols-3 gap-4">
@@ -114,6 +126,9 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
               </div>
             </div>
           </section>
+
+          {/* Page Access Management section */}
+          <PageAccessManager users={users} />
         </main>
       </div>
     </div>
