@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, pgTable, timestamp, varchar, text } from "drizzle-orm/pg-core";
 
 // Core Tables
 export const usersTable = pgTable("users", {
@@ -57,6 +57,18 @@ export const financeIncomeTable = pgTable("finance_income", {
   annualGrossIncome: integer().notNull(),
   taxDeductionPercentage: integer().notNull(),
   createdAt: timestamp().defaultNow().notNull(),
+});
+
+// Principles Tables
+export const principlesTable = pgTable("principles", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  title: varchar({ length: 255 }).notNull(),
+  content: text().notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().notNull().defaultNow(),
 });
 
 // Utilities Tables
