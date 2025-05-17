@@ -5,14 +5,13 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLoaderData, // Added useLoaderData import
+  useLoaderData,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import { isSessionCreated } from "./modules/auth.server";
 import "./app.css";
-// import Header from "./components/header/header"; // Remove old header
-import Sidebar from "./components/sidebar/Sidebar"; // Import new Sidebar
+import Sidebar from "./components/sidebar/Sidebar";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -34,7 +33,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>(); // Get isAuthenticated from loader
+  const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>();
 
   return (
     <html lang="en">
@@ -50,10 +49,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
           content="black-translucent"
         />
       </head>
-      <body className="m-0 p-0 h-screen flex"> {/* Modified body to use flex */}
-        <Sidebar isAuthenticated={isAuthenticated} /> {/* Add Sidebar */}
-        <div className="flex-1 flex flex-col overflow-hidden"> {/* Added wrapper for main content */}
-          {/* <Header /> */} {/* Remove old header */}
+      <body className="m-0 p-0 h-screen flex">
+        <Sidebar isAuthenticated={isAuthenticated} />
+        <div className="flex-1 flex flex-col overflow-hidden">
           {children}
         </div>
         <ScrollRestoration />
