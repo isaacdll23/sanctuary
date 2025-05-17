@@ -1,14 +1,29 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, type ChangeEvent } from "react";
 import { useFetcher } from "react-router";
 import type { Route } from "./+types/commands";
 import { db } from "~/db";
-import { utilitiesCommandsTable, utilitiesCommandsVersionsTable } from "~/db/schema";
+import {
+  utilitiesCommandsTable,
+  utilitiesCommandsVersionsTable,
+} from "~/db/schema";
 import { getUserFromSession, requireAuth } from "~/modules/auth.server";
 import { eq, desc } from "drizzle-orm";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 
-// Add custom styles
-import "~/app.css";
+// Fuzzy match function: matches substrings and subsequences for fuzzy filtering
+function fuzzyMatch(text: string, pattern: string): boolean {
+  const t = text.toLowerCase();
+  const p = pattern.toLowerCase();
+  if (!p) return true;
+  if (t.includes(p)) return true;
+  let ti = 0,
+    pi = 0;
+  while (ti < t.length && pi < p.length) {
+    if (t[ti] === p[pi]) pi++;
+    ti++;
+  }
+  return pi === p.length;
+}
 
 function VersionTimelineItem({
   version,
@@ -27,10 +42,22 @@ function VersionTimelineItem({
       }`}
     >
       {/* Timeline marker */}
-      <div className={`w-2.5 h-2.5 rounded-full ${isActive ? "bg-indigo-400" : "bg-slate-500"}`}></div>
+      <div
+        className={`w-2.5 h-2.5 rounded-full ${
+          isActive ? "bg-indigo-400" : "bg-slate-500"
+        }`}
+      ></div>
       <div>
-        <div className={`text-sm ${isActive ? "text-indigo-300 font-medium" : "text-slate-300"}`}>v{version.version}</div>
-        <div className="text-xs text-slate-500">{new Date(version.createdAt).toLocaleString()}</div>
+        <div
+          className={`text-sm ${
+            isActive ? "text-indigo-300 font-medium" : "text-slate-300"
+          }`}
+        >
+          v{version.version}
+        </div>
+        <div className="text-xs text-slate-500">
+          {new Date(version.createdAt).toLocaleString()}
+        </div>
       </div>
     </div>
   );
@@ -87,9 +114,13 @@ export async function action({ request }: Route.ActionArgs) {
   if (_action === "delete") {
     const id = formData.get("id") as string;
     // Delete all the version history for this command first
-    await db.delete(utilitiesCommandsVersionsTable).where(eq(utilitiesCommandsVersionsTable.commandId, Number(id)));
+    await db
+      .delete(utilitiesCommandsVersionsTable)
+      .where(eq(utilitiesCommandsVersionsTable.commandId, Number(id)));
     // Then delete the command record
-    await db.delete(utilitiesCommandsTable).where(eq(utilitiesCommandsTable.id, Number(id)));
+    await db
+      .delete(utilitiesCommandsTable)
+      .where(eq(utilitiesCommandsTable.id, Number(id)));
     return;
   } else if (_action === "update") {
     const id = formData.get("id") as string;
@@ -112,7 +143,8 @@ export async function action({ request }: Route.ActionArgs) {
       .from(utilitiesCommandsVersionsTable)
       .where(eq(utilitiesCommandsVersionsTable.commandId, Number(id)))
       .orderBy(desc(utilitiesCommandsVersionsTable.version));
-    const currentVersion = versionRecords.length > 0 ? versionRecords[0].version : 0;
+    const currentVersion =
+      versionRecords.length > 0 ? versionRecords[0].version : 0;
     const newVersion = currentVersion + 1;
 
     // If the command is the same as the latest version, do not create a new version record
@@ -171,8 +203,17 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function Commands({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
+  const [searchQuery, setSearchQuery] = useState("");
+  // Filter commands based on fuzzy search against title
+  const filteredCommands = useMemo(
+    () =>
+      loaderData.userCommands.filter((cmd: any) =>
+        fuzzyMatch(cmd.title, searchQuery)
+      ),
+    [loaderData.userCommands, searchQuery]
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // if editingCommand is set, we are in update mode (otherwise add mode)
   const [editingCommand, setEditingCommand] = useState<any>(null);
   const [commandTitle, setCommandTitle] = useState("");
@@ -248,10 +289,12 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
     setDeleteTarget(command);
     setIsDeleteModalOpen(true);
   };
-  
+
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">        {/* Header */}
+      <div className="max-w-7xl mx-auto">
+        {" "}
+        {/* Header */}
         <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="w-full md:w-auto">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center md:text-left">
@@ -260,21 +303,46 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
               </span>
             </h1>
             <p className="mt-2 text-lg text-slate-400 text-center md:text-left max-w-2xl">
-              Store and manage your frequently used command snippets for quick access.
+              Store and manage your frequently used command snippets for quick
+              access.
             </p>
-          </div>          <button
+          </div>{" "}
+          <button
             onClick={handleAddCommand}
             className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-opacity-75"
             aria-label="Create a new command"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:animate-pulse" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 group-hover:animate-pulse"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                clipRule="evenodd"
+              />
             </svg>
             <span>New Command</span>
           </button>
         </header>
-
-        {/* Command List */}        {loaderData.userCommands.length === 0 ? (
+        {/* Search input for fuzzy filtering */}
+        <div className="mb-4">
+          <label htmlFor="search-commands" className="sr-only">
+            Search commands
+          </label>
+          <input
+            type="text"
+            id="search-commands"
+            placeholder="Search commands..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-2 rounded-md bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+        </div>
+        {/* Command List */}
+        {loaderData.userCommands.length === 0 ? (
           <div className="text-center py-16 px-4 bg-slate-800/60 backdrop-blur-md rounded-3xl border border-slate-700 shadow-lg max-w-xl mx-auto">
             <div className="p-6 bg-indigo-500/10 rounded-full inline-flex mb-6">
               <svg
@@ -292,30 +360,46 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                 />
               </svg>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">No Commands Found</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              No Commands Found
+            </h2>
             <p className="text-slate-400 text-lg mb-6">
               You haven't created any command snippets yet.
             </p>
             <p className="text-slate-500 text-sm mb-8">
-              Add your first command to start building your collection of useful snippets.
+              Add your first command to start building your collection of useful
+              snippets.
             </p>
             <button
               onClick={handleAddCommand}
               className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium rounded-lg shadow-lg hover:shadow-indigo-500/20 transition-all duration-300"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                  clipRule="evenodd"
+                />
               </svg>
               Create Your First Command
             </button>
           </div>
-        ) : (          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {loaderData.userCommands.map((command, index) => (              <div
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {" "}
+            {filteredCommands.map((command, index) => (
+              <div
                 key={command.id}
                 onClick={() => handleEditCommand(command)}
                 className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-5 hover:shadow-indigo-500/10 hover:border-slate-600 transition-all duration-300 cursor-pointer group animate-fade-in relative overflow-hidden"
                 style={{ animationDelay: `${index * 0.05}s` }}
-              ><div className="flex justify-between items-start">
+              >
+                <div className="flex justify-between items-start">
                   <h2 className="text-xl font-semibold text-slate-200 group-hover:text-white transition-colors line-clamp-2 mb-2">
                     {command.title}
                   </h2>
@@ -329,24 +413,47 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                       className="p-1.5 rounded-full bg-slate-700/50 hover:bg-red-900/80 text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-red-400/50"
                       aria-label="Delete command"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </button>
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-purple-600/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300 pointer-events-none"></div>
-                  {/* Version count badge */}
+                {/* Version count badge */}
                 {(() => {
-                  const versionCount = loaderData.userCommandVersions.filter((v: any) => v.commandId === command.id).length;
+                  const versionCount = loaderData.userCommandVersions.filter(
+                    (v: any) => v.commandId === command.id
+                  ).length;
                   return (
                     <div className="flex items-center justify-between gap-1.5 mt-4 text-xs relative z-10">
                       <div className="flex items-center gap-1.5 bg-slate-700/40 px-2 py-1 rounded-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-3.5 w-3.5 text-indigo-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
                         </svg>
                         <span className="text-slate-300">
-                          {versionCount} {versionCount === 1 ? "version" : "versions"}
+                          {versionCount}{" "}
+                          {versionCount === 1 ? "version" : "versions"}
                         </span>
                       </div>
                       <span className="text-slate-500 mr-1">
@@ -355,10 +462,19 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                     </div>
                   );
                 })()}
-                  <div className="mt-3 flex items-center relative z-10">
+                <div className="mt-3 flex items-center relative z-10">
                   <div className="text-indigo-400 group-hover:text-indigo-300 text-sm font-medium flex items-center gap-1 transition-all duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 group-hover:translate-x-0.5 transition-transform"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     <span>View Details</span>
                   </div>
@@ -367,7 +483,6 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
             ))}
           </div>
         )}
-
         {/* Command Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
@@ -382,8 +497,19 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                   className="text-slate-400 hover:text-slate-200 transition-colors"
                   aria-label="Close modal"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -394,11 +520,24 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                   {/* Left Column - Command Form */}
                   <div className="lg:col-span-2">
                     <fetcher.Form method="post" className="space-y-6">
-                      {editingCommand && <input type="hidden" name="id" value={editingCommand.id} />}
-                      <input type="hidden" name="_action" value={editingCommand ? "update" : "add"} />
-                      
+                      {editingCommand && (
+                        <input
+                          type="hidden"
+                          name="id"
+                          value={editingCommand.id}
+                        />
+                      )}
+                      <input
+                        type="hidden"
+                        name="_action"
+                        value={editingCommand ? "update" : "add"}
+                      />
+
                       <div>
-                        <label htmlFor="command-title" className="block text-sm font-medium text-slate-300 mb-1">
+                        <label
+                          htmlFor="command-title"
+                          className="block text-sm font-medium text-slate-300 mb-1"
+                        >
                           Command Title
                         </label>
                         <input
@@ -412,9 +551,12 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                           required
                         />
                       </div>
-                      
+
                       <div>
-                        <label htmlFor="command-content" className="block text-sm font-medium text-slate-300 mb-1">
+                        <label
+                          htmlFor="command-content"
+                          className="block text-sm font-medium text-slate-300 mb-1"
+                        >
                           Command Content
                         </label>
                         <div className="relative">
@@ -442,9 +584,25 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                         >
                           {fetcher.state === "submitting" ? (
                             <>
-                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
                               </svg>
                               {editingCommand ? "Saving..." : "Creating..."}
                             </>
@@ -452,15 +610,29 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                             <>
                               {editingCommand ? (
                                 <>
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
                                     <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
                                   </svg>
                                   Save Changes
                                 </>
                               ) : (
                                 <>
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-5 w-5"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                      clipRule="evenodd"
+                                    />
                                   </svg>
                                   Create Command
                                 </>
@@ -468,7 +640,7 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                             </>
                           )}
                         </button>
-                        
+
                         <button
                           type="button"
                           onClick={() => setIsModalOpen(false)}
@@ -479,19 +651,32 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                       </div>
                     </fetcher.Form>
                   </div>
-                  
+
                   {/* Right Column - Version History */}
                   {editingCommand && (
                     <div>
                       <h3 className="text-lg font-medium text-slate-200 mb-4 flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5 text-indigo-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
                         </svg>
                         Version History
                       </h3>
                       {latestVersions.length === 0 ? (
                         <div className="text-center p-4 bg-slate-700/30 rounded-lg">
-                          <p className="text-slate-400">No version history available.</p>
+                          <p className="text-slate-400">
+                            No version history available.
+                          </p>
                         </div>
                       ) : (
                         <>
@@ -517,9 +702,13 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                         </>
                       )}
                       <div className="mt-6 p-4 bg-slate-700/30 rounded-lg">
-                        <h4 className="text-sm font-medium text-slate-300 mb-2">About Versioning</h4>
+                        <h4 className="text-sm font-medium text-slate-300 mb-2">
+                          About Versioning
+                        </h4>
                         <p className="text-xs text-slate-400">
-                          Each time you save changes to a command, a new version is created. You can view and restore any previous version at any time.
+                          Each time you save changes to a command, a new version
+                          is created. You can view and restore any previous
+                          version at any time.
                         </p>
                       </div>
                     </div>
@@ -529,24 +718,37 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
             </div>
           </div>
         )}
-
         {/* Delete Confirmation Modal */}
         {isDeleteModalOpen && deleteTarget && (
           <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
             <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
               <div className="flex items-center gap-4 mb-4 text-red-400">
                 <div className="p-3 rounded-xl bg-red-500/20">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </div>
                 <h2 className="text-2xl font-semibold">Delete Command</h2>
               </div>
-              
+
               <p className="mb-6 text-slate-300">
-                Are you sure you want to delete "<span className="font-medium">{deleteTarget.title}</span>"? This action cannot be undone and all versions will be permanently removed.
+                Are you sure you want to delete "
+                <span className="font-medium">{deleteTarget.title}</span>"? This
+                action cannot be undone and all versions will be permanently
+                removed.
               </p>
-              
+
               <div className="flex flex-col sm:flex-row gap-3">
                 <fetcher.Form method="post" className="flex-1">
                   <input type="hidden" name="_action" value="delete" />
@@ -558,9 +760,25 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
                   >
                     {fetcher.state === "submitting" ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
                         </svg>
                         Deleting...
                       </>
