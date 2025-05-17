@@ -1,23 +1,19 @@
 import { useState, useEffect } from "react";
-import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import type { Route } from "./+types/principles";
-import { db } from "~/db";
-import { principlesTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import PrincipleItem from "~/components/principles/PrincipleItem";
 import PrincipleModal from "~/components/principles/PrincipleModal";
-import { handlePrincipleAction } from "~/modules/services/PrincipleService";
+import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
 
-export function meta(_args: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Principles" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-
-  const user = await getUserFromSession(request);
+export const loader = pageAccessLoader("principles", async (user, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { db } = await import("~/db");
+  const { principlesTable } = await import("~/db/schema");
 
   const principles = await db
     .select()
@@ -26,21 +22,23 @@ export async function loader({ request }: Route.LoaderArgs) {
     .orderBy(desc(principlesTable.updatedAt));
 
   return { principles };
-}
+});
 
-export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
-  return await handlePrincipleAction(request);
-}
+export const action = pageAccessAction("principles", async (user, request) => {
+  // Server-only imports
+  const { handlePrincipleAction } = await import("~/modules/services/PrincipleService");
+  return handlePrincipleAction(request);
+});
 
-export default function Principles({ loaderData }: Route.ComponentProps) {
+export default function Principles() {
+  const loaderData = useLoaderData<{ principles: any[] }>();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedPrinciple, setSelectedPrinciple] = useState<typeof principlesTable.$inferSelect | null>(null);
+  const [selectedPrinciple, setSelectedPrinciple] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNewPrinciple, setIsNewPrinciple] = useState(false);
   const fetcher = useFetcher();
   const filteredPrinciples = loaderData.principles.filter(
-    (principle: typeof principlesTable.$inferSelect) => 
+    (principle: any) => 
       principle.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       principle.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -66,7 +64,7 @@ export default function Principles({ loaderData }: Route.ComponentProps) {
     setIsModalOpen(true);
   };
 
-  const handleEditPrinciple = (principle: typeof principlesTable.$inferSelect) => {
+  const handleEditPrinciple = (principle: any) => {
     setSelectedPrinciple(principle);
     setIsNewPrinciple(false);
     setIsModalOpen(true);
@@ -121,7 +119,8 @@ export default function Principles({ loaderData }: Route.ComponentProps) {
 
         {/* Principles List */}
         {filteredPrinciples.length > 0 ? (
-          <div className="space-y-4">          {filteredPrinciples.map((principle: typeof principlesTable.$inferSelect) => (
+          <div className="space-y-4">
+            {filteredPrinciples.map((principle: any) => (
               <PrincipleItem
                 key={principle.id}
                 principle={principle}

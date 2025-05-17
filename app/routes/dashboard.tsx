@@ -1,18 +1,16 @@
-import { getUserFromSession, requireAuth } from "~/modules/auth.server";
-import type { Route } from "./+types/dashboard";
-import { db } from "~/db";
-import { tasksTable } from "~/db/schema";
+import { useLoaderData } from "react-router";
 import { and, gte, eq } from "drizzle-orm";
 import { startOfDay, subDays } from "date-fns";
+import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Dashboard" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-
-  const user = await getUserFromSession(request);
+export const loader = pageAccessLoader("dashboard", async (user, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { db } = await import("~/db");
+  const { tasksTable } = await import("~/db/schema");
 
   const userTasks = await db
     .select()
@@ -32,20 +30,19 @@ export async function loader({ request }: Route.LoaderArgs) {
     newTasksLast30Days: newTasksLast30Days.length,
     completedTasksLast30Days: completedTasksLast30Days.length,
   };
-}
+});
 
-export default function Dashboard({ loaderData }: Route.ComponentProps) {
-  const {
+export default function Dashboard() {  const {
     newTasksLast7Days,
     completedTasksLast7Days,
     newTasksLast30Days,
-    completedTasksLast30Days,
-  } = loaderData as {
+    completedTasksLast30Days
+  } = useLoaderData<{
     newTasksLast7Days: number;
     completedTasksLast7Days: number;
     newTasksLast30Days: number;
     completedTasksLast30Days: number;
-  };
+  }>();
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">

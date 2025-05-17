@@ -9,7 +9,8 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import { isSessionCreated } from "./modules/auth.server";
+import { getUserFromSession, isSessionCreated, isUserAdmin } from "./modules/auth.server";
+import { getUserAccessiblePages } from "./modules/services/PageAccessService";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
 
@@ -28,12 +29,31 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   let isAuthenticated = await isSessionCreated(request);
+  let isAdmin = false;
+  let accessiblePages: string[] = [];
+  
+  if (isAuthenticated) {
+    isAdmin = await isUserAdmin(request);
+    
+    // Get the user and their accessible pages
+    try {
+      const user = await getUserFromSession(request);
+      accessiblePages = await getUserAccessiblePages(user.id);
+    } catch (error) {
+      // If there's an error getting the user or their pages, fallback to an empty list
+      console.error("Error fetching user accessible pages:", error);
+    }
+  }
 
-  return { isAuthenticated };
+  return { isAuthenticated, isAdmin, accessiblePages };
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>();
+  const { isAuthenticated, isAdmin, accessiblePages } = useLoaderData<{ 
+    isAuthenticated: boolean, 
+    isAdmin: boolean,
+    accessiblePages: string[]
+  }>();
 
   return (
     <html lang="en">
@@ -47,10 +67,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
-        />
-      </head>
+        />      </head>
       <body className="m-0 p-0 h-screen flex">
-        <Sidebar isAuthenticated={isAuthenticated} />
+        <Sidebar 
+          isAuthenticated={isAuthenticated} 
+          isAdmin={isAdmin}
+          accessiblePages={accessiblePages} 
+        />
         <div className="flex-1 flex flex-col overflow-hidden">
           {children}
         </div>
