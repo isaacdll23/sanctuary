@@ -15,6 +15,7 @@ import {
 
 interface SidebarProps {
   isAuthenticated: boolean;
+  isAdmin?: boolean;
 }
 
 const navItemsUnauth = [
@@ -31,7 +32,7 @@ const navItemsAuth = [
   { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon },
 ];
 
-export default function Sidebar({ isAuthenticated }: SidebarProps) {
+export default function Sidebar({ isAuthenticated, isAdmin = false }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false); // New state for desktop collapse
 

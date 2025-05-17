@@ -9,7 +9,7 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import { isSessionCreated } from "./modules/auth.server";
+import { isSessionCreated, isUserAdmin } from "./modules/auth.server";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
 
@@ -28,12 +28,17 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ request }: Route.LoaderArgs) {
   let isAuthenticated = await isSessionCreated(request);
+  let isAdmin = false;
+  
+  if (isAuthenticated) {
+    isAdmin = await isUserAdmin(request);
+  }
 
-  return { isAuthenticated };
+  return { isAuthenticated, isAdmin };
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useLoaderData<{ isAuthenticated: boolean }>();
+  const { isAuthenticated, isAdmin } = useLoaderData<{ isAuthenticated: boolean, isAdmin: boolean }>();
 
   return (
     <html lang="en">

@@ -30,6 +30,15 @@ export async function isSessionCreated(request: Request): Promise<boolean> {
   return session.has("userId");
 }
 
+export async function isUserAdmin(request: Request): Promise<boolean> {
+  try {
+    const user = await getUserFromSession(request);
+    return user.role === "admin";
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function getUserFromSession(
   request: Request
 ): Promise<typeof usersTable.$inferSelect> {
