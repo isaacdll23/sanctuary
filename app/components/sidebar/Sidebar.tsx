@@ -13,7 +13,6 @@ import {
   BookOpenIcon,
   Cog8ToothIcon
 } from '@heroicons/react/24/outline';
-import { ConsoleLogWriter } from 'drizzle-orm';
 
 interface SidebarProps {
   isAuthenticated: boolean;
