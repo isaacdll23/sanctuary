@@ -14,11 +14,22 @@ export const loader = pageAccessLoader("tasks", async (user, request) => {
   const { db } = await import("~/db");
   const { tasksTable, taskStepsTable } = await import("~/db/schema");
 
-  const userTasks = await db
+  // Pagination params
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const pageSize = parseInt(url.searchParams.get("pageSize") || "10", 10);
+  const offset = (page - 1) * pageSize;
+
+  // Get all user tasks (for filtering, but slice for pagination)
+  const allUserTasks = await db
     .select()
     .from(tasksTable)
     .where(eq(tasksTable.userId, user.id))
     .orderBy(desc(tasksTable.createdAt));
+
+  // Paginate
+  const userTasks = allUserTasks.slice(offset, offset + pageSize);
+  const totalTasks = allUserTasks.length;
 
   const userTaskSteps = await db
     .select()
@@ -26,7 +37,7 @@ export const loader = pageAccessLoader("tasks", async (user, request) => {
     .where(eq(taskStepsTable.userId, user.id))
     .orderBy(desc(taskStepsTable.createdAt));
 
-  return { userTasks, userTaskSteps };
+  return { userTasks, userTaskSteps, totalTasks, page, pageSize };
 });
 
 export const action = pageAccessAction("tasks", async (user, request) => {
@@ -38,19 +49,23 @@ export const action = pageAccessAction("tasks", async (user, request) => {
 });
 
 export default function Tasks() {
-  const loaderData = useLoaderData<{ userTasks: any[], userTaskSteps: any[] }>();
+  const loaderData = useLoaderData<{ userTasks: any[], userTaskSteps: any[], totalTasks: number, page: number, pageSize: number }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialHide = searchParams.get("hideCompletedTasks") === "true";
   const initialCategory = searchParams.get("filterCategory") || "";
+  const initialPage = parseInt(searchParams.get("page") || loaderData.page?.toString() || "1", 10);
+  const pageSize = loaderData.pageSize || 10;
   const [hideCompletedTasks, setHideCompletedTasks] = useState(initialHide);
   const [filterCategory, setFilterCategory] = useState(initialCategory);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [page, setPage] = useState(initialPage);
   let fetcher = useFetcher();
 
   const distinctCategories = Array.from(
     new Set(loaderData.userTasks.map((task) => task.category).filter(Boolean))
   ) as string[];
 
+  // Filtering is done on the paginated slice, not the full set
   const filteredTasks = loaderData.userTasks.filter((task) => {
     if (hideCompletedTasks && task.completedAt !== null) return false;
     if (filterCategory && task.category !== filterCategory) return false;
@@ -58,30 +73,39 @@ export default function Tasks() {
   });
 
   const openTasks = loaderData.userTasks.filter(
-    (task) =>
-      task.completedAt === null &&
-      (filterCategory === "" || task.category === filterCategory)
+    (task) => task.completedAt === null && (filterCategory === "" || task.category === filterCategory)
   );
 
+  // Pagination logic
+  const totalTasks = loaderData.totalTasks;
+  const totalPages = Math.ceil(totalTasks / pageSize);
+
+  // When filters or page changes, update search params
   useEffect(() => {
     setSearchParams({
       hideCompletedTasks: hideCompletedTasks.toString(),
       filterCategory: filterCategory,
+      page: page.toString(),
     });
-  }, [hideCompletedTasks, filterCategory, setSearchParams]);
-
+  }, [hideCompletedTasks, filterCategory, page, setSearchParams]);
 
   useEffect(() => {
     if (
       fetcher.state === "idle" &&
-      fetcher.data && // Check that fetcher.data is not null/undefined
-      (fetcher.data as any).success === true && // Check for the success flag from your service
+      fetcher.data &&
+      (fetcher.data as any).success === true &&
       isModalOpen
     ) {
       setIsModalOpen(false);
-      fetcher.data = null; // Reset fetcher data to prevent re-triggering
+      fetcher.data = null;
     }
   }, [fetcher.state, fetcher.data, isModalOpen]);
+
+  // Pagination controls
+  function goToPage(newPage: number) {
+    if (newPage < 1 || newPage > totalPages) return;
+    setPage(newPage);
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
@@ -170,18 +194,47 @@ export default function Tasks() {
             </p>
           </div>
         ) : (
-          <ul className="space-y-4 md:space-y-6">
-            {filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                taskSteps={loaderData.userTaskSteps.filter(
-                  (step) => step.taskId === task.id
-                )}
-                distinctCategories={distinctCategories}
-              />
-            ))}
-          </ul>
+          <>
+            <ul className="space-y-4 md:space-y-6">
+              {filteredTasks.map((task) => (
+                <TaskItem
+                  key={task.id}
+                  task={task}
+                  taskSteps={loaderData.userTaskSteps.filter(
+                    (step) => step.taskId === task.id
+                  )}
+                  distinctCategories={distinctCategories}
+                />
+              ))}
+            </ul>
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="px-3 py-1 rounded bg-slate-700 text-slate-300 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => goToPage(p)}
+                  className={`px-3 py-1 rounded ${p === page ? "bg-purple-600 text-white" : "bg-slate-700 text-slate-300"}`}
+                  disabled={p === page}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="px-3 py-1 rounded bg-slate-700 text-slate-300 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
 
