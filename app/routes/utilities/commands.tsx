@@ -5,6 +5,7 @@ import { db } from "~/db";
 import { utilitiesCommandsTable, utilitiesCommandsVersionsTable } from "~/db/schema";
 import { getUserFromSession, requireAuth } from "~/modules/auth.server";
 import { eq, desc } from "drizzle-orm";
+import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 
 // Add custom styles
 import "~/app.css";
@@ -62,11 +63,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Commands" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-
-  const user = await getUserFromSession(request);
-
+export const loader = pageAccessLoader("commands", async (user, request) => {
   const userCommands = await db
     .select()
     .from(utilitiesCommandsTable)
@@ -80,7 +77,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     .orderBy(desc(utilitiesCommandsVersionsTable.createdAt));
 
   return { userCommands, userCommandVersions };
-}
+});
 
 export async function action({ request }: Route.ActionArgs) {
   await requireAuth(request);
