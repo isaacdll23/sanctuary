@@ -4,7 +4,11 @@ import { useFetcher, useLoaderData } from "react-router";
 import { PlusIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import PrincipleItem from "~/components/principles/PrincipleItem";
 import PrincipleModal from "~/components/principles/PrincipleModal";
-import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
+import {
+  pageAccessLoader,
+  pageAccessAction,
+} from "~/modules/middleware/pageAccess";
+import { fuzzyMatch } from "~/utils/fuzzyMatch";
 
 export function meta() {
   return [{ title: "Principles" }];
@@ -26,7 +30,9 @@ export const loader = pageAccessLoader("principles", async (user, request) => {
 
 export const action = pageAccessAction("principles", async (user, request) => {
   // Server-only imports
-  const { handlePrincipleAction } = await import("~/modules/services/PrincipleService");
+  const { handlePrincipleAction } = await import(
+    "~/modules/services/PrincipleService"
+  );
   return handlePrincipleAction(request);
 });
 
@@ -38,9 +44,9 @@ export default function Principles() {
   const [isNewPrinciple, setIsNewPrinciple] = useState(false);
   const fetcher = useFetcher();
   const filteredPrinciples = loaderData.principles.filter(
-    (principle: any) => 
-      principle.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      principle.content.toLowerCase().includes(searchQuery.toLowerCase())
+    (principle: any) =>
+      fuzzyMatch(principle.title, searchQuery) ||
+      fuzzyMatch(principle.content, searchQuery)
   );
 
   useEffect(() => {
@@ -134,7 +140,9 @@ export default function Principles() {
               <p className="text-slate-400">No principles match your search.</p>
             ) : (
               <div className="space-y-4">
-                <p className="text-slate-400">You haven't created any principles yet.</p>
+                <p className="text-slate-400">
+                  You haven't created any principles yet.
+                </p>
                 <button
                   onClick={handleCreatePrinciple}
                   className="px-4 py-2 rounded-lg border border-purple-500 text-purple-400 hover:bg-purple-500/10 transition-colors"

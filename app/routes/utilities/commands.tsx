@@ -9,21 +9,8 @@ import {
 import { getUserFromSession, requireAuth } from "~/modules/auth.server";
 import { eq, desc } from "drizzle-orm";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
-
-// Fuzzy match function: matches substrings and subsequences for fuzzy filtering
-function fuzzyMatch(text: string, pattern: string): boolean {
-  const t = text.toLowerCase();
-  const p = pattern.toLowerCase();
-  if (!p) return true;
-  if (t.includes(p)) return true;
-  let ti = 0,
-    pi = 0;
-  while (ti < t.length && pi < p.length) {
-    if (t[ti] === p[pi]) pi++;
-    ti++;
-  }
-  return pi === p.length;
-}
+import { fuzzyMatch } from "~/utils/fuzzyMatch";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 function VersionTimelineItem({
   version,
@@ -328,17 +315,17 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
           </button>
         </header>
         {/* Search input for fuzzy filtering */}
-        <div className="mb-4">
-          <label htmlFor="search-commands" className="sr-only">
-            Search commands
-          </label>
+        <div className="relative mb-4">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <MagnifyingGlassIcon className="h-5 w-5 text-slate-400" />
+          </div>
           <input
             type="text"
             id="search-commands"
             placeholder="Search commands..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full p-2 rounded-md bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="block w-full p-3 pl-10 bg-slate-800 border border-slate-700 text-slate-100 rounded-lg focus:ring-2 focus:ring-indigo-500"
           />
         </div>
         {/* Command List */}
