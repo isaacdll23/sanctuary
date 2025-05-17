@@ -1,15 +1,13 @@
-import { requireAuth } from "~/modules/auth.server";
-import type { Route } from "./+types/finance";
-import { Link } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Finance Dashboard" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
+export const loader = pageAccessLoader("finance", async (user, request) => {
   return {};
-}
+});
 
 export default function Finance() {
   return (

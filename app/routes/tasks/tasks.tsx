@@ -1,22 +1,18 @@
 import { useState, useEffect } from "react";
-import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import type { Route } from "./+types/tasks";
-import { db } from "~/db";
-import { tasksTable, taskStepsTable } from "~/db/schema";
-import { eq, desc, ConsoleLogWriter } from "drizzle-orm";
-import { useFetcher, useSearchParams } from "react-router";
+import { eq, desc } from "drizzle-orm";
+import { useFetcher, useSearchParams, useLoaderData } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
-import { handleTaskAction } from "~/modules/services/TaskService";
 import { PlusIcon, AdjustmentsHorizontalIcon, EyeSlashIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
 
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [{ title: "Tasks" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-
-  const user = await getUserFromSession(request);
+export const loader = pageAccessLoader("tasks", async (user, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { db } = await import("~/db");
+  const { tasksTable, taskStepsTable } = await import("~/db/schema");
 
   const userTasks = await db
     .select()
@@ -31,15 +27,18 @@ export async function loader({ request }: Route.LoaderArgs) {
     .orderBy(desc(taskStepsTable.createdAt));
 
   return { userTasks, userTaskSteps };
-}
+});
 
-export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
+export const action = pageAccessAction("tasks", async (user, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { handleTaskAction } = await import("~/modules/services/TaskService");
+  
   // Ensure the result of handleTaskAction is returned
-  return await handleTaskAction(request);
-}
+  return handleTaskAction(request);
+});
 
-export default function Tasks({ loaderData }: Route.ComponentProps) {
+export default function Tasks() {
+  const loaderData = useLoaderData<{ userTasks: any[], userTaskSteps: any[] }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialHide = searchParams.get("hideCompletedTasks") === "true";
   const initialCategory = searchParams.get("filterCategory") || "";

@@ -18,6 +18,7 @@ import { ConsoleLogWriter } from 'drizzle-orm';
 interface SidebarProps {
   isAuthenticated: boolean;
   isAdmin?: boolean;
+  accessiblePages?: string[];
 }
 
 const navItemsUnauth = [
@@ -26,20 +27,20 @@ const navItemsUnauth = [
 ];
 
 const navItemsAuth = [
-  { to: '/dashboard', label: 'Dashboard', icon: HomeIcon },
-  { to: '/finance', label: 'Finance', icon: CurrencyDollarIcon },
-  { to: '/tasks', label: 'Tasks', icon: ClipboardDocumentListIcon },
-  { to: '/principles', label: 'Principles', icon: BookOpenIcon },
-  { to: '/utilities/commands', label: 'Commands', icon: CommandLineIcon },
-  { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon },
+  { to: '/dashboard', label: 'Dashboard', icon: HomeIcon, pageId: 'dashboard' },
+  { to: '/finance', label: 'Finance', icon: CurrencyDollarIcon, pageId: 'finance' },
+  { to: '/tasks', label: 'Tasks', icon: ClipboardDocumentListIcon, pageId: 'tasks' },
+  { to: '/principles', label: 'Principles', icon: BookOpenIcon, pageId: 'principles' },
+  { to: '/utilities/commands', label: 'Commands', icon: CommandLineIcon, pageId: 'utilities/commands' },
+  { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon, pageId: 'logout' },
 ];
 
 // Admin-only navigation items
 const navItemsAdmin = [
-  { to: '/admin', label: 'Admin', icon: Cog8ToothIcon },
+  { to: '/admin', label: 'Admin', icon: Cog8ToothIcon, pageId: 'admin' },
 ];
 
-export default function Sidebar({ isAuthenticated, isAdmin = false }: SidebarProps) {
+export default function Sidebar({ isAuthenticated, isAdmin = false, accessiblePages = [] }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false); // New state for desktop collapse
 
@@ -51,10 +52,18 @@ export default function Sidebar({ isAuthenticated, isAdmin = false }: SidebarPro
     setIsDesktopCollapsed(!isDesktopCollapsed);
   };
 
-  // Determine which nav items to show based on auth status and admin role
-  let navItems = isAuthenticated ? [...navItemsAuth] : navItemsUnauth;
+  // Determine which nav items to show based on auth status, admin role, and page access
+  let navItems = isAuthenticated 
+    ? navItemsAuth.filter(item => {
+        // Special pages like logout are always accessible
+        if (item.pageId === 'logout') return true;
+        
+        // Check if the page is in the accessible pages list
+        return accessiblePages.includes(item.pageId);
+      }) 
+    : navItemsUnauth;
   
-  // Add admin nav items if the user is an admin
+  // Add admin nav items if the user is an admin (admins always have access to admin pages)
   if (isAuthenticated && isAdmin) {
     navItems = [...navItemsAdmin, ...navItems];
   }

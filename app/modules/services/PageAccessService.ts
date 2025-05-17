@@ -112,3 +112,49 @@ export async function hasPageAccess(
 
   return allowedPages.includes(pageId);
 }
+
+// Helper function to get all pages a user has access to
+export async function getUserAccessiblePages(
+  userId: number
+): Promise<string[]> {
+  const users = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+
+  if (users.length === 0) {
+    return [];
+  }
+
+  const user = users[0];
+
+  // Admins have access to all pages
+  if (user.role === "admin") {
+    // Return all possible page IDs (this should ideally be pulled from a central registry)
+    return [
+      "dashboard",
+      "finance",
+      "tasks",
+      "principles",
+      "utilities/commands",
+      "admin",
+    ];
+  }
+
+  // Parse allowed pages
+  const allowedPages: string[] = user.allowedPages
+    ? typeof user.allowedPages === "string"
+      ? JSON.parse(user.allowedPages)
+      : user.allowedPages
+    : [];
+
+  // Everyone has access to dashboard by default
+  if (!allowedPages.includes("dashboard")) {
+    allowedPages.push("dashboard");
+  }
+
+  return allowedPages;
+}
+
+// Export the hasPageAccess function directly for convenience when working with client components
+export const hasPageAccessClient = hasPageAccess;
