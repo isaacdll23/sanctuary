@@ -76,6 +76,3 @@ export function pageAccessAction<ActionData>(
     return actionFn(user, request);
   };
 }
-
-// Export the NotAuthorized component from a separate file
-export { default as NotAuthorized } from "~/components/auth/NotAuthorized";
