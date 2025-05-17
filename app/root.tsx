@@ -55,7 +55,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />
       </head>
       <body className="m-0 p-0 h-screen flex">
-        <Sidebar isAuthenticated={isAuthenticated} />
+        <Sidebar isAuthenticated={isAuthenticated} isAdmin={isAdmin} />
         <div className="flex-1 flex flex-col overflow-hidden">
           {children}
         </div>

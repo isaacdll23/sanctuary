@@ -10,8 +10,10 @@ import {
   ArrowRightEndOnRectangleIcon,
   ArrowLeftEndOnRectangleIcon,
   CommandLineIcon,
-  BookOpenIcon
+  BookOpenIcon,
+  Cog8ToothIcon
 } from '@heroicons/react/24/outline';
+import { ConsoleLogWriter } from 'drizzle-orm';
 
 interface SidebarProps {
   isAuthenticated: boolean;
@@ -32,6 +34,11 @@ const navItemsAuth = [
   { to: '/auth/logout', label: 'Logout', icon: ArrowLeftEndOnRectangleIcon },
 ];
 
+// Admin-only navigation items
+const navItemsAdmin = [
+  { to: '/admin', label: 'Admin', icon: Cog8ToothIcon },
+];
+
 export default function Sidebar({ isAuthenticated, isAdmin = false }: SidebarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false); // New state for desktop collapse
@@ -44,7 +51,13 @@ export default function Sidebar({ isAuthenticated, isAdmin = false }: SidebarPro
     setIsDesktopCollapsed(!isDesktopCollapsed);
   };
 
-  const navItems = isAuthenticated ? navItemsAuth : navItemsUnauth;
+  // Determine which nav items to show based on auth status and admin role
+  let navItems = isAuthenticated ? [...navItemsAuth] : navItemsUnauth;
+  
+  // Add admin nav items if the user is an admin
+  if (isAuthenticated && isAdmin) {
+    navItems = [...navItemsAdmin, ...navItems];
+  }
 
   return (
     <>

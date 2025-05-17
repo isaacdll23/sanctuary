@@ -1,51 +1,39 @@
-import { redirect } from "react-router";
-import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import { db } from "~/db";
-import { usersTable } from "~/db/schema";
-import type { Route } from "./+types/admin";
-import { handlePageAccessAction } from "~/modules/services/PageAccessService";
+import { useLoaderData } from "react-router";
 import PageAccessManager from "~/components/admin/PageAccessManager";
+import { adminOnlyLoader, adminOnlyAction } from "~/modules/middleware/adminOnly";
 
-export function meta({}: Route.MetaArgs) {
+// Use React Router v7's auto-generated types (no need for manual import)
+
+export function meta() {
   return [{ title: "Admin Portal" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  // First ensure the user is authenticated
-  await requireAuth(request);
-  
-  // Then get the user
-  const user = await getUserFromSession(request);
-  
-  // Check if the user has admin role
-  if (user.role !== "admin") {
-    // Redirect non-admin users
-    return redirect("/dashboard");
-  }
-  
+// Use the adminOnlyLoader middleware to protect this route
+export const loader = adminOnlyLoader(async (adminUser, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { db } = await import("~/db");
+  const { usersTable } = await import("~/db/schema");
+
   // Fetch all users for the admin dashboard
   const users = await db
     .select()
     .from(usersTable)
     .orderBy(usersTable.username);
   
-  return { users, currentUser: user };
-}
+  return { users, currentUser: adminUser };
+});
 
-export async function action({ request }: Route.ActionArgs) {
-  // Ensure the user is authenticated and has admin role
-  await requireAuth(request);
-  const currentUser = await getUserFromSession(request);
-  if (currentUser.role !== 'admin') {
-    throw new Response('Unauthorized', { status: 403 });
-  }
-  
+// Use the adminOnlyAction middleware to protect this action
+export const action = adminOnlyAction(async (adminUser, request) => {
+  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
+  const { handlePageAccessAction } = await import("~/modules/services/PageAccessService");
+
   // Handle page access actions (grant/revoke permissions)
   return handlePageAccessAction(request);
-}
+});
 
-export default function Admin({ loaderData }: Route.ComponentProps) {
-  const { users, currentUser } = loaderData;
+export default function Admin() {
+  const { users, currentUser } = useLoaderData<{ users: any[], currentUser: any }>();
   
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
@@ -76,9 +64,8 @@ export default function Admin({ loaderData }: Route.ComponentProps) {
                     <th className="text-left p-4">Created</th>
                     <th className="text-left p-4 rounded-tr-lg">Actions</th>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700">
-                  {users.map(user => (
+                </thead>                <tbody className="divide-y divide-slate-700">
+                  {users.map((user: any) => (
                     <tr key={user.id} className="hover:bg-slate-700/50">
                       <td className="p-4">{user.username}</td>
                       <td className="p-4">{user.email}</td>
