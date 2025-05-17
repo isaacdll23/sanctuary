@@ -1,4 +1,10 @@
-import { integer, pgTable, timestamp, varchar, text } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+} from "drizzle-orm/pg-core";
 
 // Core Tables
 export const usersTable = pgTable("users", {
