@@ -15,7 +15,7 @@ export async function action({ request }: Route.ActionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
 
   if (session.has("userId")) {
-    return redirect("/golf");
+    return redirect("/dashboard");
   }
 
   let formData = await request.formData();

@@ -7,7 +7,6 @@ const APP_PAGES = [
   { id: 'tasks', label: 'Tasks' },
   { id: 'finance', label: 'Finance' },
   { id: 'principles', label: 'Principles' },
-  { id: 'golf', label: 'Golf' },
   { id: 'utilities/commands', label: 'Utilities Commands' }
 ];
 
