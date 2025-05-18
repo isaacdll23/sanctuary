@@ -66,12 +66,12 @@ export default function PrinciplesPage() {
 
   // Filter principles client-side using fuzzyMatch
   const filteredPrinciples = useMemo(() => {
-    if (!searchQuery) return principles;
-    return principles.filter(
+    if (!searchQuery) return initialPrinciples;
+    return initialPrinciples.filter(
       (p: any) =>
         fuzzyMatch(p.title, searchQuery) || fuzzyMatch(p.content, searchQuery)
     );
-  }, [principles, searchQuery]);
+  }, [initialPrinciples, searchQuery]);
 
   // Ref to track the previous state of the fetcher to detect state transitions
   const prevFetcherStateRef = useRef(fetcher.state);
@@ -107,19 +107,15 @@ export default function PrinciplesPage() {
   }, [fetcher.state, fetcher.data, revalidator, selectedPrincipleId]); // isEditing is intentionally not a dependency here
 
   const selectedPrinciple = useMemo(() => {
-    return principles.find((p: any) => p.id === selectedPrincipleId) || null;
-  }, [principles, selectedPrincipleId]);
+    return (
+      filteredPrinciples.find((p: any) => p.id === selectedPrincipleId) || null
+    );
+  }, [filteredPrinciples, selectedPrincipleId]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchQuery(value);
-    // Only trigger server-side search if query is not empty
-    if (value) {
-      fetcher.load(`/principles?q=${encodeURIComponent(value)}`);
-    } else {
-      // If search is cleared, reload all principles from the server
-      fetcher.load(`/principles`);
-    }
+    // No server-side search; all filtering is client-side now
   };
 
   const handleSelectPrinciple = (
