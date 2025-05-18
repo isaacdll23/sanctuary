@@ -116,6 +116,9 @@ export default function PrinciplesPage() {
     // Only trigger server-side search if query is not empty
     if (value) {
       fetcher.load(`/principles?q=${encodeURIComponent(value)}`);
+    } else {
+      // If search is cleared, reload all principles from the server
+      fetcher.load(`/principles`);
     }
   };
 
