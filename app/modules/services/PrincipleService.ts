@@ -14,7 +14,9 @@ export async function handlePrincipleAction(request: Request) {
     const content = formData.get("content") as string;
 
     if (!title || !content) {
-      throw new Error("Title and Content are required for creating a principle.");
+      throw new Error(
+        "Title and Content are required for creating a principle."
+      );
     }
 
     const newPrinciple = await db
@@ -23,11 +25,15 @@ export async function handlePrincipleAction(request: Request) {
         userId: user.id,
         title: title.trim(),
         content: content.trim(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
       .returning();
-    
-    return { success: true, message: "Principle created.", principle: newPrinciple[0] };
+
+    return {
+      success: true,
+      message: "Principle created.",
+      principle: newPrinciple[0],
+    };
   }
 
   // Update principle
@@ -37,19 +43,27 @@ export async function handlePrincipleAction(request: Request) {
     const content = formData.get("content") as string;
 
     if (!principleId || !title || !content) {
-      throw new Error("Principle ID, Title, and Content are required for updating.");
+      throw new Error(
+        "Principle ID, Title, and Content are required for updating."
+      );
     }
 
-    await db
+    const updatedPrinciples = await db
       .update(principlesTable)
       .set({
         title: title.trim(),
         content: content.trim(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
-      .where(eq(principlesTable.id, principleId));
-    
-    return { success: true, message: "Principle updated." };
+      .where(eq(principlesTable.id, principleId))
+      .returning(); // Added .returning() to get the updated record
+
+    // Return the updated principle, ensuring one was actually updated and returned
+    return {
+      success: true,
+      message: "Principle updated.",
+      principle: updatedPrinciples[0] || null,
+    };
   }
 
   // Delete principle
@@ -60,17 +74,15 @@ export async function handlePrincipleAction(request: Request) {
       throw new Error("Principle ID is required for deletion.");
     }
 
-    await db
-      .delete(principlesTable)
-      .where(eq(principlesTable.id, principleId));
-    
+    await db.delete(principlesTable).where(eq(principlesTable.id, principleId));
+
     return { success: true, message: "Principle deleted." };
   }
 
   // If no matching intent was found
-  return { 
-    success: false, 
-    message: "Unknown action or missing required parameters." 
+  return {
+    success: false,
+    message: "Unknown action or missing required parameters.",
   };
 }
 
@@ -92,6 +104,6 @@ export async function getPrinciple(principleId: number, userId: number) {
         eq(principlesTable.userId, userId)
       )
     );
-  
+
   return results[0] || null;
 }
