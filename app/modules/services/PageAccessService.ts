@@ -135,7 +135,7 @@ export async function getUserAccessiblePages(
       "dashboard",
       "finance",
       "tasks",
-      "principles",
+      "notes", // Updated from principles to notes
       "utilities/commands",
       "admin",
       "profile", // Ensure admin always sees profile page
