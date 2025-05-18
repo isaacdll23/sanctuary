@@ -9,7 +9,11 @@ import {
 } from "react-router";
 
 import type { Route } from "./+types/root";
-import { getUserFromSession, isSessionCreated, isUserAdmin } from "./modules/auth.server";
+import {
+  getUserFromSession,
+  isSessionCreated,
+  isUserAdmin,
+} from "./modules/auth.server";
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
@@ -31,10 +35,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   let isAuthenticated = await isSessionCreated(request);
   let isAdmin = false;
   let accessiblePages: string[] = [];
-  
+
   if (isAuthenticated) {
     isAdmin = await isUserAdmin(request);
-    
+
     // Get the user and their accessible pages
     try {
       const user = await getUserFromSession(request);
@@ -49,10 +53,10 @@ export async function loader({ request }: Route.LoaderArgs) {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin, accessiblePages } = useLoaderData<{ 
-    isAuthenticated: boolean, 
-    isAdmin: boolean,
-    accessiblePages: string[]
+  const { isAuthenticated, isAdmin, accessiblePages } = useLoaderData<{
+    isAuthenticated: boolean;
+    isAdmin: boolean;
+    accessiblePages: string[];
   }>();
 
   return (
@@ -67,16 +71,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
-        />      </head>
+        />{" "}
+      </head>
       <body className="m-0 p-0 h-screen flex">
-        <Sidebar 
-          isAuthenticated={isAuthenticated} 
+        <Sidebar
+          isAuthenticated={isAuthenticated}
           isAdmin={isAdmin}
-          accessiblePages={accessiblePages} 
+          accessiblePages={accessiblePages}
         />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {children}
-        </div>
+        <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -86,7 +89,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <main className="flex-1 overflow-y-auto p-4 md:p-6"> {/* Adjusted padding and overflow */}
+    <main className="flex-1 overflow-y-auto p-4 md:p-6">
+      {" "}
+      {/* Adjusted padding and overflow */}
       <Outlet />
     </main>
   );

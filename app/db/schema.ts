@@ -68,12 +68,22 @@ export const financeIncomeTable = pgTable("finance_income", {
   createdAt: timestamp().defaultNow().notNull(),
 });
 
-// Principles Tables
-export const principlesTable = pgTable("principles", {
+// Notes & Folders Tables
+export const foldersTable = pgTable("folders", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: integer()
     .notNull()
     .references(() => usersTable.id),
+  name: varchar({ length: 255 }).notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+});
+
+export const notesTable = pgTable("notes", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  folderId: integer().references(() => foldersTable.id), // nullable for notes not in a folder
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(),
   createdAt: timestamp().defaultNow().notNull(),

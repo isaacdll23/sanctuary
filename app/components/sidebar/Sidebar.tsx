@@ -40,10 +40,10 @@ const navItemsAuth = [
     pageId: "tasks",
   },
   {
-    to: "/principles",
-    label: "Principles",
+    to: "/notes",
+    label: "Notes",
     icon: BookOpenIcon,
-    pageId: "principles",
+    pageId: "notes",
   },
   {
     to: "/utilities/commands",
