@@ -261,24 +261,34 @@ export default function NotesPage() {
           ))}
           <hr className="my-2 border-slate-700" />
           {filteredNotes.length > 0 ? (
-            filteredNotes.map((n: any) => (
-              <div
-                key={n.id}
-                draggable
-                onDragStart={() => setDraggedNoteId(n.id)}
-                onDragEnd={() => setDraggedNoteId(null)}
-                onClick={() => handleSelectNote(n)}
-                className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
-                  selectedNoteId === n.id
-                    ? "bg-slate-700 ring-2 ring-purple-500"
-                    : "bg-slate-800"
-                }`}
-              >
-                <h3 className="font-semibold truncate text-purple-400">
-                  {n.title}
-                </h3>
-              </div>
-            ))
+            filteredNotes.map((n: any) => {
+              const folder = folders.find((f: any) => f.id === n.folderId);
+              return (
+                <div
+                  key={n.id}
+                  draggable
+                  onDragStart={() => setDraggedNoteId(n.id)}
+                  onDragEnd={() => setDraggedNoteId(null)}
+                  onClick={() => handleSelectNote(n)}
+                  className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
+                    selectedNoteId === n.id
+                      ? "bg-slate-700 ring-2 ring-purple-500"
+                      : "bg-slate-800"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold truncate text-purple-400">
+                      {n.title}
+                    </h3>
+                    {folder && (
+                      <span className="ml-2 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-300 border border-slate-600">
+                        {folder.name}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <p className="text-slate-400 text-center py-4">
               {searchQuery
