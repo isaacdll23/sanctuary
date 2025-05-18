@@ -73,12 +73,11 @@ export default function NotesPage() {
   const [draggedNoteId, setDraggedNoteId] = useState<number | null>(null);
   const [dragOverTargetId, setDragOverTargetId] = useState<
     string | number | null
-  >(null); // Added state for drag over target
+  >(null);
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
 
-  // Filter notes by search and folder
   const filteredNotes = useMemo(() => {
     let filtered = notes;
     if (selectedFolderId) {
@@ -160,7 +159,6 @@ export default function NotesPage() {
 
   return (
     <div className="flex h-screen bg-slate-900 text-slate-100">
-      {/* Sidebar: Folders and Notes */}
       <div className="w-1/3 border-r border-slate-700 p-4 flex flex-col">
         <div className="mb-4">
           <div className="relative">
@@ -210,10 +208,10 @@ export default function NotesPage() {
             <button
               className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
                 dragOverTargetId === "all"
-                  ? "bg-purple-800 ring-2 ring-purple-400" // Drag over style
+                  ? "bg-purple-800 ring-2 ring-purple-400"
                   : selectedFolderId === null
-                  ? "bg-slate-700 ring-2 ring-purple-500" // Selected style
-                  : "bg-slate-800 hover:bg-slate-700" // Default style
+                  ? "bg-slate-700 ring-2 ring-purple-500"
+                  : "bg-slate-800 hover:bg-slate-700"
               }`}
               onClick={() => handleFolderSelect(null)}
               onDragOver={(e) => {
@@ -230,13 +228,13 @@ export default function NotesPage() {
                   fetcher.submit(
                     {
                       intent: "moveNoteToFolder",
-                      noteId: draggedNoteId.toString(), // Ensure noteId is a string
+                      noteId: draggedNoteId.toString(),
                       folderId: "",
                     },
                     { method: "post", action: "/notes" }
                   );
                   setDraggedNoteId(null);
-                  setDragOverTargetId(null); // Reset drag over target
+                  setDragOverTargetId(null);
                 }
               }}
             >
@@ -249,10 +247,10 @@ export default function NotesPage() {
               <button
                 className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
                   dragOverTargetId === folder.id
-                    ? "bg-purple-800 ring-2 ring-purple-400" // Drag over style
+                    ? "bg-purple-800 ring-2 ring-purple-400"
                     : selectedFolderId === folder.id
-                    ? "bg-slate-700 ring-2 ring-purple-500" // Selected style
-                    : "bg-slate-800 hover:bg-slate-700" // Default style
+                    ? "bg-slate-700 ring-2 ring-purple-500"
+                    : "bg-slate-800 hover:bg-slate-700"
                 }`}
                 onClick={() => handleFolderSelect(folder.id)}
                 onDragOver={(e) => {
@@ -269,13 +267,13 @@ export default function NotesPage() {
                     fetcher.submit(
                       {
                         intent: "moveNoteToFolder",
-                        noteId: draggedNoteId.toString(), // Ensure noteId is a string
-                        folderId: folder.id.toString(), // Ensure folderId is a string
+                        noteId: draggedNoteId.toString(),
+                        folderId: folder.id.toString(),
                       },
                       { method: "post", action: "/notes" }
                     );
                     setDraggedNoteId(null);
-                    setDragOverTargetId(null); // Reset drag over target
+                    setDragOverTargetId(null);
                   }
                 }}
               >
@@ -295,7 +293,7 @@ export default function NotesPage() {
                   onDragStart={() => setDraggedNoteId(n.id)}
                   onDragEnd={() => {
                     setDraggedNoteId(null);
-                    setDragOverTargetId(null); // Reset drag over target on drag end
+                    setDragOverTargetId(null);
                   }}
                   onClick={() => handleSelectNote(n)}
                   className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
@@ -326,7 +324,6 @@ export default function NotesPage() {
           )}
         </div>
       </div>
-      {/* Right Column: Preview or Edit Note */}
       <div className="w-2/3 p-6 overflow-y-auto">
         {isEditing ? (
           <NoteEditor
@@ -382,7 +379,6 @@ export default function NotesPage() {
   );
 }
 
-// In-place editor component
 function NoteEditor({
   note,
   fetcher,
