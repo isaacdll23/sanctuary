@@ -10,6 +10,7 @@ export default [
   route("principles", "routes/principles/principles.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
   route("admin", "routes/admin/admin.tsx"),
+  route("profile", "routes/profile.tsx"),
   route("auth/login", "routes/auth/login.tsx"),
   route("auth/logout", "routes/auth/logout.tsx"),
   route("auth/register", "routes/auth/register.tsx"),

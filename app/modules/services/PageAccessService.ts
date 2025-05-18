@@ -138,6 +138,7 @@ export async function getUserAccessiblePages(
       "principles",
       "utilities/commands",
       "admin",
+      "profile", // Ensure admin always sees profile page
     ];
   }
 

@@ -52,6 +52,12 @@ const navItemsAuth = [
     pageId: "utilities/commands",
   },
   {
+    to: "/profile",
+    label: "Profile",
+    icon: UserCircleIcon,
+    pageId: "profile",
+  },
+  {
     to: "/auth/logout",
     label: "Logout",
     icon: ArrowLeftEndOnRectangleIcon,
