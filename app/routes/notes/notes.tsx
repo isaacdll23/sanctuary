@@ -70,6 +70,7 @@ export default function NotesPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showFolderInput, setShowFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [draggedNoteId, setDraggedNoteId] = useState<number | null>(null);
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
@@ -210,6 +211,20 @@ export default function NotesPage() {
                   : "bg-slate-800 hover:bg-slate-700"
               }`}
               onClick={() => handleFolderSelect(null)}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                if (draggedNoteId) {
+                  fetcher.submit(
+                    {
+                      intent: "moveNoteToFolder",
+                      noteId: draggedNoteId,
+                      folderId: "",
+                    },
+                    { method: "post", action: "/notes" }
+                  );
+                  setDraggedNoteId(null);
+                }
+              }}
             >
               <FolderIcon className="h-5 w-5 mr-2 text-slate-400" />
               All Notes
@@ -224,6 +239,20 @@ export default function NotesPage() {
                     : "bg-slate-800 hover:bg-slate-700"
                 }`}
                 onClick={() => handleFolderSelect(folder.id)}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  if (draggedNoteId) {
+                    fetcher.submit(
+                      {
+                        intent: "moveNoteToFolder",
+                        noteId: draggedNoteId,
+                        folderId: folder.id,
+                      },
+                      { method: "post", action: "/notes" }
+                    );
+                    setDraggedNoteId(null);
+                  }
+                }}
               >
                 <FolderIcon className="h-5 w-5 mr-2 text-purple-400" />
                 {folder.name}
@@ -235,6 +264,9 @@ export default function NotesPage() {
             filteredNotes.map((n: any) => (
               <div
                 key={n.id}
+                draggable
+                onDragStart={() => setDraggedNoteId(n.id)}
+                onDragEnd={() => setDraggedNoteId(null)}
                 onClick={() => handleSelectNote(n)}
                 className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
                   selectedNoteId === n.id
