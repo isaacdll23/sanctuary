@@ -1,12 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { eq, desc, or, like, sql } from "drizzle-orm";
-import {
-  useFetcher,
-  useLoaderData,
-  Form,
-  Await,
-  useRevalidator,
-} from "react-router";
+import { desc, sql } from "drizzle-orm";
+import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -18,17 +12,7 @@ import {
   pageAccessLoader,
   pageAccessAction,
 } from "~/modules/middleware/pageAccess";
-import { fuzzyMatch } from "~/utils/fuzzyMatch"; // Assuming this is still relevant for client-side filtering if needed
 import type { principlesTable } from "~/db/schema"; // Ensure this type is correctly imported
-
-// Helper function to get the server URL (replace with your actual logic if different)
-const getServerUrl = () => {
-  if (typeof window !== "undefined") {
-    return window.location.origin;
-  }
-  // Fallback for server-side rendering, ensure this is correctly set for your environment
-  return process.env.SERVER_URL || "http://localhost:3000";
-};
 
 export function meta() {
   return [{ title: "Principles" }];
@@ -183,9 +167,6 @@ export default function PrinciplesPage() {
                 <h3 className="font-semibold truncate text-purple-400">
                   {p.title}
                 </h3>
-                <p className="text-sm text-slate-400 truncate">
-                  {p.content.substring(0, 100)}...
-                </p>
               </div>
             ))
           ) : (
@@ -277,29 +258,8 @@ function PrincipleEditor({
     setContent(principle?.content || "");
   }, [principle]);
 
-  const handleSubmit = (event: React.FormEvent) => {
-    // The fetcher.Form will handle the submission.
-    // We might not need to call fetcher.submit explicitly if using fetcher.Form correctly.
-    // However, if we need to do something before submission or if not using fetcher.Form directly for the submit button:
-    // event.preventDefault(); // if not using fetcher.Form's implicit submission
-    // fetcher.submit(
-    //   {
-    //     intent: isNew ? "createPrinciple" : "updatePrinciple",
-    //     principleId: principle?.id?.toString(),
-    //     title,
-    //     content,
-    //   },
-    //   { method: "post", action: "/principles" }
-    // );
-  };
-
   return (
-    <fetcher.Form
-      method="post"
-      action="/principles"
-      onSubmit={handleSubmit}
-      className="space-y-6"
-    >
+    <fetcher.Form method="post" action="/principles" className="space-y-6">
       <input
         type="hidden"
         name="intent"
