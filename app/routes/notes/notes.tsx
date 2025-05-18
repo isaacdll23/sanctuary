@@ -71,6 +71,9 @@ export default function NotesPage() {
   const [showFolderInput, setShowFolderInput] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [draggedNoteId, setDraggedNoteId] = useState<number | null>(null);
+  const [dragOverTargetId, setDragOverTargetId] = useState<
+    string | number | null
+  >(null); // Added state for drag over target
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
@@ -206,23 +209,34 @@ export default function NotesPage() {
           <div className="mb-2">
             <button
               className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-                selectedFolderId === null
-                  ? "bg-slate-700 ring-2 ring-purple-500"
-                  : "bg-slate-800 hover:bg-slate-700"
+                dragOverTargetId === "all"
+                  ? "bg-purple-800 ring-2 ring-purple-400" // Drag over style
+                  : selectedFolderId === null
+                  ? "bg-slate-700 ring-2 ring-purple-500" // Selected style
+                  : "bg-slate-800 hover:bg-slate-700" // Default style
               }`}
               onClick={() => handleFolderSelect(null)}
-              onDragOver={(e) => e.preventDefault()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (draggedNoteId) setDragOverTargetId("all");
+              }}
+              onDragEnter={(e) => {
+                e.preventDefault();
+                if (draggedNoteId) setDragOverTargetId("all");
+              }}
+              onDragLeave={() => setDragOverTargetId(null)}
               onDrop={(e) => {
                 if (draggedNoteId) {
                   fetcher.submit(
                     {
                       intent: "moveNoteToFolder",
-                      noteId: draggedNoteId,
+                      noteId: draggedNoteId.toString(), // Ensure noteId is a string
                       folderId: "",
                     },
                     { method: "post", action: "/notes" }
                   );
                   setDraggedNoteId(null);
+                  setDragOverTargetId(null); // Reset drag over target
                 }
               }}
             >
@@ -234,23 +248,34 @@ export default function NotesPage() {
             <div key={folder.id} className="mb-1">
               <button
                 className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  selectedFolderId === folder.id
-                    ? "bg-slate-700 ring-2 ring-purple-500"
-                    : "bg-slate-800 hover:bg-slate-700"
+                  dragOverTargetId === folder.id
+                    ? "bg-purple-800 ring-2 ring-purple-400" // Drag over style
+                    : selectedFolderId === folder.id
+                    ? "bg-slate-700 ring-2 ring-purple-500" // Selected style
+                    : "bg-slate-800 hover:bg-slate-700" // Default style
                 }`}
                 onClick={() => handleFolderSelect(folder.id)}
-                onDragOver={(e) => e.preventDefault()}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  if (draggedNoteId) setDragOverTargetId(folder.id);
+                }}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  if (draggedNoteId) setDragOverTargetId(folder.id);
+                }}
+                onDragLeave={() => setDragOverTargetId(null)}
                 onDrop={(e) => {
                   if (draggedNoteId) {
                     fetcher.submit(
                       {
                         intent: "moveNoteToFolder",
-                        noteId: draggedNoteId,
-                        folderId: folder.id,
+                        noteId: draggedNoteId.toString(), // Ensure noteId is a string
+                        folderId: folder.id.toString(), // Ensure folderId is a string
                       },
                       { method: "post", action: "/notes" }
                     );
                     setDraggedNoteId(null);
+                    setDragOverTargetId(null); // Reset drag over target
                   }
                 }}
               >
@@ -268,7 +293,10 @@ export default function NotesPage() {
                   key={n.id}
                   draggable
                   onDragStart={() => setDraggedNoteId(n.id)}
-                  onDragEnd={() => setDraggedNoteId(null)}
+                  onDragEnd={() => {
+                    setDraggedNoteId(null);
+                    setDragOverTargetId(null); // Reset drag over target on drag end
+                  }}
                   onClick={() => handleSelectNote(n)}
                   className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
                     selectedNoteId === n.id
