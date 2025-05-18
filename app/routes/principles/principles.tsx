@@ -13,6 +13,7 @@ import {
   pageAccessAction,
 } from "~/modules/middleware/pageAccess";
 import type { principlesTable } from "~/db/schema"; // Ensure this type is correctly imported
+import { fuzzyMatch } from "~/utils/fuzzyMatch";
 
 export function meta() {
   return [{ title: "Principles" }];
@@ -63,6 +64,15 @@ export default function PrinciplesPage() {
 
   const principles = fetcher.data?.principles || initialPrinciples;
 
+  // Filter principles client-side using fuzzyMatch
+  const filteredPrinciples = useMemo(() => {
+    if (!searchQuery) return principles;
+    return principles.filter(
+      (p: any) =>
+        fuzzyMatch(p.title, searchQuery) || fuzzyMatch(p.content, searchQuery)
+    );
+  }, [principles, searchQuery]);
+
   // Ref to track the previous state of the fetcher to detect state transitions
   const prevFetcherStateRef = useRef(fetcher.state);
 
@@ -101,11 +111,12 @@ export default function PrinciplesPage() {
   }, [principles, selectedPrincipleId]);
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-    // Trigger a fetcher.load or navigate to update results based on search query
-    // For simplicity, this example uses client-side filtering first, then shows server-side.
-    // Ideally, debounce this and use fetcher.load or navigate to update via loader.
-    fetcher.load(`/principles?q=${encodeURIComponent(event.target.value)}`);
+    const value = event.target.value;
+    setSearchQuery(value);
+    // Only trigger server-side search if query is not empty
+    if (value) {
+      fetcher.load(`/principles?q=${encodeURIComponent(value)}`);
+    }
   };
 
   const handleSelectPrinciple = (
@@ -153,8 +164,8 @@ export default function PrinciplesPage() {
           New Principle
         </button>
         <div className="flex-grow overflow-y-auto space-y-2 p-1">
-          {principles.length > 0 ? (
-            principles.map((p: any) => (
+          {filteredPrinciples.length > 0 ? (
+            filteredPrinciples.map((p: any) => (
               <div
                 key={p.id}
                 onClick={() => handleSelectPrinciple(p)}
