@@ -1,4 +1,3 @@
-// Renamed and refactored from principles.tsx to notes.tsx
 import { useState, useEffect, useMemo, useRef } from "react";
 import { desc, sql } from "drizzle-orm";
 import { useFetcher, useLoaderData, useRevalidator } from "react-router";
