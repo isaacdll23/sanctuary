@@ -91,7 +91,7 @@ export async function handleNoteAction(request: Request) {
         name: name.trim(),
       })
       .returning();
-    const folders = await getFolders(user.id); // cache folders
+    const folders = await getFolders(user.id);
     return {
       success: true,
       message: "Folder created.",
@@ -112,7 +112,7 @@ export async function handleNoteAction(request: Request) {
         and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
       )
       .returning();
-    const folders = await getFolders(user.id); // cache folders
+    const folders = await getFolders(user.id);
     if (updated.length === 0) {
       return {
         success: false,
@@ -145,7 +145,7 @@ export async function handleNoteAction(request: Request) {
         and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
       )
       .returning();
-    const folders = await getFolders(user.id); // cache folders
+    const folders = await getFolders(user.id);
     if (deleted.length === 0) {
       return {
         success: false,
