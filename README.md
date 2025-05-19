@@ -2,6 +2,9 @@
 
 Sanctuary is a modern, full-stack productivity and personal management app built with React Router, TypeScript, Drizzle ORM, and Tailwind CSS. It provides a robust platform for managing tasks, finances, utilities, and more—all with a beautiful, responsive UI and a focus on user experience.
 
+![image](https://github.com/user-attachments/assets/4ddd8b10-83bd-446c-885a-7e24ec2763bc)
+
+
 ## Features
 
 - 📝 **Task Management**: Organize, track, and complete your work with categories, steps, and filtering.
