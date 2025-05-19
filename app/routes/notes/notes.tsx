@@ -106,11 +106,11 @@ export default function NotesPage() {
       fetcher.data
     ) {
       const data = fetcher.data;
-      console.log("Fetcher data:", data);
+
       if (data.success) {
         setIsEditing(false);
         let toastMessage = data.message;
-        console.log("Data:", data);
+
         if (data.createdNoteId) {
           setSelectedNoteId(data.createdNoteId);
           toastMessage = toastMessage || "Note created successfully!";
@@ -130,10 +130,10 @@ export default function NotesPage() {
         } else {
           toastMessage = toastMessage || "Action completed successfully!";
         }
-        console.log("Toast message:", toastMessage);
-        addToast(toastMessage, "success");
+
+        addToast(toastMessage, "success", 3000);
       } else if (data.error) {
-        addToast(data.error, "error");
+        addToast(data.error, "error", 5000);
       }
     }
     prevFetcherStateRef.current = fetcher.state;
