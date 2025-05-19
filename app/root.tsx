@@ -17,6 +17,7 @@ import {
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
+import { ToastProvider } from "./context/ToastContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -74,14 +75,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
         />{" "}
       </head>
       <body className="m-0 p-0 h-screen flex">
-        <Sidebar
-          isAuthenticated={isAuthenticated}
-          isAdmin={isAdmin}
-          accessiblePages={accessiblePages}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
-        <ScrollRestoration />
-        <Scripts />
+        <ToastProvider>
+          <Sidebar
+            isAuthenticated={isAuthenticated}
+            isAdmin={isAdmin}
+            accessiblePages={accessiblePages}
+          />
+          <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
+          <ScrollRestoration />
+          <Scripts />
+        </ToastProvider>
       </body>
     </html>
   );

@@ -17,6 +17,7 @@ import {
 } from "~/modules/middleware/pageAccess";
 import type { notesTable, foldersTable } from "~/db/schema";
 import { fuzzyMatch } from "~/utils/fuzzyMatch";
+import { useToast } from "~/hooks/useToast";
 
 export function meta() {
   return [{ title: "Notes" }];
@@ -61,8 +62,9 @@ export default function NotesPage() {
     folders: initialFolders,
     searchTerm: initialSearchTerm,
   } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<any>();
   const revalidator = useRevalidator();
+  const { addToast } = useToast();
 
   const [searchQuery, setSearchQuery] = useState(initialSearchTerm);
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
@@ -95,24 +97,47 @@ export default function NotesPage() {
   const prevFetcherStateRef = useRef(fetcher.state);
   useEffect(() => {
     const previousState = prevFetcherStateRef.current;
+    console.log("Previous fetcher state:", previousState);
+    console.log("Current fetcher state:", fetcher.state);
+    console.log("Fetcher data:", fetcher.data);
     if (
       fetcher.state === "idle" &&
-      previousState === "submitting" &&
+      previousState === "loading" &&
       fetcher.data
     ) {
-      if (fetcher.data.success) {
+      const data = fetcher.data;
+      console.log("Fetcher data:", data);
+      if (data.success) {
         setIsEditing(false);
-        if (fetcher.data.createdNoteId) {
-          setSelectedNoteId(fetcher.data.createdNoteId);
-        } else if (fetcher.data.deletedNoteId) {
-          if (selectedNoteId === fetcher.data.deletedNoteId) {
+        let toastMessage = data.message;
+        console.log("Data:", data);
+        if (data.createdNoteId) {
+          setSelectedNoteId(data.createdNoteId);
+          toastMessage = toastMessage || "Note created successfully!";
+        } else if (data.updatedNoteId) {
+          toastMessage = toastMessage || "Note updated successfully!";
+        } else if (data.deletedNoteId) {
+          if (selectedNoteId === data.deletedNoteId) {
             setSelectedNoteId(null);
           }
+          toastMessage = toastMessage || "Note deleted successfully!";
+        } else if (data.movedNoteId) {
+          toastMessage = toastMessage || "Note moved successfully!";
+        } else if (data.folderCreatedId) {
+          toastMessage = toastMessage || "Folder created successfully!";
+          setNewFolderName("");
+          setShowFolderInput(false);
+        } else {
+          toastMessage = toastMessage || "Action completed successfully!";
         }
+        console.log("Toast message:", toastMessage);
+        addToast(toastMessage, "success");
+      } else if (data.error) {
+        addToast(data.error, "error");
       }
     }
     prevFetcherStateRef.current = fetcher.state;
-  }, [fetcher.state, fetcher.data, revalidator, selectedNoteId]);
+  }, [fetcher.state, fetcher.data, revalidator, selectedNoteId, addToast]);
 
   const selectedNote = useMemo(() => {
     return filteredNotes.find((n: any) => n.id === selectedNoteId) || null;
@@ -224,12 +249,13 @@ export default function NotesPage() {
               }}
               onDragLeave={() => setDragOverTargetId(null)}
               onDrop={(e) => {
+                e.preventDefault();
                 if (draggedNoteId) {
                   fetcher.submit(
                     {
                       intent: "moveNoteToFolder",
                       noteId: draggedNoteId.toString(),
-                      folderId: "",
+                      folderId: "", // Empty string for "no folder"
                     },
                     { method: "post", action: "/notes" }
                   );
@@ -263,6 +289,7 @@ export default function NotesPage() {
                 }}
                 onDragLeave={() => setDragOverTargetId(null)}
                 onDrop={(e) => {
+                  e.preventDefault();
                   if (draggedNoteId) {
                     fetcher.submit(
                       {
@@ -285,33 +312,36 @@ export default function NotesPage() {
           <hr className="my-2 border-slate-700" />
           {filteredNotes.length > 0 ? (
             filteredNotes.map((n: any) => {
-              const folder = folders.find((f: any) => f.id === n.folderId);
+              const currentFolder = folders.find(
+                (f: any) => f.id === n.folderId
+              );
               return (
                 <div
                   key={n.id}
                   draggable
                   onDragStart={() => setDraggedNoteId(n.id)}
-                  onDragEnd={() => {
-                    setDraggedNoteId(null);
-                    setDragOverTargetId(null);
-                  }}
                   onClick={() => handleSelectNote(n)}
-                  className={`p-3 rounded-lg cursor-pointer hover:bg-slate-700 transition-colors ${
-                    selectedNoteId === n.id
-                      ? "bg-slate-700 ring-2 ring-purple-500"
-                      : "bg-slate-800"
-                  }`}
+                  className={`p-3 rounded-lg cursor-grab mb-2 transition-colors
+                    ${draggedNoteId === n.id ? "opacity-50 bg-purple-700" : ""}
+                    ${
+                      selectedNoteId === n.id
+                        ? "bg-purple-600 ring-2 ring-purple-400 shadow-lg"
+                        : "bg-slate-800 hover:bg-slate-700 shadow-md"
+                    }
+                  `}
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold truncate text-purple-400">
-                      {n.title}
-                    </h3>
-                    {folder && (
-                      <span className="ml-2 px-2 py-0.5 text-xs rounded bg-slate-700 text-slate-300 border border-slate-600">
-                        {folder.name}
-                      </span>
-                    )}
-                  </div>
+                  <h3 className="font-semibold text-slate-100 truncate">
+                    {n.title || "Untitled Note"}
+                  </h3>
+                  <p className="text-sm text-slate-400 truncate mt-1">
+                    {n.content?.substring(0, 80) || "No content..."}
+                  </p>
+                  {currentFolder && (
+                    <div className="text-xs text-purple-300 mt-2 flex items-center">
+                      <FolderIcon className="h-4 w-4 mr-1 flex-shrink-0" />
+                      <span>{currentFolder.name}</span>
+                    </div>
+                  )}
                 </div>
               );
             })
