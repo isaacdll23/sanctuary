@@ -9,6 +9,8 @@ import {
   TrashIcon,
   FolderPlusIcon,
   FolderIcon,
+  PencilIcon, // Added
+  XMarkIcon, // Added
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from "react-markdown";
 import {
@@ -76,6 +78,8 @@ export default function NotesPage() {
   const [dragOverTargetId, setDragOverTargetId] = useState<
     string | number | null
   >(null);
+  const [editingFolderId, setEditingFolderId] = useState<number | null>(null); // Added
+  const [editingFolderName, setEditingFolderName] = useState(""); // Added
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
@@ -105,6 +109,15 @@ export default function NotesPage() {
       const data = fetcher.data;
       if (data.success) {
         setIsEditing(false);
+        setEditingFolderId(null); // Added
+        setEditingFolderName(""); // Added
+        // Check if folders were returned, if so, update the local state
+        if (data.folders) {
+          // This part assumes you might want to update folders state directly
+          // or rely on revalidator.revalidate() to refresh loader data.
+          // For simplicity, if `revalidator` is already called or loader data is up-to-date,
+          // direct state update might not be needed if `fetcher.data.folders` is used.
+        }
       } else if (data.error) {
         addToast(data.error, "error", 5000);
       }
@@ -157,6 +170,49 @@ export default function NotesPage() {
     setShowFolderInput(false);
   };
 
+  const handleRenameFolder = (folderId: number) => {
+    const folderToRename = folders.find((f: any) => f.id === folderId);
+    if (!editingFolderName.trim()) {
+      addToast("Folder name cannot be empty.", "error", 3000);
+      setEditingFolderId(null); // Cancel editing
+      setEditingFolderName("");
+      return;
+    }
+    if (folderToRename && folderToRename.name === editingFolderName.trim()) {
+      setEditingFolderId(null); // Cancel editing
+      setEditingFolderName("");
+      return;
+    }
+
+    fetcher.submit(
+      {
+        intent: "renameFolder",
+        folderId: folderId.toString(),
+        name: editingFolderName,
+      },
+      { method: "post", action: "/notes" }
+    );
+    addToast(`Folder renamed to '${editingFolderName}'.`, "success", 3000);
+  };
+
+  const handleDeleteFolder = (folderId: number, folderName: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the folder "${folderName}"? Notes in this folder will be moved to "No Folder".`
+      )
+    ) {
+      fetcher.submit(
+        { intent: "deleteFolder", folderId: folderId.toString() },
+        { method: "post", action: "/notes" }
+      );
+      // Toast is now shown based on fetcher.data in useEffect
+      // addToast(`Folder "${folderName}" deleted.`, "success", 3000);
+      if (selectedFolderId === folderId) {
+        setSelectedFolderId(null); // Deselect if current folder is deleted
+      }
+    }
+  };
+
   return (
     <div className="flex h-screen bg-slate-900 text-slate-100">
       <div className="w-1/3 border-r border-slate-700 p-4 flex flex-col">
@@ -179,48 +235,104 @@ export default function NotesPage() {
           <PlusIcon className="h-5 w-5 mr-2" />
           New Note
         </button>
-        <button
-          onClick={() => setShowFolderInput((v) => !v)}
-          className="mb-4 w-full flex items-center justify-center px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
-        >
-          <FolderPlusIcon className="h-5 w-5 mr-2" />
-          New Folder
-        </button>
-        {showFolderInput && (
-          <div className="mb-4 flex">
-            <input
-              type="text"
-              className="flex-1 bg-slate-800 border border-slate-600 rounded-l-lg p-2 focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Folder name"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-            />
-            <button
-              onClick={handleCreateFolder}
-              className="px-3 py-2 rounded-r-lg bg-purple-600 text-white hover:bg-purple-700"
-            >
-              Add
-            </button>
-          </div>
-        )}
-        <div className="flex-grow overflow-y-auto space-y-2 p-1">
-          <div className="mb-2">
-            <button
-              className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
+        <div className="mb-4 space-y-2">
+          <button
+            onClick={() => setShowFolderInput((v) => !v)}
+            className="w-full flex items-center justify-center px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
+          >
+            <FolderPlusIcon className="h-5 w-5 mr-2" />
+            {showFolderInput ? "Cancel" : "New Folder"}
+          </button>
+          {showFolderInput && (
+            <div className="flex p-2 bg-slate-800 rounded-lg shadow">
+              <input
+                type="text"
+                className="flex-1 bg-slate-700 border border-slate-600 rounded-l-lg p-2 focus:ring-purple-500 focus:border-purple-500 placeholder-slate-400"
+                placeholder="Enter folder name..."
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+              />
+              <button
+                onClick={handleCreateFolder}
+                className="px-4 py-2 rounded-r-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors font-semibold"
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="flex-grow overflow-y-auto space-y-1 p-1">
+          <div
+            className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-2
+              ${
                 dragOverTargetId === "all"
                   ? "bg-purple-800 ring-2 ring-purple-400"
-                  : selectedFolderId === null
+                  : ""
+              }
+              ${
+                selectedFolderId === null
                   ? "bg-slate-700 ring-2 ring-purple-500"
                   : "bg-slate-800 hover:bg-slate-700"
-              }`}
-              onClick={() => handleFolderSelect(null)}
+              }
+            `}
+            onClick={() => handleFolderSelect(null)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              if (draggedNoteId) setDragOverTargetId("all");
+            }}
+            onDragEnter={(e) => {
+              e.preventDefault();
+              if (draggedNoteId) setDragOverTargetId("all");
+            }}
+            onDragLeave={() => setDragOverTargetId(null)}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (draggedNoteId) {
+                fetcher.submit(
+                  {
+                    intent: "moveNoteToFolder",
+                    noteId: draggedNoteId.toString(),
+                    folderId: "", // Empty string for "no folder"
+                  },
+                  { method: "post", action: "/notes" }
+                );
+                addToast("Note removed from folder.", "success", 3000);
+                setDraggedNoteId(null);
+                setDragOverTargetId(null);
+              }
+            }}
+          >
+            <div className="flex items-center">
+              <FolderIcon className="h-5 w-5 mr-2 text-slate-400" />
+              All Notes
+            </div>
+          </div>
+          {folders.map((folder: any) => (
+            <div
+              key={folder.id}
+              className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-1
+                ${
+                  dragOverTargetId === folder.id
+                    ? "bg-purple-800 ring-2 ring-purple-400"
+                    : ""
+                }
+                ${
+                  selectedFolderId === folder.id
+                    ? "bg-slate-700 ring-2 ring-purple-500"
+                    : "bg-slate-800 hover:bg-slate-700"
+                }
+              `}
+              onClick={() =>
+                editingFolderId !== folder.id && handleFolderSelect(folder.id)
+              }
               onDragOver={(e) => {
                 e.preventDefault();
-                if (draggedNoteId) setDragOverTargetId("all");
+                if (draggedNoteId) setDragOverTargetId(folder.id);
               }}
               onDragEnter={(e) => {
                 e.preventDefault();
-                if (draggedNoteId) setDragOverTargetId("all");
+                if (draggedNoteId) setDragOverTargetId(folder.id);
               }}
               onDragLeave={() => setDragOverTargetId(null)}
               onDrop={(e) => {
@@ -230,64 +342,149 @@ export default function NotesPage() {
                     {
                       intent: "moveNoteToFolder",
                       noteId: draggedNoteId.toString(),
-                      folderId: "", // Empty string for "no folder"
+                      folderId: folder.id.toString(),
                     },
                     { method: "post", action: "/notes" }
                   );
-                  addToast("Note removed from folder.", "success", 3000);
+                  addToast(`Note moved to '${folder.name}'.`, "success", 3000);
                   setDraggedNoteId(null);
                   setDragOverTargetId(null);
                 }
               }}
             >
-              <FolderIcon className="h-5 w-5 mr-2 text-slate-400" />
-              All Notes
-            </button>
-          </div>
-          {folders.map((folder: any) => (
-            <div key={folder.id} className="mb-1">
-              <button
-                className={`w-full flex items-center px-3 py-2 rounded-lg transition-colors ${
-                  dragOverTargetId === folder.id
-                    ? "bg-purple-800 ring-2 ring-purple-400"
-                    : selectedFolderId === folder.id
-                    ? "bg-slate-700 ring-2 ring-purple-500"
-                    : "bg-slate-800 hover:bg-slate-700"
-                }`}
-                onClick={() => handleFolderSelect(folder.id)}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  if (draggedNoteId) setDragOverTargetId(folder.id);
-                }}
-                onDragEnter={(e) => {
-                  e.preventDefault();
-                  if (draggedNoteId) setDragOverTargetId(folder.id);
-                }}
-                onDragLeave={() => setDragOverTargetId(null)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (draggedNoteId) {
-                    fetcher.submit(
-                      {
-                        intent: "moveNoteToFolder",
-                        noteId: draggedNoteId.toString(),
-                        folderId: folder.id.toString(),
-                      },
-                      { method: "post", action: "/notes" }
-                    );
-                    addToast(
-                      `Note moved to '${folder.name}'.`,
-                      "success",
-                      3000
-                    );
-                    setDraggedNoteId(null);
-                    setDragOverTargetId(null);
-                  }
-                }}
-              >
-                <FolderIcon className="h-5 w-5 mr-2 text-purple-400" />
-                {folder.name}
-              </button>
+              {editingFolderId === folder.id ? (
+                <div className="flex-1 flex items-center">
+                  <input
+                    type="text"
+                    value={editingFolderName}
+                    onChange={(e) => setEditingFolderName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        // Check if name actually changed before submitting
+                        const folderToRename = folders.find(
+                          (f: any) => f.id === folder.id
+                        );
+                        if (
+                          folderToRename &&
+                          folderToRename.name !== editingFolderName.trim() &&
+                          editingFolderName.trim() !== ""
+                        ) {
+                          handleRenameFolder(folder.id);
+                        } else if (editingFolderName.trim() === "") {
+                          addToast(
+                            "Folder name cannot be empty.",
+                            "error",
+                            3000
+                          );
+                        } else {
+                          // Name is the same or empty, just cancel editing
+                          setEditingFolderId(null);
+                          setEditingFolderName("");
+                        }
+                      } else if (e.key === "Escape") {
+                        setEditingFolderId(null);
+                        setEditingFolderName("");
+                      }
+                    }}
+                    className="flex-1 bg-slate-700 border border-purple-500 rounded-md p-1 text-sm focus:ring-1 focus:ring-purple-400"
+                    autoFocus
+                    onBlur={() => {
+                      // setTimeout to allow click on save button
+                      setTimeout(() => {
+                        if (editingFolderId === folder.id) {
+                          const folderToRename = folders.find(
+                            (f: any) => f.id === folder.id
+                          );
+                          if (
+                            folderToRename &&
+                            editingFolderName.trim() !== folderToRename.name &&
+                            editingFolderName.trim() !== ""
+                          ) {
+                            handleRenameFolder(folder.id);
+                          } else {
+                            // If name is unchanged or empty, cancel edit without toast unless it was identical
+                            if (
+                              folderToRename &&
+                              editingFolderName.trim() === folderToRename.name
+                            ) {
+                              // No toast needed here as it's a silent cancel or handled by handleRenameFolder
+                            } else if (editingFolderName.trim() === "") {
+                              // Potentially add a toast if it was cleared and blurred
+                            }
+                            setEditingFolderId(null);
+                            setEditingFolderName("");
+                          }
+                        }
+                      }, 100);
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const folderToRename = folders.find(
+                        (f: any) => f.id === folder.id
+                      );
+                      if (
+                        folderToRename &&
+                        folderToRename.name !== editingFolderName.trim() &&
+                        editingFolderName.trim() !== ""
+                      ) {
+                        handleRenameFolder(folder.id);
+                      } else if (editingFolderName.trim() === "") {
+                        addToast("Folder name cannot be empty.", "error", 3000);
+                      } else {
+                        setEditingFolderId(null);
+                        setEditingFolderName("");
+                      }
+                    }}
+                    className="p-1 text-green-400 hover:text-green-300"
+                    aria-label="Save folder name"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingFolderId(null);
+                      setEditingFolderName("");
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-300"
+                    aria-label="Cancel rename"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center flex-1 min-w-0">
+                  <FolderIcon className="h-5 w-5 mr-2 text-purple-400 flex-shrink-0" />
+                  <span className="truncate" title={folder.name}>
+                    {folder.name}
+                  </span>
+                </div>
+              )}
+              {editingFolderId !== folder.id && (
+                <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent folder selection
+                      setEditingFolderId(folder.id);
+                      setEditingFolderName(folder.name);
+                    }}
+                    className="p-1 text-slate-400 hover:text-purple-400"
+                    aria-label="Rename folder"
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent folder selection
+                      handleDeleteFolder(folder.id, folder.name);
+                    }}
+                    className="p-1 text-slate-400 hover:text-red-500"
+                    aria-label="Delete folder"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
           <hr className="my-2 border-slate-700" />
@@ -418,114 +615,113 @@ function NoteEditor({
   }, [note, folderId]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    // Let fetcher.Form handle the submit, but add toast after
-    setTimeout(() => {
-      if (isNew) {
-        addToast(`Note '${title}' created successfully!`, "success", 3000);
-      } else {
-        addToast(`Note '${title}' saved.`, "success", 3000);
-      }
-    }, 0);
+    const currentTitle = title.trim();
+    const currentContent = content.trim();
+
+    const noChange =
+      !isNew &&
+      note &&
+      currentTitle === note.title &&
+      currentContent === note.content &&
+      selectedFolder === note.folderId;
+
+    if (noChange) {
+      e.preventDefault();
+      addToast("No changes detected.", "info", 3000);
+      onCancel();
+      return;
+    }
+
+    // If there are changes, or it's a new note, prepare and submit the data.
+    // The e.preventDefault() is called by the onSubmit handler of the form itself.
+    const submissionData: any = {
+      intent: isNew ? "createNote" : "updateNote",
+      title: currentTitle,
+      content: currentContent,
+      folderId: selectedFolder ? selectedFolder.toString() : "",
+    };
+
+    if (!isNew && note) {
+      submissionData.noteId = note.id.toString();
+    }
+
+    fetcher.submit(submissionData, { method: "post", action: "/notes" });
+
+    // Optimistic toast removed, relying on useEffect in NotesPage for server confirmation.
+    // onCancel(); // onCancel is typically called after successful submission, handled by useEffect
   };
 
   return (
-    <fetcher.Form
-      method="post"
-      action="/notes"
-      className="space-y-6"
-      onSubmit={handleSubmit}
+    <form
+      onSubmit={(e) => {
+        e.preventDefault(); // Prevent default form submission
+        // Construct an event-like object if handleSubmit expects one, or pass necessary data directly
+        // For this case, handleSubmit is designed to be called within an event handler context
+        // but it doesn't strictly need the event object if form data is accessed via state.
+        // However, to keep the structure, we can pass it.
+        // The actual submission logic is now inside handleSubmit.
+        handleSubmit(e);
+      }}
+      className="space-y-4"
     >
-      <input
-        type="hidden"
-        name="intent"
-        value={isNew ? "createNote" : "updateNote"}
-      />
-      {note?.id && <input type="hidden" name="noteId" value={note.id} />}
       <div>
-        <label
-          htmlFor="title"
-          className="block text-sm font-medium text-slate-300 mb-1"
-        >
+        <label className="block text-sm font-medium text-slate-300 mb-1">
           Title
         </label>
         <input
           type="text"
-          name="title"
-          id="title"
-          required
-          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 focus:ring-purple-500 focus:border-purple-500"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note Title"
+          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
+          placeholder="Enter note title"
+          autoFocus
         />
       </div>
       <div>
-        <label
-          htmlFor="content"
-          className="block text-sm font-medium text-slate-300 mb-1"
-        >
-          Content (Markdown supported)
+        <label className="block text-sm font-medium text-slate-300 mb-1">
+          Content
         </label>
         <textarea
-          name="content"
-          id="content"
-          required
-          rows={12}
-          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 focus:ring-purple-500 focus:border-purple-500"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your note content here..."
+          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
+          placeholder="Enter note content"
+          rows={8}
         />
       </div>
       <div>
-        <label
-          htmlFor="folderId"
-          className="block text-sm font-medium text-slate-300 mb-1"
-        >
+        <label className="block text-sm font-medium text-slate-300 mb-1">
           Folder
         </label>
         <select
-          name="folderId"
-          id="folderId"
-          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 focus:ring-purple-500 focus:border-purple-500"
-          value={selectedFolder || ""}
+          value={selectedFolder ?? ""}
           onChange={(e) =>
-            setSelectedFolder(e.target.value ? Number(e.target.value) : null)
+            setSelectedFolder(e.target.value ? parseInt(e.target.value) : null)
           }
+          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
         >
           <option value="">No Folder</option>
-          {folders.map((folder: any) => (
+          {folders.map((folder) => (
             <option key={folder.id} value={folder.id}>
               {folder.name}
             </option>
           ))}
         </select>
       </div>
-      {fetcher.data?.error && (
-        <p className="text-red-500 text-sm">{fetcher.data.error}</p>
-      )}
-      <div className="flex justify-end space-x-3">
+      <div className="flex justify-end gap-2">
         <button
-          type="button"
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
         >
           Cancel
         </button>
         <button
           type="submit"
-          disabled={fetcher.state === "submitting"}
-          className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors disabled:opacity-50"
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors"
         >
-          {fetcher.state === "submitting"
-            ? isNew
-              ? "Creating..."
-              : "Saving..."
-            : isNew
-            ? "Create Note"
-            : "Save Changes"}
+          {isNew ? "Create Note" : "Save Changes"}
         </button>
       </div>
-    </fetcher.Form>
+    </form>
   );
 }

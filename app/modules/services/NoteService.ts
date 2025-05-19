@@ -91,7 +91,12 @@ export async function handleNoteAction(request: Request) {
         name: name.trim(),
       })
       .returning();
-    return { success: true, message: "Folder created.", folder: newFolder[0] };
+    return {
+      success: true,
+      message: "Folder created.",
+      folder: newFolder[0],
+      folders: await getFolders(user.id),
+    };
   }
 
   // Rename folder
@@ -102,9 +107,23 @@ export async function handleNoteAction(request: Request) {
     const updated = await db
       .update(foldersTable)
       .set({ name: name.trim() })
-      .where(eq(foldersTable.id, folderId))
+      .where(
+        and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
+      )
       .returning();
-    return { success: true, message: "Folder renamed.", folder: updated[0] };
+    if (updated.length === 0) {
+      return {
+        success: false,
+        error: "Folder not found or permission denied.",
+        folders: await getFolders(user.id),
+      };
+    }
+    return {
+      success: true,
+      message: "Folder renamed.",
+      folder: updated[0],
+      folders: await getFolders(user.id),
+    };
   }
 
   // Delete folder
@@ -115,9 +134,27 @@ export async function handleNoteAction(request: Request) {
     await db
       .update(notesTable)
       .set({ folderId: null })
-      .where(eq(notesTable.folderId, folderId));
-    await db.delete(foldersTable).where(eq(foldersTable.id, folderId));
-    return { success: true, message: "Folder deleted." };
+      .where(
+        and(eq(notesTable.folderId, folderId), eq(notesTable.userId, user.id))
+      );
+    const deleted = await db
+      .delete(foldersTable)
+      .where(
+        and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
+      )
+      .returning();
+    if (deleted.length === 0) {
+      return {
+        success: false,
+        error: "Folder not found or permission denied.",
+        folders: await getFolders(user.id),
+      };
+    }
+    return {
+      success: true,
+      message: "Folder deleted.",
+      folders: await getFolders(user.id),
+    };
   }
 
   // Move note to folder
@@ -132,7 +169,13 @@ export async function handleNoteAction(request: Request) {
       .set({ folderId })
       .where(eq(notesTable.id, noteId))
       .returning();
-    return { success: true, message: "Note moved.", note: updated[0] };
+    return {
+      success: true,
+      message: "Note moved.",
+      note: updated[0],
+      notes: await getNotes(user.id),
+      folders: await getFolders(user.id),
+    };
   }
 
   return {
