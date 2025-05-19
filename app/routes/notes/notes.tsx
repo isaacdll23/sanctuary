@@ -10,6 +10,7 @@ import {
   FolderIcon,
   PencilIcon,
   XMarkIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from "react-markdown";
 import {
@@ -710,9 +711,12 @@ function NoteEditor({
             className="flex-shrink-0 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
           >
             {isGeneratingTitle ? (
-              <SpinnerIcon className="w-5 h-5 animate-spin" />
+              <svg className="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 18V4a8 8 0 010 16z" />
+              </svg>
             ) : (
-              <MagicWandIcon className="w-5 h-5" />
+              <SparklesIcon className="h-5 w-5" />
             )}
           </button>
         </div>
