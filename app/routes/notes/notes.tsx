@@ -498,6 +498,7 @@ export default function NotesPage() {
                   key={n.id}
                   draggable
                   onDragStart={() => setDraggedNoteId(n.id)}
+                  onDragEnd={() => setDraggedNoteId(null)} // Added this line
                   onClick={() => handleSelectNote(n)}
                   className={`p-3 rounded-lg cursor-grab mb-2 transition-colors
                     ${draggedNoteId === n.id ? "opacity-50 bg-purple-700" : ""}
