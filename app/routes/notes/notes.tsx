@@ -97,41 +97,14 @@ export default function NotesPage() {
   const prevFetcherStateRef = useRef(fetcher.state);
   useEffect(() => {
     const previousState = prevFetcherStateRef.current;
-    console.log("Previous fetcher state:", previousState);
-    console.log("Current fetcher state:", fetcher.state);
-    console.log("Fetcher data:", fetcher.data);
     if (
       fetcher.state === "idle" &&
       previousState === "loading" &&
       fetcher.data
     ) {
       const data = fetcher.data;
-
       if (data.success) {
         setIsEditing(false);
-        let toastMessage = data.message;
-
-        if (data.createdNoteId) {
-          setSelectedNoteId(data.createdNoteId);
-          toastMessage = toastMessage || "Note created successfully!";
-        } else if (data.updatedNoteId) {
-          toastMessage = toastMessage || "Note updated successfully!";
-        } else if (data.deletedNoteId) {
-          if (selectedNoteId === data.deletedNoteId) {
-            setSelectedNoteId(null);
-          }
-          toastMessage = toastMessage || "Note deleted successfully!";
-        } else if (data.movedNoteId) {
-          toastMessage = toastMessage || "Note moved successfully!";
-        } else if (data.folderCreatedId) {
-          toastMessage = toastMessage || "Folder created successfully!";
-          setNewFolderName("");
-          setShowFolderInput(false);
-        } else {
-          toastMessage = toastMessage || "Action completed successfully!";
-        }
-
-        addToast(toastMessage, "success", 3000);
       } else if (data.error) {
         addToast(data.error, "error", 5000);
       }
@@ -163,6 +136,7 @@ export default function NotesPage() {
         { intent: "deleteNote", noteId: noteId.toString() },
         { method: "post", action: "/notes" }
       );
+      addToast("Note deleted.", "success", 3000);
     }
   };
 
@@ -178,6 +152,7 @@ export default function NotesPage() {
       { intent: "createFolder", name: newFolderName },
       { method: "post", action: "/notes" }
     );
+    addToast(`Folder '${newFolderName}' created.`, "success", 3000);
     setNewFolderName("");
     setShowFolderInput(false);
   };
@@ -259,6 +234,7 @@ export default function NotesPage() {
                     },
                     { method: "post", action: "/notes" }
                   );
+                  addToast("Note removed from folder.", "success", 3000);
                   setDraggedNoteId(null);
                   setDragOverTargetId(null);
                 }
@@ -298,6 +274,11 @@ export default function NotesPage() {
                         folderId: folder.id.toString(),
                       },
                       { method: "post", action: "/notes" }
+                    );
+                    addToast(
+                      `Note moved to '${folder.name}'.`,
+                      "success",
+                      3000
                     );
                     setDraggedNoteId(null);
                     setDragOverTargetId(null);
@@ -428,6 +409,7 @@ function NoteEditor({
     note?.folderId || folderId || null
   );
   const isNew = !note;
+  const { addToast } = useToast();
 
   useEffect(() => {
     setTitle(note?.title || "");
@@ -435,8 +417,24 @@ function NoteEditor({
     setSelectedFolder(note?.folderId || folderId || null);
   }, [note, folderId]);
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // Let fetcher.Form handle the submit, but add toast after
+    setTimeout(() => {
+      if (isNew) {
+        addToast(`Note '${title}' created successfully!`, "success", 3000);
+      } else {
+        addToast(`Note '${title}' saved.`, "success", 3000);
+      }
+    }, 0);
+  };
+
   return (
-    <fetcher.Form method="post" action="/notes" className="space-y-6">
+    <fetcher.Form
+      method="post"
+      action="/notes"
+      className="space-y-6"
+      onSubmit={handleSubmit}
+    >
       <input
         type="hidden"
         name="intent"
