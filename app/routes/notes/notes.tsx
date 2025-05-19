@@ -9,8 +9,8 @@ import {
   TrashIcon,
   FolderPlusIcon,
   FolderIcon,
-  PencilIcon, // Added
-  XMarkIcon, // Added
+  PencilIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from "react-markdown";
 import {
@@ -78,8 +78,8 @@ export default function NotesPage() {
   const [dragOverTargetId, setDragOverTargetId] = useState<
     string | number | null
   >(null);
-  const [editingFolderId, setEditingFolderId] = useState<number | null>(null); // Added
-  const [editingFolderName, setEditingFolderName] = useState(""); // Added
+  const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState("");
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
@@ -109,14 +109,9 @@ export default function NotesPage() {
       const data = fetcher.data;
       if (data.success) {
         setIsEditing(false);
-        setEditingFolderId(null); // Added
-        setEditingFolderName(""); // Added
-        // Check if folders were returned, if so, update the local state
+        setEditingFolderId(null);
+        setEditingFolderName("");
         if (data.folders) {
-          // This part assumes you might want to update folders state directly
-          // or rely on revalidator.revalidate() to refresh loader data.
-          // For simplicity, if `revalidator` is already called or loader data is up-to-date,
-          // direct state update might not be needed if `fetcher.data.folders` is used.
         }
       } else if (data.error) {
         addToast(data.error, "error", 5000);
@@ -174,12 +169,12 @@ export default function NotesPage() {
     const folderToRename = folders.find((f: any) => f.id === folderId);
     if (!editingFolderName.trim()) {
       addToast("Folder name cannot be empty.", "error", 3000);
-      setEditingFolderId(null); // Cancel editing
+      setEditingFolderId(null);
       setEditingFolderName("");
       return;
     }
     if (folderToRename && folderToRename.name === editingFolderName.trim()) {
-      setEditingFolderId(null); // Cancel editing
+      setEditingFolderId(null);
       setEditingFolderName("");
       return;
     }
@@ -205,10 +200,8 @@ export default function NotesPage() {
         { intent: "deleteFolder", folderId: folderId.toString() },
         { method: "post", action: "/notes" }
       );
-      // Toast is now shown based on fetcher.data in useEffect
-      // addToast(`Folder "${folderName}" deleted.`, "success", 3000);
       if (selectedFolderId === folderId) {
-        setSelectedFolderId(null); // Deselect if current folder is deleted
+        setSelectedFolderId(null);
       }
     }
   };
@@ -293,7 +286,7 @@ export default function NotesPage() {
                   {
                     intent: "moveNoteToFolder",
                     noteId: draggedNoteId.toString(),
-                    folderId: "", // Empty string for "no folder"
+                    folderId: "",
                   },
                   { method: "post", action: "/notes" }
                 );
@@ -360,7 +353,6 @@ export default function NotesPage() {
                     onChange={(e) => setEditingFolderName(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        // Check if name actually changed before submitting
                         const folderToRename = folders.find(
                           (f: any) => f.id === folder.id
                         );
@@ -377,7 +369,6 @@ export default function NotesPage() {
                             3000
                           );
                         } else {
-                          // Name is the same or empty, just cancel editing
                           setEditingFolderId(null);
                           setEditingFolderName("");
                         }
@@ -389,7 +380,6 @@ export default function NotesPage() {
                     className="flex-1 bg-slate-700 border border-purple-500 rounded-md p-1 text-sm focus:ring-1 focus:ring-purple-400"
                     autoFocus
                     onBlur={() => {
-                      // setTimeout to allow click on save button
                       setTimeout(() => {
                         if (editingFolderId === folder.id) {
                           const folderToRename = folders.find(
@@ -402,14 +392,11 @@ export default function NotesPage() {
                           ) {
                             handleRenameFolder(folder.id);
                           } else {
-                            // If name is unchanged or empty, cancel edit without toast unless it was identical
                             if (
                               folderToRename &&
                               editingFolderName.trim() === folderToRename.name
                             ) {
-                              // No toast needed here as it's a silent cancel or handled by handleRenameFolder
                             } else if (editingFolderName.trim() === "") {
-                              // Potentially add a toast if it was cleared and blurred
                             }
                             setEditingFolderId(null);
                             setEditingFolderName("");
@@ -464,7 +451,7 @@ export default function NotesPage() {
                 <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent folder selection
+                      e.stopPropagation();
                       setEditingFolderId(folder.id);
                       setEditingFolderName(folder.name);
                     }}
@@ -475,7 +462,7 @@ export default function NotesPage() {
                   </button>
                   <button
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent folder selection
+                      e.stopPropagation();
                       handleDeleteFolder(folder.id, folder.name);
                     }}
                     className="p-1 text-slate-400 hover:text-red-500"
@@ -498,7 +485,7 @@ export default function NotesPage() {
                   key={n.id}
                   draggable
                   onDragStart={() => setDraggedNoteId(n.id)}
-                  onDragEnd={() => setDraggedNoteId(null)} // Added this line
+                  onDragEnd={() => setDraggedNoteId(null)}
                   onClick={() => handleSelectNote(n)}
                   className={`p-3 rounded-lg cursor-grab mb-2 transition-colors
                     ${draggedNoteId === n.id ? "opacity-50 bg-purple-700" : ""}
@@ -633,8 +620,6 @@ function NoteEditor({
       return;
     }
 
-    // If there are changes, or it's a new note, prepare and submit the data.
-    // The e.preventDefault() is called by the onSubmit handler of the form itself.
     const submissionData: any = {
       intent: isNew ? "createNote" : "updateNote",
       title: currentTitle,
@@ -647,20 +632,12 @@ function NoteEditor({
     }
 
     fetcher.submit(submissionData, { method: "post", action: "/notes" });
-
-    // Optimistic toast removed, relying on useEffect in NotesPage for server confirmation.
-    // onCancel(); // onCancel is typically called after successful submission, handled by useEffect
   };
 
   return (
     <form
       onSubmit={(e) => {
-        e.preventDefault(); // Prevent default form submission
-        // Construct an event-like object if handleSubmit expects one, or pass necessary data directly
-        // For this case, handleSubmit is designed to be called within an event handler context
-        // but it doesn't strictly need the event object if form data is accessed via state.
-        // However, to keep the structure, we can pass it.
-        // The actual submission logic is now inside handleSubmit.
+        e.preventDefault();
         handleSubmit(e);
       }}
       className="space-y-4"
