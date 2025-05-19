@@ -3,6 +3,7 @@ import { db } from "~/db";
 import { notesTable, foldersTable } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
+import { generateNoteTitle } from "~/modules/ai.server";
 
 export async function handleNoteAction(request: Request) {
   const user = await getUserFromSession(request);
@@ -178,6 +179,20 @@ export async function handleNoteAction(request: Request) {
       note: updated[0],
       notes: await getNotes(user.id),
       folders: await getFolders(user.id),
+    };
+  }
+
+  // Generate note title
+  if (intent === "generateNoteTitle") {
+    const content = formData.get("content") as string;
+    if (!content) {
+      throw new Error("Content is required to generate a title.");
+    }
+    const title = await generateNoteTitle(content);
+    return {
+      success: true,
+      message: "Title generated.",
+      title,
     };
   }
 
