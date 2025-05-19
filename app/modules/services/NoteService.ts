@@ -91,11 +91,12 @@ export async function handleNoteAction(request: Request) {
         name: name.trim(),
       })
       .returning();
+    const folders = await getFolders(user.id); // cache folders
     return {
       success: true,
       message: "Folder created.",
       folder: newFolder[0],
-      folders: await getFolders(user.id),
+      folders,
     };
   }
 
@@ -111,18 +112,19 @@ export async function handleNoteAction(request: Request) {
         and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
       )
       .returning();
+    const folders = await getFolders(user.id); // cache folders
     if (updated.length === 0) {
       return {
         success: false,
         error: "Folder not found or permission denied.",
-        folders: await getFolders(user.id),
+        folders,
       };
     }
     return {
       success: true,
       message: "Folder renamed.",
       folder: updated[0],
-      folders: await getFolders(user.id),
+      folders,
     };
   }
 
@@ -143,17 +145,18 @@ export async function handleNoteAction(request: Request) {
         and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
       )
       .returning();
+    const folders = await getFolders(user.id); // cache folders
     if (deleted.length === 0) {
       return {
         success: false,
         error: "Folder not found or permission denied.",
-        folders: await getFolders(user.id),
+        folders,
       };
     }
     return {
       success: true,
       message: "Folder deleted.",
-      folders: await getFolders(user.id),
+      folders,
     };
   }
 
