@@ -5,10 +5,14 @@ import { TrashIcon } from "@heroicons/react/24/outline"; // For delete button
 interface TaskStepProps {
   taskStep: typeof taskStepsTable.$inferSelect;
   fetcher: FetcherWithComponents<any>;
-  isCompactView?: boolean; // New: Add isCompactView prop
+  isCompactView?: boolean;
 }
 
-export default function TaskStep({ taskStep, fetcher, isCompactView }: TaskStepProps) { // New: Destructure isCompactView
+export default function TaskStep({
+  taskStep,
+  fetcher,
+  isCompactView,
+}: TaskStepProps) {
   const isCompleted = taskStep.completedAt !== null;
 
   return (
@@ -21,12 +25,15 @@ export default function TaskStep({ taskStep, fetcher, isCompactView }: TaskStepP
             ? "bg-slate-700/50 opacity-70"
             : "bg-slate-700/80 hover:bg-slate-600/80"
         }
-        ${isCompactView ? 'p-2' : 'p-3'} // New: Adjust padding for compact view
+        ${isCompactView ? "p-2" : "p-3"}
       `}
     >
       <fetcher.Form method="post" className="flex items-center flex-grow mr-2">
-        <input type="hidden" name="completeStep" value={taskStep.id.toString()} />
-
+        <input
+          type="hidden"
+          name="completeStep"
+          value={taskStep.id.toString()}
+        />
         <label className="flex items-center cursor-pointer flex-grow">
           <input
             type="checkbox"
@@ -48,21 +55,20 @@ export default function TaskStep({ taskStep, fetcher, isCompactView }: TaskStepP
                   : "bg-slate-600 border-slate-500 hover:border-purple-500 focus:ring-purple-500/50"
               }
               text-green-500 focus:ring-offset-0 focus:ring-2 cursor-pointer
-              ${isCompactView ? 'h-4 w-4' : 'h-5 w-5'} // New: Adjust checkbox size for compact view
+              ${isCompactView ? "h-4 w-4" : "h-5 w-5"}
             `}
           />
           <span
             className={`
               ml-3 
               ${isCompleted ? "text-slate-400 line-through" : "text-slate-200"}
-              ${isCompactView ? 'text-xs' : 'text-sm'} // New: Adjust font size for compact view
+              ${isCompactView ? "text-xs" : "text-sm"}
             `}
           >
             {taskStep.description}
           </span>
         </label>
       </fetcher.Form>
-
       <fetcher.Form method="post" className="flex-shrink-0">
         <input type="hidden" name="deleteStep" value={taskStep.id.toString()} />
         <button
@@ -72,10 +78,12 @@ export default function TaskStep({ taskStep, fetcher, isCompactView }: TaskStepP
               e.preventDefault();
             }
           }}
-          className={`text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${isCompactView ? 'p-1' : 'p-1.5'}`} // New: Adjust padding for compact view
+          className={`text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${isCompactView ? "p-1" : "p-1.5"}`}
           aria-label="Delete step"
         >
-          <TrashIcon className={`${isCompactView ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} /> {/* New: Adjust icon size for compact view */}
+          <TrashIcon
+            className={`${isCompactView ? "h-3.5 w-3.5" : "h-4 w-4"}`}
+          />
         </button>
       </fetcher.Form>
     </li>
