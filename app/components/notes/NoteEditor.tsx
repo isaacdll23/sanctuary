@@ -55,16 +55,13 @@ export function NoteEditor({
     }
   }, [titleFetcher.state, titleFetcher.data, addToast]);
 
+  const hasChanges = isNew || (note && (title !== note.title || content !== note.content || selectedFolder !== note.folderId));
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const currentTitle = title.trim();
     const currentContent = content.trim();
-    const noChange =
-      !isNew &&
-      note &&
-      currentTitle === note.title &&
-      currentContent === note.content &&
-      selectedFolder === note.folderId;
-    if (noChange) {
+    
+    if (!isNew && !hasChanges) {
       e.preventDefault();
       addToast("No changes detected.", "info", 3000);
       onCancel();
@@ -197,7 +194,8 @@ export function NoteEditor({
         </button>
         <button
           type="submit"
-          className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors"
+          disabled={!isNew && !hasChanges}
+          className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isNew ? "Create Note" : "Save Changes"}
         </button>
