@@ -78,7 +78,9 @@ export default function TaskStep({
               e.preventDefault();
             }
           }}
-          className={`text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${isCompactView ? "p-1" : "p-1.5"}`}
+          className={`text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${
+            isCompactView ? "p-1" : "p-1.5"
+          }`}
           aria-label="Delete step"
         >
           <TrashIcon

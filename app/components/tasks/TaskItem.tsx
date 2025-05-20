@@ -50,9 +50,7 @@ export default function TaskItem({
           transition-all duration-300 ease-in-out cursor-pointer group
           hover:border-purple-500/70 hover:shadow-purple-500/20 hover:shadow-xl hover:scale-[1.02]
           ${task.completedAt ? "opacity-60 hover:opacity-80" : ""}
-          ${
-            isCompactView ? "p-3 md:p-4" : "p-5 md:p-6"
-          }
+          ${isCompactView ? "p-3 md:p-4" : "p-5 md:p-6"}
         `}
       >
         <div className="flex flex-col h-full">
@@ -65,21 +63,19 @@ export default function TaskItem({
             >
               {task.title}
             </h3>
-            {task.category &&
-              !isCompactView && (
-                <div className="flex items-center text-xs text-purple-400 group-hover:text-purple-300 mt-1">
-                  <TagIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                  <span className="truncate">{task.category}</span>
-                </div>
-              )}
+            {task.category && !isCompactView && (
+              <div className="flex items-center text-xs text-purple-400 group-hover:text-purple-300 mt-1">
+                <TagIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                <span className="truncate">{task.category}</span>
+              </div>
+            )}
           </div>
           {/* Task Description (truncated) */}
-          {task.description &&
-            !isCompactView && (
-              <p className="text-sm text-slate-400 mb-4 line-clamp-2">
-                {task.description}
-              </p>
-            )}
+          {task.description && !isCompactView && (
+            <p className="text-sm text-slate-400 mb-4 line-clamp-2">
+              {task.description}
+            </p>
+          )}
           {/* Spacer to push content below to the bottom if description is short */}
           {!task.description && !isCompactView && <div className="mb-4"></div>}
           {/* Progress Bar (if applicable) */}
@@ -107,7 +103,8 @@ export default function TaskItem({
                   }`}
                 />
                 <span>
-                  Created: {format(
+                  Created:{" "}
+                  {format(
                     new Date(task.createdAt),
                     isCompactView ? "MM/dd/yy" : "MMM d, yyyy"
                   )}
@@ -125,7 +122,8 @@ export default function TaskItem({
                     }`}
                   />
                   <span>
-                    Completed: {format(
+                    Completed:{" "}
+                    {format(
                       new Date(task.completedAt),
                       isCompactView ? "MM/dd/yy" : "MMM d, yyyy"
                     )}
