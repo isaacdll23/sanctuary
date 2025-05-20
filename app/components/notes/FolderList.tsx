@@ -1,4 +1,10 @@
-import { FolderIcon, PencilIcon, TrashIcon, XMarkIcon, FolderPlusIcon } from "@heroicons/react/24/outline";
+import {
+  FolderIcon,
+  PencilIcon,
+  TrashIcon,
+  XMarkIcon,
+  FolderPlusIcon,
+} from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { useToast } from "~/hooks/useToast";
 
@@ -23,7 +29,7 @@ export function FolderList({
   newFolderName,
   setNewFolderName,
   handleCreateFolder,
-  handleFolderSelect
+  handleFolderSelect,
 }: any) {
   return (
     <div>
@@ -55,8 +61,16 @@ export function FolderList({
       <div className="flex-grow overflow-y-auto space-y-1 p-1">
         <div
           className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-2
-            ${dragOverTargetId === "all" ? "bg-purple-800 ring-2 ring-purple-400" : ""}
-            ${selectedFolderId === null ? "bg-slate-700 ring-2 ring-purple-500" : "bg-slate-800 hover:bg-slate-700"}
+            ${
+              dragOverTargetId === "all"
+                ? "bg-purple-800 ring-2 ring-purple-400"
+                : ""
+            }
+            ${
+              selectedFolderId === null
+                ? "bg-slate-700 ring-2 ring-purple-500"
+                : "bg-slate-800 hover:bg-slate-700"
+            }
           `}
           onClick={() => handleFolderSelect(null)}
           onDragOver={(e) => {
@@ -94,8 +108,16 @@ export function FolderList({
           <div
             key={folder.id}
             className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-1
-              ${dragOverTargetId === folder.id ? "bg-purple-800 ring-2 ring-purple-400" : ""}
-              ${selectedFolderId === folder.id ? "bg-slate-700 ring-2 ring-purple-500" : "bg-slate-800 hover:bg-slate-700"}
+              ${
+                dragOverTargetId === folder.id
+                  ? "bg-purple-800 ring-2 ring-purple-400"
+                  : ""
+              }
+              ${
+                selectedFolderId === folder.id
+                  ? "bg-slate-700 ring-2 ring-purple-500"
+                  : "bg-slate-800 hover:bg-slate-700"
+              }
             `}
             onClick={() =>
               editingFolderId !== folder.id && handleFolderSelect(folder.id)

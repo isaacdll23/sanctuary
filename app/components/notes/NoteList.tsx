@@ -8,7 +8,7 @@ export function NoteList({
   setSelectedNoteId,
   setIsEditing,
   setDraggedNoteId,
-  draggedNoteId
+  draggedNoteId,
 }: any) {
   return (
     <div className="flex-grow overflow-y-auto space-y-1 p-1">
@@ -27,7 +27,11 @@ export function NoteList({
               }}
               className={`p-3 rounded-lg cursor-grab mb-2 transition-colors
                 ${draggedNoteId === n.id ? "opacity-50 bg-purple-700" : ""}
-                ${selectedNoteId === n.id ? "bg-purple-600 ring-2 ring-purple-400 shadow-lg" : "bg-slate-800 hover:bg-slate-700 shadow-md"}
+                ${
+                  selectedNoteId === n.id
+                    ? "bg-purple-600 ring-2 ring-purple-400 shadow-lg"
+                    : "bg-slate-800 hover:bg-slate-700 shadow-md"
+                }
               `}
             >
               <h3 className="font-semibold text-slate-100 truncate">
@@ -46,9 +50,7 @@ export function NoteList({
           );
         })
       ) : (
-        <p className="text-slate-400 text-center py-4">
-          No notes found.
-        </p>
+        <p className="text-slate-400 text-center py-4">No notes found.</p>
       )}
     </div>
   );

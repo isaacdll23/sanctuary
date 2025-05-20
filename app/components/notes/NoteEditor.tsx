@@ -22,7 +22,11 @@ export function NoteEditor({
     note?.folderId || folderId || null
   );
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
-  const titleFetcher = fetcher.titleFetcher || { state: "idle", data: null, submit: () => {} };
+  const titleFetcher = fetcher.titleFetcher || {
+    state: "idle",
+    data: null,
+    submit: () => {},
+  };
   const isNew = !note;
   const { addToast } = useToast();
 
