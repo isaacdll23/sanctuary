@@ -6,6 +6,8 @@ import {
   PencilSquareIcon,
   TrashIcon,
   SparklesIcon,
+  ChevronLeftIcon, // Added
+  ChevronRightIcon, // Added
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from "react-markdown";
 import {
@@ -79,9 +81,24 @@ export default function NotesPage() {
   >(null);
   const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
   const [editingFolderName, setEditingFolderName] = useState("");
+  const [isLeftColumnCollapsed, setIsLeftColumnCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("isLeftColumnCollapsed") === "true";
+    }
+    return false;
+  });
 
   const notes = fetcher.data?.notes || initialNotes;
   const folders = fetcher.data?.folders || initialFolders;
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "isLeftColumnCollapsed",
+        String(isLeftColumnCollapsed)
+      );
+    }
+  }, [isLeftColumnCollapsed]);
 
   const filteredNotes = useMemo(() => {
     let filtered = notes;
@@ -205,52 +222,98 @@ export default function NotesPage() {
     }
   };
 
+  const handleToggleLeftColumn = () => {
+    setIsLeftColumnCollapsed((prev) => !prev);
+  };
+
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-100">
-      <div className="w-1/3 border-r border-slate-700 p-4 flex flex-col">
-        <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
-        <button
-          onClick={handleCreateNew}
-          className="mb-2 w-full flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          New Note
-        </button>
-        <FolderList
-          folders={folders}
-          selectedFolderId={selectedFolderId}
-          setSelectedFolderId={setSelectedFolderId}
-          fetcher={fetcher}
-          addToast={addToast}
-          draggedNoteId={draggedNoteId}
-          setDraggedNoteId={setDraggedNoteId}
-          dragOverTargetId={dragOverTargetId}
-          setDragOverTargetId={setDragOverTargetId}
-          handleDeleteFolder={handleDeleteFolder}
-          handleRenameFolder={handleRenameFolder}
-          editingFolderId={editingFolderId}
-          setEditingFolderId={setEditingFolderId}
-          editingFolderName={editingFolderName}
-          setEditingFolderName={setEditingFolderName}
-          showFolderInput={showFolderInput}
-          setShowFolderInput={setShowFolderInput}
-          newFolderName={newFolderName}
-          setNewFolderName={setNewFolderName}
-          handleCreateFolder={handleCreateFolder}
-          handleFolderSelect={handleFolderSelect}
-        />
-        <NoteList
-          notes={notes}
-          folders={folders}
-          filteredNotes={filteredNotes}
-          selectedNoteId={selectedNoteId}
-          setSelectedNoteId={setSelectedNoteId}
-          setIsEditing={setIsEditing}
-          setDraggedNoteId={setDraggedNoteId}
-          draggedNoteId={draggedNoteId}
-        />
+    <div className="flex h-screen bg-slate-900 text-slate-100 relative">
+      {/* Toggle Button */}
+      <button
+        onClick={handleToggleLeftColumn}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all duration-300 ease-in-out
+          ${
+            isLeftColumnCollapsed
+              ? "left-1"
+              : "left-[calc(33.333333%-28px)]"
+          }
+        `}
+        aria-label={
+          isLeftColumnCollapsed ? "Expand sidebar" : "Collapse sidebar"
+        }
+      >
+        {isLeftColumnCollapsed ? (
+          <ChevronRightIcon className="h-5 w-5" />
+        ) : (
+          <ChevronLeftIcon className="h-5 w-5" />
+        )}
+      </button>
+
+      {/* Left Column */}
+      <div
+        className={`
+          ${
+            isLeftColumnCollapsed ? "w-0 p-0" : "w-1/3 p-4"
+          } border-r border-slate-700 flex flex-col transition-all duration-300 ease-in-out overflow-hidden
+        `}
+      >
+        {!isLeftColumnCollapsed && (
+          <>
+            <SearchBar
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
+            <button
+              onClick={handleCreateNew}
+              className="mb-2 w-full flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors"
+            >
+              <PlusIcon className="h-5 w-5 mr-2" />
+              New Note
+            </button>
+            <FolderList
+              folders={folders}
+              selectedFolderId={selectedFolderId}
+              setSelectedFolderId={setSelectedFolderId}
+              fetcher={fetcher}
+              addToast={addToast}
+              draggedNoteId={draggedNoteId}
+              setDraggedNoteId={setDraggedNoteId}
+              dragOverTargetId={dragOverTargetId}
+              setDragOverTargetId={setDragOverTargetId}
+              handleDeleteFolder={handleDeleteFolder}
+              handleRenameFolder={handleRenameFolder}
+              editingFolderId={editingFolderId}
+              setEditingFolderId={setEditingFolderId}
+              editingFolderName={editingFolderName}
+              setEditingFolderName={setEditingFolderName}
+              showFolderInput={showFolderInput}
+              setShowFolderInput={setShowFolderInput}
+              newFolderName={newFolderName}
+              setNewFolderName={setNewFolderName}
+              handleCreateFolder={handleCreateFolder}
+              handleFolderSelect={handleFolderSelect}
+            />
+            <NoteList
+              notes={notes}
+              folders={folders}
+              filteredNotes={filteredNotes}
+              selectedNoteId={selectedNoteId}
+              setSelectedNoteId={setSelectedNoteId}
+              setIsEditing={setIsEditing}
+              setDraggedNoteId={setDraggedNoteId}
+              draggedNoteId={draggedNoteId}
+            />
+          </>
+        )}
       </div>
-      <div className="w-2/3 p-6 overflow-y-auto">
+      {/* Right Column */}
+      <div
+        className={`
+        ${
+          isLeftColumnCollapsed ? "w-full" : "w-2/3"
+        } p-6 overflow-y-auto transition-all duration-300 ease-in-out
+        `}
+      >
         {isEditing ? (
           <NoteEditor
             key={selectedNote?.id || "new"}
