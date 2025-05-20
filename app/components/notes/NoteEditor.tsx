@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react"; // Added useRef
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import { useToast } from "~/hooks/useToast";
 import ReactMarkdown from "react-markdown";
@@ -11,7 +11,7 @@ export function NoteEditor({
   folders,
 }: {
   note?: any;
-  fetcher: any;
+  fetcher: any; // This is the complex fetcher object from NotesPage
   onCancel: () => void;
   folderId?: number | null;
   folders: any[];
@@ -22,38 +22,116 @@ export function NoteEditor({
     note?.folderId || folderId || null
   );
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
-  const titleFetcher = fetcher.titleFetcher || {
+
+  // Use fetcher.titleFetcher for title generation
+  const titleGenerationFetcher = fetcher.titleFetcher || {
     state: "idle",
     data: null,
     submit: () => {},
   };
+  // Use the main fetcher parts for note submission
+  const noteSubmissionFetcher = {
+    state: fetcher.state,
+    data: fetcher.data,
+    submit: fetcher.submit,
+  };
+
   const isNew = !note;
   const { addToast } = useToast();
 
-  useEffect(() => {
-    setTitle(note?.title || "");
-    setContent(note?.content || "");
-    setSelectedFolder(note?.folderId || folderId || null);
-  }, [note, folderId]);
+  const prevSubmitFetcherStateRef = useRef<string | undefined>(
+    noteSubmissionFetcher.state
+  );
+
+  // Ref to track the key of the note currently loaded in the editor (note.id or "new")
+  const loadedNoteKeyRef = useRef<string | number | null | undefined>(
+    undefined
+  );
+  // Ref to track the initial folderId when editing a new note, to detect if the prop changes
+  const initialFolderIdForNewNoteRef = useRef<number | null | undefined>(
+    undefined
+  );
 
   useEffect(() => {
-    if (titleFetcher.state === "idle" && titleFetcher.data) {
+    const currentKey = note ? note.id : isNew ? "new" : null; // Represents the entity being edited
+
+    let needsReset = false;
+    if (currentKey !== loadedNoteKeyRef.current) {
+      // Switched to a different note, or to/from a new note editor
+      needsReset = true;
+      if (currentKey === "new") {
+        // When switching to a "new" note editor, store its initial folderId prop
+        initialFolderIdForNewNoteRef.current = folderId;
+      }
+    } else if (
+      currentKey === "new" &&
+      folderId !== initialFolderIdForNewNoteRef.current
+    ) {
+      // Still editing a "new" note, but the folderId prop from parent changed
+      needsReset = true;
+      initialFolderIdForNewNoteRef.current = folderId; // Update the stored initial folderId
+    }
+
+    if (needsReset) {
+      setTitle(note?.title || "");
+      setContent(note?.content || "");
+      setSelectedFolder(note?.folderId || folderId || null); // Use note.folderId for existing, folderId prop for new
+      loadedNoteKeyRef.current = currentKey;
+    }
+  }, [note, folderId, isNew]); // isNew is derived from !note
+
+  useEffect(() => {
+    // Effect for title generation (uses titleGenerationFetcher)
+    if (
+      titleGenerationFetcher.state === "idle" &&
+      titleGenerationFetcher.data
+    ) {
       setIsGeneratingTitle(false);
-      if (titleFetcher.data.success && titleFetcher.data.title) {
-        setTitle(titleFetcher.data.title);
+      if (
+        titleGenerationFetcher.data.success &&
+        titleGenerationFetcher.data.title
+      ) {
+        setTitle(titleGenerationFetcher.data.title); // Only update title
         addToast("Title generated successfully.", "success", 3000);
-      } else if (titleFetcher.data.error) {
+      } else if (titleGenerationFetcher.data.error) {
         addToast(
-          `Failed to generate title: ${titleFetcher.data.error}`,
+          `Failed to generate title: ${titleGenerationFetcher.data.error}`,
           "error",
           3000
         );
-        console.error("Title generation error:", titleFetcher.data.error);
+        console.error(
+          "Title generation error:",
+          titleGenerationFetcher.data.error
+        );
       }
-    } else if (titleFetcher.state === "loading") {
+    } else if (titleGenerationFetcher.state === "loading") {
       setIsGeneratingTitle(true);
     }
-  }, [titleFetcher.state, titleFetcher.data, addToast]);
+  }, [titleGenerationFetcher.state, titleGenerationFetcher.data, addToast]);
+
+  // Effect for handling main note submission success toasts (uses noteSubmissionFetcher)
+  useEffect(() => {
+    const previousState = prevSubmitFetcherStateRef.current;
+    if (
+      noteSubmissionFetcher.state === "idle" &&
+      previousState === "loading" &&
+      noteSubmissionFetcher.data
+    ) {
+      if (noteSubmissionFetcher.data.success) {
+        const message = isNew
+          ? "Note created successfully."
+          : "Note updated successfully.";
+        addToast(message, "success", 3000);
+      }
+      // Error toasts for this fetcher are assumed to be handled by the parent component (NotesPage)
+    }
+    prevSubmitFetcherStateRef.current = noteSubmissionFetcher.state;
+  }, [
+    noteSubmissionFetcher.state,
+    noteSubmissionFetcher.data,
+    addToast,
+    isNew,
+  ]);
 
   const hasChanges =
     isNew ||
@@ -81,7 +159,11 @@ export function NoteEditor({
     if (!isNew && note) {
       submissionData.noteId = note.id.toString();
     }
-    fetcher.submit(submissionData, { method: "post", action: "/notes" });
+    // Use the main fetcher's submit for saving notes
+    noteSubmissionFetcher.submit(submissionData, {
+      method: "post",
+      action: "/notes",
+    });
   };
   const handleGenerateTitle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -94,7 +176,8 @@ export function NoteEditor({
       return;
     }
     setIsGeneratingTitle(true);
-    titleFetcher.submit(
+    // Use the titleGenerationFetcher for generating titles
+    titleGenerationFetcher.submit(
       {
         intent: "generateNoteTitle",
         content: content,
@@ -109,18 +192,22 @@ export function NoteEditor({
         e.preventDefault();
         handleSubmit(e);
       }}
-      className="space-y-4"
+      className="space-y-6 flex flex-col h-full" // Increased spacing and flex for layout
     >
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">
+        <label
+          htmlFor="note-title"
+          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+        >
           Title
         </label>
         <div className="flex gap-2">
           <input
+            id="note-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
+            className="flex-1 bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
             placeholder="Enter note title"
             autoFocus
           />
@@ -130,7 +217,7 @@ export function NoteEditor({
             disabled={isGeneratingTitle}
             title="Generate title from content"
             aria-label="Generate title from content"
-            className="flex-shrink-0 px-4 py-2 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50"
+            className="flex-shrink-0 px-4 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900" // Added focus styling
           >
             {isGeneratingTitle ? (
               <svg
@@ -159,28 +246,38 @@ export function NoteEditor({
           </button>
         </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">
+      <div className="flex-grow flex flex-col">
+        {" "}
+        {/* Added flex-grow for content area */}
+        <label
+          htmlFor="note-content"
+          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+        >
           Content
         </label>
         <textarea
+          id="note-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
+          className="w-full flex-grow bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm resize-none" // Refined styling, flex-grow, resize-none
           placeholder="Enter note content"
-          rows={8}
+          rows={15} // Increased rows for more vertical space
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">
+        <label
+          htmlFor="note-folder"
+          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+        >
           Folder
         </label>
         <select
+          id="note-folder"
           value={selectedFolder ?? ""}
           onChange={(e) =>
             setSelectedFolder(e.target.value ? parseInt(e.target.value) : null)
           }
-          className="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-slate-100 focus:ring-purple-500 focus:border-purple-500"
+          className="w-full bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
         >
           <option value="">No Folder</option>
           {folders.map((folder) => (
@@ -190,17 +287,20 @@ export function NoteEditor({
           ))}
         </select>
       </div>
-      <div className="flex justify-end gap-2">
+      <div className="flex justify-end gap-3 pt-2">
+        {" "}
+        {/* Adjusted gap and padding */}
         <button
+          type="button" // Explicitly set type to button
           onClick={onCancel}
-          className="px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
+          className="px-4 py-2 rounded-md bg-slate-600 text-slate-100 font-medium hover:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900" // Refined styling for secondary button
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={!isNew && !hasChanges}
-          className="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900 shadow-md" // Refined styling for primary button
         >
           {isNew ? "Create Note" : "Save Changes"}
         </button>

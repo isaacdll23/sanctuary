@@ -65,7 +65,8 @@ export default function NotesPage() {
     folders: initialFolders,
     searchTerm: initialSearchTerm,
   } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher<any>();
+  const pageActionFetcher = useFetcher<any>(); // Renamed for clarity, handles main page and note save/update actions
+  const titleGenerationFetcher = useFetcher<any>(); // New fetcher dedicated to title generation
   const revalidator = useRevalidator();
   const { addToast } = useToast();
 
@@ -88,8 +89,8 @@ export default function NotesPage() {
     return false;
   });
 
-  const notes = fetcher.data?.notes || initialNotes;
-  const folders = fetcher.data?.folders || initialFolders;
+  const notes = pageActionFetcher.data?.notes || initialNotes;
+  const folders = pageActionFetcher.data?.folders || initialFolders;
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -114,15 +115,15 @@ export default function NotesPage() {
     return filtered;
   }, [notes, searchQuery, selectedFolderId]);
 
-  const prevFetcherStateRef = useRef(fetcher.state);
+  const prevFetcherStateRef = useRef(pageActionFetcher.state);
   useEffect(() => {
     const previousState = prevFetcherStateRef.current;
     if (
-      fetcher.state === "idle" &&
+      pageActionFetcher.state === "idle" &&
       previousState === "loading" &&
-      fetcher.data
+      pageActionFetcher.data
     ) {
-      const data = fetcher.data;
+      const data = pageActionFetcher.data;
       if (data.success) {
         setIsEditing(false);
         setEditingFolderId(null);
@@ -133,8 +134,14 @@ export default function NotesPage() {
         addToast(data.error, "error", 5000);
       }
     }
-    prevFetcherStateRef.current = fetcher.state;
-  }, [fetcher.state, fetcher.data, revalidator, selectedNoteId, addToast]);
+    prevFetcherStateRef.current = pageActionFetcher.state;
+  }, [
+    pageActionFetcher.state,
+    pageActionFetcher.data,
+    revalidator,
+    selectedNoteId,
+    addToast,
+  ]);
 
   const selectedNote = useMemo(() => {
     return filteredNotes.find((n: any) => n.id === selectedNoteId) || null;
@@ -156,7 +163,7 @@ export default function NotesPage() {
 
   const handleDelete = (noteId: number) => {
     if (window.confirm("Are you sure you want to delete this note?")) {
-      fetcher.submit(
+      pageActionFetcher.submit(
         { intent: "deleteNote", noteId: noteId.toString() },
         { method: "post", action: "/notes" }
       );
@@ -172,7 +179,7 @@ export default function NotesPage() {
 
   const handleCreateFolder = () => {
     if (!newFolderName.trim()) return;
-    fetcher.submit(
+    pageActionFetcher.submit(
       { intent: "createFolder", name: newFolderName },
       { method: "post", action: "/notes" }
     );
@@ -195,7 +202,7 @@ export default function NotesPage() {
       return;
     }
 
-    fetcher.submit(
+    pageActionFetcher.submit(
       {
         intent: "renameFolder",
         folderId: folderId.toString(),
@@ -212,7 +219,7 @@ export default function NotesPage() {
         `Are you sure you want to delete the folder "${folderName}"? Notes in this folder will be moved to "No Folder".`
       )
     ) {
-      fetcher.submit(
+      pageActionFetcher.submit(
         { intent: "deleteFolder", folderId: folderId.toString() },
         { method: "post", action: "/notes" }
       );
@@ -232,11 +239,7 @@ export default function NotesPage() {
       <button
         onClick={handleToggleLeftColumn}
         className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all duration-300 ease-in-out
-          ${
-            isLeftColumnCollapsed
-              ? "left-1"
-              : "left-[calc(33.333333%-28px)]"
-          }
+          ${isLeftColumnCollapsed ? "left-1" : "left-[calc(33.333333%-28px)]"}
         `}
         aria-label={
           isLeftColumnCollapsed ? "Expand sidebar" : "Collapse sidebar"
@@ -274,7 +277,7 @@ export default function NotesPage() {
               folders={folders}
               selectedFolderId={selectedFolderId}
               setSelectedFolderId={setSelectedFolderId}
-              fetcher={fetcher}
+              fetcher={pageActionFetcher} // Pass the pageActionFetcher for folder operations
               addToast={addToast}
               draggedNoteId={draggedNoteId}
               setDraggedNoteId={setDraggedNoteId}
@@ -318,7 +321,12 @@ export default function NotesPage() {
           <NoteEditor
             key={selectedNote?.id || "new"}
             note={selectedNote}
-            fetcher={fetcher}
+            fetcher={{
+              submit: pageActionFetcher.submit, // For note creation/update
+              state: pageActionFetcher.state,
+              data: pageActionFetcher.data,
+              titleFetcher: titleGenerationFetcher, // Dedicated fetcher for title generation
+            }}
             onCancel={() => setIsEditing(false)}
             folderId={selectedFolderId}
             folders={folders}
