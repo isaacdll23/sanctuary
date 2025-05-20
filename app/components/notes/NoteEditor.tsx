@@ -55,12 +55,17 @@ export function NoteEditor({
     }
   }, [titleFetcher.state, titleFetcher.data, addToast]);
 
-  const hasChanges = isNew || (note && (title !== note.title || content !== note.content || selectedFolder !== note.folderId));
+  const hasChanges =
+    isNew ||
+    (note &&
+      (title !== note.title ||
+        content !== note.content ||
+        selectedFolder !== note.folderId));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     const currentTitle = title.trim();
     const currentContent = content.trim();
-    
+
     if (!isNew && !hasChanges) {
       e.preventDefault();
       addToast("No changes detected.", "info", 3000);
