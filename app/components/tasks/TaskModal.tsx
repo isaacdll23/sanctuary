@@ -22,12 +22,14 @@ export default function TaskModal({
   fetcher,
   onClose,
   distinctCategories = [],
+  isCompactView, // New: Add isCompactView prop
 }: {
   task: typeof tasksTable.$inferSelect;
   taskSteps?: (typeof taskStepsTable.$inferSelect)[];
   fetcher: FetcherWithComponents<any>; // Typed fetcher
   onClose: () => void;
   distinctCategories?: string[];
+  isCompactView?: boolean; // New: Add isCompactView prop type
 }) {
   const [editableTitle, setEditableTitle] = useState(task.title);
   const [editableDescription, setEditableDescription] = useState(task.description || "");
@@ -60,22 +62,22 @@ export default function TaskModal({
       onClick={onClose} // Close if backdrop is clicked
     >
       <div
-        className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out"
+        className={`bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out ${isCompactView ? 'max-w-md' : ''}`} // New: Adjust max width for compact view
         onClick={(e) => e.stopPropagation()} // Prevent closing when modal content is clicked
       >
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-5 md:p-6 border-b border-slate-700">
+        <div className={`flex justify-between items-center border-b border-slate-700 ${isCompactView ? 'p-3 md:p-4' : 'p-5 md:p-6'}`}> {/* New: Adjust padding for compact view */}
           {isEditingDetails ? (
             <input 
               type="text" 
               name="title" // Name for form submission
               value={editableTitle} 
               onChange={(e) => setEditableTitle(e.target.value)}
-              className="text-xl md:text-2xl font-semibold bg-slate-700 text-slate-100 rounded-md p-2 flex-grow mr-4 focus:ring-2 focus:ring-purple-500"
+              className={`font-semibold bg-slate-700 text-slate-100 rounded-md p-2 flex-grow mr-4 focus:ring-2 focus:ring-purple-500 ${isCompactView ? 'text-lg md:text-xl' : 'text-xl md:text-2xl'}`} // New: Adjust font size for compact view
               form="updateTaskDetailsForm" // Associate with the form
             />
           ) : (
-            <h2 className="text-xl md:text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 truncate pr-4">
+            <h2 className={`font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 truncate pr-4 ${isCompactView ? 'text-lg md:text-xl' : 'text-xl md:text-2xl'}`}> {/* New: Adjust font size for compact view */}
               {task.title}
             </h2>
           )}
@@ -83,10 +85,10 @@ export default function TaskModal({
             {!isEditingDetails && (
                 <button 
                     onClick={() => setIsEditingDetails(true)} 
-                    className="text-slate-400 hover:text-purple-400 p-2 rounded-md transition-colors mr-2"
+                    className={`text-slate-400 hover:text-purple-400 p-2 rounded-md transition-colors ${isCompactView ? 'mr-1' : 'mr-2'}`} // New: Adjust margin for compact view
                     aria-label="Edit task details"
                 >
-                    <PencilIcon className="h-5 w-5" />
+                    <PencilIcon className={`${isCompactView ? 'h-4 w-4' : 'h-5 w-5'}`} /> {/* New: Adjust icon size for compact view */}
                 </button>
             )}
             <button
@@ -94,67 +96,67 @@ export default function TaskModal({
               className="text-slate-400 hover:text-slate-200 p-2 rounded-md transition-colors"
               aria-label="Close modal"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <XMarkIcon className={`${isCompactView ? 'h-5 w-5' : 'h-6 w-6'}`} /> {/* New: Adjust icon size for compact view */}
             </button>
           </div>
         </div>
 
         {/* Modal Body - Scrollable */}
-        <div className="p-5 md:p-6 space-y-6 overflow-y-auto flex-grow">
+        <div className={`space-y-6 overflow-y-auto flex-grow ${isCompactView ? 'p-3 md:p-4 space-y-4' : 'p-5 md:p-6'}`}> {/* New: Adjust padding and spacing for compact view */}
           {/* Task Metadata (Created/Completed Dates) */}
-          <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-slate-400 gap-2 sm:gap-4">
-            <div className="flex items-center">
-              <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-slate-500 flex-shrink-0" />
-              <span>Created: {format(new Date(task.createdAt), "MMM d, yyyy, p")}</span>
-            </div>
-            {task.completedAt && (
-              <div className="flex items-center text-green-400">
-                <CheckCircleIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
-                <span>Completed: {format(new Date(task.completedAt), "MMM d, yyyy, p")}</span>
+          {!isCompactView && ( // New: Hide metadata in compact view
+            <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-slate-400 gap-2 sm:gap-4">
+              <div className="flex items-center">
+                <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-slate-500 flex-shrink-0" />
+                <span>Created: {format(new Date(task.createdAt), "MMM d, yyyy, p")}</span>
               </div>
-            )}
-          </div>
+              {task.completedAt && (
+                <div className="flex items-center text-green-400">
+                  <CheckCircleIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                  <span>Completed: {format(new Date(task.completedAt), "MMM d, yyyy, p")}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Description and Category - Editable within a form */}
-          <fetcher.Form method="post" onSubmit={handleDetailsSave} id="updateTaskDetailsForm" className="space-y-4">
+          <fetcher.Form method="post" onSubmit={handleDetailsSave} id="updateTaskDetailsForm" className={`${isCompactView ? 'space-y-3' : 'space-y-4'}`}> {/* New: Adjust spacing for compact view */}
             <input type="hidden" name="intent" value="updateTaskDetails" />
             <input type="hidden" name="taskId" value={task.id} />
-            {/* Title is handled in header, but part of this form */} 
-            {/* Hidden input for title if not directly in form, or rely on the one in header with form="id" */} 
             {isEditingDetails && <input type="hidden" name="title" value={editableTitle} />} 
 
             <div>
-              <label htmlFor="taskDescription" className="block text-sm font-medium text-slate-300 mb-1">Description</label>
+              <label htmlFor="taskDescription" className={`block font-medium text-slate-300 mb-1 ${isCompactView ? 'text-xs' : 'text-sm'}`}>Description</label> {/* New: Adjust font size for compact view */}
               {isEditingDetails ? (
                 <textarea
-                  name="description" // Name for form submission
+                  name="description"
                   id="taskDescription"
                   value={editableDescription}
                   onChange={(e) => setEditableDescription(e.target.value)}
-                  rows={3}
-                  className="w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                  rows={isCompactView ? 2 : 3} // New: Adjust rows for compact view
+                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${isCompactView ? 'text-xs' : 'text-sm'}`} // New: Adjust font size for compact view
                   placeholder="Add more details..."
                 />
               ) : (
-                <p className="text-sm text-slate-300 whitespace-pre-wrap min-h-[40px]">
+                <p className={`whitespace-pre-wrap min-h-[40px] ${isCompactView ? 'text-xs text-slate-400' : 'text-sm text-slate-300'}`}> {/* New: Adjust font size and color for compact view */}
                   {task.description || <span className="text-slate-500 italic">No description provided.</span>}
                 </p>
               )}
             </div>
 
             <div>
-              <label htmlFor="taskCategory" className="block text-sm font-medium text-slate-300 mb-1">Category</label>
+              <label htmlFor="taskCategory" className={`block font-medium text-slate-300 mb-1 ${isCompactView ? 'text-xs' : 'text-sm'}`}>Category</label> {/* New: Adjust font size for compact view */}
               {isEditingDetails ? (
                 <div className="relative">
-                  <TagIcon className="h-5 w-5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <TagIcon className={`text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isCompactView ? 'h-4 w-4' : 'h-5 w-5'}`} /> {/* New: Adjust icon size for compact view */}
                   <input
                     type="text"
-                    name="category" // Name for form submission
+                    name="category"
                     id="taskCategory"
                     value={editableCategory}
                     onChange={(e) => setEditableCategory(e.target.value)}
                     list="modal-categories-datalist"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-700 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                    className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${isCompactView ? 'pl-9 pr-3 py-2 text-xs' : 'pl-10 pr-4 py-2.5 text-sm'}`} // New: Adjust padding and font size for compact view
                     placeholder="e.g., Work, Personal"
                   />
                   <datalist id="modal-categories-datalist">
@@ -164,10 +166,10 @@ export default function TaskModal({
                   </datalist>
                 </div>
               ) : (
-                <div className="flex items-center text-sm text-slate-300 min-h-[40px]">
+                <div className={`flex items-center min-h-[40px] ${isCompactView ? 'text-xs text-slate-400' : 'text-sm text-slate-300'}`}> {/* New: Adjust font size and color for compact view */}
                   {task.category ? (
                     <>
-                      <TagIcon className="h-4 w-4 mr-1.5 text-purple-400 flex-shrink-0" /> 
+                      <TagIcon className={`mr-1.5 text-purple-400 flex-shrink-0 ${isCompactView ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />  {/* New: Adjust icon size for compact view */}
                       {task.category}
                     </>
                   ) : (
@@ -182,20 +184,19 @@ export default function TaskModal({
                   type="button" 
                   onClick={() => {
                     setIsEditingDetails(false);
-                    // Reset fields to original task values if canceling edit
                     setEditableTitle(task.title);
                     setEditableDescription(task.description || "");
                     setEditableCategory(task.category || "");
                   }}
-                  className="bg-slate-600 hover:bg-slate-500 text-slate-100 font-semibold py-2 px-4 rounded-lg transition-colors text-sm"
+                  className={`bg-slate-600 hover:bg-slate-500 text-slate-100 font-semibold rounded-lg transition-colors ${isCompactView ? 'py-1.5 px-3 text-xs' : 'py-2 px-4 text-sm'}`} // New: Adjust padding and font size for compact view
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm flex items-center gap-2"
+                  className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 ${isCompactView ? 'py-1.5 px-3 text-xs' : 'py-2 px-4 text-sm'}`} // New: Adjust padding and font size for compact view
                 >
-                  <CheckIcon className="h-4 w-4"/> Save Changes
+                  <CheckIcon className={`${isCompactView ? 'h-3.5 w-3.5' : 'h-4 w-4'}`}/> Save Changes {/* New: Adjust icon size for compact view */}
                 </button>
               </div>
             )}
@@ -203,24 +204,24 @@ export default function TaskModal({
 
           {/* Progress Section */}
           {totalSteps > 0 && (
-            <div className="pt-4 border-t border-slate-700/50">
-              <h3 className="text-md font-semibold text-slate-200 mb-2">Progress</h3>
+            <div className={`pt-4 border-t border-slate-700/50 ${isCompactView ? 'pt-3' : ''}`}> {/* New: Adjust padding for compact view */}
+              <h3 className={`font-semibold text-slate-200 mb-2 ${isCompactView ? 'text-sm' : 'text-md'}`}>Progress</h3> {/* New: Adjust font size for compact view */}
               <ProgressBar
                 progressPercentage={progressPercentage}
                 completedSteps={completedSteps}
                 totalSteps={totalSteps}
-                size="default" // Use default size for modal
+                size={isCompactView ? "small" : "default"} // New: Adjust size for compact view
               />
             </div>
           )}
 
           {/* Task Steps Section */}
-          <div className={totalSteps > 0 ? "pt-4 border-t border-slate-700/50" : ""}>
-            <h3 className="text-md font-semibold text-slate-200 mb-3">Steps ({completedSteps}/{totalSteps})</h3>
+          <div className={`${totalSteps > 0 ? 'border-t border-slate-700/50' : ''} ${isCompactView ? 'pt-3' : 'pt-4'}`}> {/* New: Adjust padding for compact view */}
+            <h3 className={`font-semibold text-slate-200 mb-3 ${isCompactView ? 'text-sm mb-2' : 'text-md'}`}>Steps ({completedSteps}/{totalSteps})</h3> {/* New: Adjust font size and margin for compact view */}
             {taskSteps.length > 0 && (
-              <ul className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-2">
+              <ul className={`space-y-2 mb-4 max-h-60 overflow-y-auto pr-2 ${isCompactView ? 'max-h-40 space-y-1.5 mb-3' : ''}`}> {/* New: Adjust max height, spacing, and margin for compact view */}
                 {taskSteps.map((step) => (
-                  <TaskStep key={step.id} taskStep={step} fetcher={fetcher} />
+                  <TaskStep key={step.id} taskStep={step} fetcher={fetcher} isCompactView={isCompactView} /> // New: Pass isCompactView to TaskStep
                 ))}
               </ul>
             )}
@@ -231,22 +232,22 @@ export default function TaskModal({
                 type="text"
                 name="stepDescription"
                 placeholder="Add a new step..."
-                className="flex-grow bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                className={`flex-grow bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${isCompactView ? 'p-2 text-xs' : 'p-2.5 text-sm'}`} // New: Adjust padding and font size for compact view
                 required
               />
               <button
                 type="submit"
-                className="bg-purple-500 hover:bg-purple-600 text-white font-semibold p-2.5 rounded-lg transition-colors flex items-center justify-center"
+                className={`bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center ${isCompactView ? 'p-2' : 'p-2.5'}`} // New: Adjust padding for compact view
                 aria-label="Add step"
               >
-                <PlusIcon className="h-5 w-5" />
+                <PlusIcon className={`${isCompactView ? 'h-4 w-4' : 'h-5 w-5'}`} /> {/* New: Adjust icon size for compact view */}
               </button>
             </fetcher.Form>
           </div>
         </div>
 
         {/* Modal Footer - Actions */}
-        <div className="p-5 md:p-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-800/50 rounded-b-2xl">
+        <div className={`border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-800/50 rounded-b-2xl ${isCompactView ? 'p-3 md:p-4' : 'p-5 md:p-6'}`}> {/* New: Adjust padding for compact view */}
           <fetcher.Form method="post" className="w-full sm:w-auto">
             <input type="hidden" name="deleteTask" value={task.id} />
             <button
@@ -256,9 +257,9 @@ export default function TaskModal({
                   e.preventDefault();
                 }
               }}
-              className="w-full text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 font-medium py-2.5 px-5 rounded-lg transition-colors duration-150 text-sm flex items-center justify-center gap-2"
+              className={`w-full text-red-500 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 font-medium rounded-lg transition-colors duration-150 flex items-center justify-center gap-2 ${isCompactView ? 'py-2 px-4 text-xs' : 'py-2.5 px-5 text-sm'}`} // New: Adjust padding and font size for compact view
             >
-              <TrashIcon className="h-4 w-4"/> Delete Task
+              <TrashIcon className={`${isCompactView ? 'h-3.5 w-3.5' : 'h-4 w-4'}`}/> Delete Task {/* New: Adjust icon size for compact view */}
             </button>
           </fetcher.Form>
 
@@ -266,7 +267,6 @@ export default function TaskModal({
             method="post"
             className="w-full"
           >
-            {/* Correctly structure the hidden input for complete/incomplete actions */}
             <input
               type="hidden"
               name={task.completedAt ? "incompleteTask" : "completeTask"}
@@ -274,12 +274,12 @@ export default function TaskModal({
             />
             <button
               type="submit"
-              className="w-full text-green-500 hover:text-green-400 bg-green-500/10 hover:bg-green-500/20 font-medium py-2.5 px-5 rounded-lg transition-colors duration-150 text-sm flex items-center justify-center gap-2"
+              className={`w-full text-green-500 hover:text-green-400 bg-green-500/10 hover:bg-green-500/20 font-medium rounded-lg transition-colors duration-150 flex items-center justify-center gap-2 ${isCompactView ? 'py-2 px-4 text-xs' : 'py-2.5 px-5 text-sm'}`} // New: Adjust padding and font size for compact view
             >
               {task.completedAt ? (
-                <ArrowUturnLeftIcon className="h-4 w-4" /> 
+                <ArrowUturnLeftIcon className={`${isCompactView ? 'h-3.5 w-3.5' : 'h-4 w-4'}`} />  // New: Adjust icon size for compact view
               ) : (
-                <CheckCircleIcon className="h-5 w-5" />
+                <CheckCircleIcon className={`${isCompactView ? 'h-4 w-4' : 'h-5 w-5'}`} /> // New: Adjust icon size for compact view
               )}
               {task.completedAt ? "Mark as Incomplete" : "Mark as Complete"}
             </button>
