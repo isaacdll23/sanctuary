@@ -239,16 +239,16 @@ export default function NotesPage() {
       <button
         onClick={handleToggleLeftColumn}
         className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all duration-300 ease-in-out
-          ${isLeftColumnCollapsed ? "left-1" : "left-[calc(33.333333%-28px)]"}
+          ${isLeftColumnCollapsed ? "left-1" : "left-[calc(33.333333%-22px)]"}
         `}
         aria-label={
           isLeftColumnCollapsed ? "Expand sidebar" : "Collapse sidebar"
         }
       >
         {isLeftColumnCollapsed ? (
-          <ChevronRightIcon className="h-5 w-5" />
+          <ChevronRightIcon className="h-2 w-2" />
         ) : (
-          <ChevronLeftIcon className="h-5 w-5" />
+          <ChevronLeftIcon className="h-2 w-2" />
         )}
       </button>
 
