@@ -1,4 +1,4 @@
-import { useLoaderData } from "react-router";
+import { useLoaderData, useFetcher } from "react-router";
 import { useState } from "react";
 import PageAccessManager from "~/components/admin/PageAccessManager";
 import UserEditModal from "~/components/admin/UserEditModal";
@@ -39,6 +39,7 @@ export const action = adminOnlyAction(async (adminUser, request) => {
   const { handleUserManagementAction } = await import(
     "~/modules/services/UserManagementService"
   );
+  const { sendEmail } = await import("~/modules/services/NotificationService");
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -52,6 +53,15 @@ export const action = adminOnlyAction(async (adminUser, request) => {
     )
   ) {
     return handleUserManagementAction(request, formData);
+  } else if (intent === "sendTestEmail") {
+    const email = formData.get("email") as string;
+    if (!email) return { success: false, message: "Email is required." };
+    const result = await sendEmail({
+      to: email,
+      subject: "Sanctuary Test Email",
+      html: `<p>This is a test email from Sanctuary Admin Portal.</p>`,
+    });
+    return result;
   }
 
   return { success: false, message: "Unknown action" };
@@ -65,6 +75,8 @@ export default function Admin() {
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const fetcher = useFetcher();
+  const [testEmail, setTestEmail] = useState("");
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
@@ -92,6 +104,56 @@ export default function Admin() {
         </header>
 
         <main className="grid gap-8">
+          {/* Test Email Section */}
+          <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+            <h2 className="text-xl font-bold mb-4">Send Test Email</h2>
+            <fetcher.Form
+              method="post"
+              className="flex flex-col md:flex-row gap-3 items-start md:items-end"
+            >
+              <input type="hidden" name="intent" value="sendTestEmail" />
+              <div>
+                <label
+                  htmlFor="testEmail"
+                  className="block text-slate-300 font-medium mb-1"
+                >
+                  Email Address
+                </label>
+                <input
+                  id="testEmail"
+                  name="email"
+                  type="email"
+                  required
+                  value={testEmail}
+                  onChange={(e) => setTestEmail(e.target.value)}
+                  className="bg-slate-700 border border-slate-600 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors w-72"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg px-6 py-2 transition-colors mt-2 md:mt-0"
+                disabled={fetcher.state === "submitting"}
+              >
+                {fetcher.state === "submitting"
+                  ? "Sending..."
+                  : "Send Test Email"}
+              </button>
+            </fetcher.Form>
+            {fetcher.data && (
+              <div
+                className={`mt-3 text-sm ${
+                  fetcher.data.success ? "text-green-400" : "text-red-400"
+                }`}
+              >
+                {fetcher.data.success
+                  ? "Test email sent!"
+                  : `Error: ${
+                      fetcher.data.error?.message || fetcher.data.message
+                    }`}
+              </div>
+            )}
+          </section>
           {/* Admin Stats */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">

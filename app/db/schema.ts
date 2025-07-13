@@ -5,6 +5,7 @@ import {
   varchar,
   text,
   json,
+  serial,
 } from "drizzle-orm/pg-core";
 
 // Core Tables
@@ -29,6 +30,8 @@ export const tasksTable = pgTable("tasks", {
   dueDate: timestamp(),
   completedAt: timestamp(),
   category: varchar({ length: 255 }),
+  reminderDate: timestamp(), // When to send reminder
+  reminderSent: integer().default(0), // 0 = not sent, 1 = sent
   createdAt: timestamp().defaultNow().notNull(),
 });
 
@@ -55,7 +58,10 @@ export const financeExpensesTable = pgTable("finance_expenses", {
   monthlyCost: integer().notNull(),
   chargeDay: integer().notNull(),
   category: varchar({ length: 255 }).notNull().default("Subscription"),
+  accountId: integer("account_id"),
+  isActive: integer("is_active").default(1).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const financeIncomeTable = pgTable("finance_income", {
@@ -65,12 +71,17 @@ export const financeIncomeTable = pgTable("finance_income", {
     .references(() => usersTable.id),
   annualGrossIncome: integer().notNull(),
   taxDeductionPercentage: integer().notNull(),
+  accountId: integer("account_id"),
+  payFrequency: varchar("pay_frequency", { length: 50 })
+    .default("monthly")
+    .notNull(),
   createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 // Notes & Folders Tables
 export const foldersTable = pgTable("folders", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  id: serial().primaryKey(),
   userId: integer()
     .notNull()
     .references(() => usersTable.id),

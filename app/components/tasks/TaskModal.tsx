@@ -157,6 +157,54 @@ export default function TaskModal({
             {isEditingDetails && (
               <input type="hidden" name="title" value={editableTitle} />
             )}
+            {/* Reminder Date Field */}
+            <div>
+              <label
+                htmlFor="reminderDate"
+                className={`block font-medium text-slate-300 mb-1 ${
+                  isCompactView ? "text-xs" : "text-sm"
+                }`}
+              >
+                Reminder
+              </label>
+              {isEditingDetails ? (
+                <input
+                  type="datetime-local"
+                  name="reminderDate"
+                  id="reminderDate"
+                  defaultValue={
+                    task.reminderDate
+                      ? format(
+                          new Date(task.reminderDate),
+                          "yyyy-MM-dd'T'HH:mm"
+                        )
+                      : ""
+                  }
+                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                    isCompactView ? "text-xs py-2" : "text-sm py-2.5"
+                  }`}
+                />
+              ) : (
+                <p
+                  className={`min-h-[40px] ${
+                    isCompactView
+                      ? "text-xs text-slate-400"
+                      : "text-sm text-slate-300"
+                  }`}
+                >
+                  {task.reminderDate ? (
+                    <>
+                      <CalendarDaysIcon className="inline-block w-4 h-4 mr-1 text-purple-400 align-text-bottom" />
+                      {format(new Date(task.reminderDate), "MMM d, yyyy, p")}
+                    </>
+                  ) : (
+                    <span className="text-slate-500 italic">
+                      No reminder set.
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
             <div>
               <label
                 htmlFor="taskDescription"

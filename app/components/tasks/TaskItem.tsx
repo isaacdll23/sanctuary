@@ -110,6 +110,23 @@ export default function TaskItem({
                   )}
                 </span>
               </div>
+              {/* Reminder Date */}
+              {task.reminderDate && (
+                <div className="flex items-center text-purple-400">
+                  <CalendarDaysIcon
+                    className={`mr-1.5 flex-shrink-0 ${
+                      isCompactView ? "h-3 w-3" : "h-3.5 w-3.5"
+                    }`}
+                  />
+                  <span>
+                    Reminder:{" "}
+                    {format(
+                      new Date(task.reminderDate),
+                      isCompactView ? "MM/dd/yy p" : "MMM d, yyyy, p"
+                    )}
+                  </span>
+                </div>
+              )}
               {task.completedAt && (
                 <div
                   className={`flex items-center ${

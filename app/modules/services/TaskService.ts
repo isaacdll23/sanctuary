@@ -8,15 +8,32 @@ export async function handleTaskAction(request: Request) {
   const formData = await request.formData();
   const intent = formData.get("intent");
 
+  // Handle 'setTaskReminder' intent
+  if (intent === "setTaskReminder") {
+    const taskId = Number(formData.get("taskId"));
+    const reminderDate = formData.get("reminderDate") as string | null;
+    if (!taskId || !reminderDate) {
+      throw new Error("Task ID and Reminder Date are required.");
+    }
+    await db
+      .update(tasksTable)
+      .set({
+        reminderDate: new Date(reminderDate),
+        reminderSent: 0,
+      })
+      .where(eq(tasksTable.id, taskId));
+    return { success: true, message: "Reminder set." };
+  }
+
   // Handle 'updateTaskDetails' intent
   if (intent === "updateTaskDetails") {
     const taskId = Number(formData.get("taskId"));
     const title = formData.get("title") as string;
     const description = formData.get("description") as string | null;
     const category = formData.get("category") as string | null;
+    const reminderDate = formData.get("reminderDate") as string | null;
 
     if (!taskId || !title) {
-      // Or handle more gracefully
       throw new Error("Task ID and Title are required for updating.");
     }
 
@@ -26,10 +43,12 @@ export async function handleTaskAction(request: Request) {
         title: title.trim(),
         description: description?.trim() || null,
         category: category?.trim() || null,
-        // Potentially add updatedAt: new Date() here if you have such a field
+        ...(reminderDate
+          ? { reminderDate: new Date(reminderDate), reminderSent: 0 }
+          : {}),
       })
       .where(eq(tasksTable.id, taskId));
-    return { success: true, message: "Task details updated." }; // Optional: return a response
+    return { success: true, message: "Task details updated." };
   }
 
   // Update category branch
@@ -162,7 +181,8 @@ export async function handleTaskAction(request: Request) {
   // We should ensure this block correctly handles that or that there's an explicit intent === 'createTask' block.
 
   // For now, let's assume this is the intended creation path if `intent` was `createTask` or not handled above.
-  if (intent === "createTask") { // Explicitly check for createTask intent
+  if (intent === "createTask") {
+    // Explicitly check for createTask intent
     const title = formData.get("title") as string;
     const description = formData.get("description") as string | null;
     const category = formData.get("category") as string | null;
@@ -180,7 +200,7 @@ export async function handleTaskAction(request: Request) {
     });
     return { success: true, type: "taskCreation", message: "Task created." };
   }
-  
+
   // Fallback for the original create task logic if no intent matched and it wasn't createTask
   // This part might be redundant if all actions are intent-driven.
   const titleFromForm = formData.get("title");
@@ -188,8 +208,8 @@ export async function handleTaskAction(request: Request) {
     // This will only be hit if no other condition was met, and there was no 'createTask' intent,
     // but a 'title' was still present. This maintains previous behavior for any non-intent based submissions
     // that might have only sent a title.
-    const descriptionFromForm = formData.get("description"); 
-    const taskCategoryFromForm = formData.get("category"); 
+    const descriptionFromForm = formData.get("description");
+    const taskCategoryFromForm = formData.get("category");
 
     await db.insert(tasksTable).values({
       title: titleFromForm.trim(),
@@ -199,7 +219,11 @@ export async function handleTaskAction(request: Request) {
       createdAt: new Date(),
     });
     // This specific return helps differentiate if needed, but generally, a success is a success.
-    return { success: true, type: "taskCreation_fallback", message: "Task created (fallback)." };
+    return {
+      success: true,
+      type: "taskCreation_fallback",
+      message: "Task created (fallback).",
+    };
   }
 
   // If no action was taken, and no title for fallback creation, return a generic response or error
