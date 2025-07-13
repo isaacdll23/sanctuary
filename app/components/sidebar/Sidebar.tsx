@@ -137,7 +137,13 @@ export default function Sidebar({
         } w-64 md:sticky md:flex md:flex-col`}
       >
         {/* Sidebar Header (for mobile close and desktop collapse) */}
-        <div className="flex items-center justify-between p-4 h-16">
+        <div
+          className={`flex items-center p-4 h-16 ${
+            isDesktopCollapsed && !isMobileMenuOpen
+              ? "md:justify-center"
+              : "justify-between"
+          }`}
+        >
           {/* Logo or Title - visible when expanded on desktop, or on mobile */}
           <span
             className={`text-xl font-semibold ${
