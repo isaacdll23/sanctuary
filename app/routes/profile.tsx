@@ -2,6 +2,7 @@ import { useFetcher, useLoaderData } from "react-router";
 import { useState, useContext, useEffect } from "react";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { ToastContext } from "~/context/ToastContext";
+import { KeyIcon } from "@heroicons/react/24/outline";
 
 export function meta() {
   return [{ title: "Profile" }];
@@ -32,11 +33,13 @@ type LoaderData = {
 type ActionData = {
   errors?: { username?: string; email?: string };
   success?: boolean;
+  message?: string;
 };
 
 export default function Profile() {
   const { user } = useLoaderData() as LoaderData;
   const fetcher = useFetcher<ActionData>();
+  const passwordResetFetcher = useFetcher<ActionData>();
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     username: user.username,
@@ -48,6 +51,8 @@ export default function Profile() {
   const toastCtx = useContext(ToastContext);
 
   const [toastShown, setToastShown] = useState(false);
+  const [passwordResetToastShown, setPasswordResetToastShown] = useState(false);
+
   useEffect(() => {
     if (success && toastCtx && !toastShown) {
       toastCtx.addToast("Profile updated successfully.", "success");
@@ -60,6 +65,27 @@ export default function Profile() {
     // eslint-disable-next-line
   }, [success, toastCtx, toastShown]);
 
+  useEffect(() => {
+    if (passwordResetFetcher.data && toastCtx && !passwordResetToastShown) {
+      if (passwordResetFetcher.data.success) {
+        toastCtx.addToast(
+          passwordResetFetcher.data.message || "Password reset email sent!",
+          "success"
+        );
+      } else {
+        toastCtx.addToast(
+          passwordResetFetcher.data.message || "Failed to send reset email.",
+          "error"
+        );
+      }
+      setPasswordResetToastShown(true);
+    }
+    if (!passwordResetFetcher.data) {
+      setPasswordResetToastShown(false);
+    }
+    // eslint-disable-next-line
+  }, [passwordResetFetcher.data, toastCtx, passwordResetToastShown]);
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
@@ -67,6 +93,13 @@ export default function Profile() {
   function handleEdit(e: React.FormEvent) {
     e.preventDefault();
     fetcher.submit({ ...form, intent: "updateProfile" }, { method: "post" });
+  }
+
+  function handlePasswordReset() {
+    passwordResetFetcher.submit(
+      { intent: "requestPasswordReset" },
+      { method: "post" }
+    );
   }
 
   return (
@@ -83,12 +116,24 @@ export default function Profile() {
               <span className="block text-slate-400 text-sm">Email</span>
               <span className="font-semibold text-lg">{user.email}</span>
             </div>
-            <button
-              className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg"
-              onClick={() => setEditMode(true)}
-            >
-              Edit Profile
-            </button>
+            <div className="space-y-3 mt-6">
+              <button
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors"
+                onClick={() => setEditMode(true)}
+              >
+                Edit Profile
+              </button>
+              <button
+                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                onClick={handlePasswordReset}
+                disabled={passwordResetFetcher.state === "submitting"}
+              >
+                <KeyIcon className="w-4 h-4" />
+                {passwordResetFetcher.state === "submitting"
+                  ? "Sending Reset Email..."
+                  : "Request Password Reset"}
+              </button>
+            </div>
           </div>
         ) : (
           <fetcher.Form
@@ -145,14 +190,14 @@ export default function Profile() {
             <div className="flex gap-2 mt-6">
               <button
                 type="submit"
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg"
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg transition-colors"
                 disabled={fetcher.state === "submitting"}
               >
                 {fetcher.state === "submitting" ? "Saving..." : "Save Changes"}
               </button>
               <button
                 type="button"
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg"
+                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors"
                 onClick={() => setEditMode(false)}
                 disabled={fetcher.state === "submitting"}
               >

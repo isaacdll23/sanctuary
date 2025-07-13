@@ -1,4 +1,11 @@
-import { Form, Link, redirect, data, useFetcher } from "react-router";
+import {
+  Form,
+  Link,
+  redirect,
+  data,
+  useFetcher,
+  useLoaderData,
+} from "react-router";
 import type { Route } from "./+types/login";
 import { getSession, commitSession } from "~/modules/sessions.server";
 import { db } from "~/db";
@@ -61,12 +68,38 @@ export async function action({ request }: Route.ActionArgs) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   await requireNoAuth(request);
-  return {};
+
+  const url = new URL(request.url);
+  const success = url.searchParams.get("success");
+  const error = url.searchParams.get("error");
+
+  return { success, error };
 }
 
 export default function Login() {
+  const { success, error } = useLoaderData<typeof loader>();
   let fetcher = useFetcher();
   let errors = fetcher.data?.errors;
+
+  const getSuccessMessage = (success: string) => {
+    switch (success) {
+      case "password-reset":
+        return "Password reset successfully! You can now log in with your new password.";
+      default:
+        return null;
+    }
+  };
+
+  const getErrorMessage = (error: string) => {
+    switch (error) {
+      case "invalid-reset-link":
+        return "Invalid password reset link.";
+      case "invalid-or-expired-reset-link":
+        return "Password reset link is invalid or has expired.";
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 md:p-8">
@@ -76,6 +109,16 @@ export default function Login() {
         </h1>
         <fetcher.Form method="post" className="w-full">
           <div className="w-full flex flex-col items-center justify-center gap-6">
+            {success && getSuccessMessage(success) && (
+              <p className="text-green-400 text-sm self-start -mb-2">
+                {getSuccessMessage(success)}
+              </p>
+            )}
+            {error && getErrorMessage(error) && (
+              <p className="text-red-400 text-sm self-start -mb-2">
+                {getErrorMessage(error)}
+              </p>
+            )}
             {errors?.invalid ? (
               <p className="text-red-400 text-sm self-start -mb-2">
                 {errors.invalid}

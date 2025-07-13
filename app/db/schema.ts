@@ -16,6 +16,8 @@ export const usersTable = pgTable("users", {
   passwordHash: varchar({ length: 1024 }).notNull(),
   role: varchar({ length: 50 }).default("user").notNull(),
   allowedPages: json(), // JSON array of page identifiers that the user can access
+  resetPasswordToken: varchar({ length: 255 }), // Token for password reset
+  resetPasswordExpires: timestamp(), // When the reset token expires
   createdAt: timestamp().defaultNow().notNull(),
 });
 
