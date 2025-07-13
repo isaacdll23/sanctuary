@@ -1,48 +1,42 @@
 import { useFetcher, useLoaderData } from "react-router";
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
+import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { ToastContext } from "~/context/ToastContext";
 
 export function meta() {
   return [{ title: "Profile" }];
 }
 
-export const loader = async ({ request }: any) => {
-  const { requireAuth, getUserFromSession } = await import(
-    "~/modules/auth.server"
-  );
-  await requireAuth(request);
-  const user = await getUserFromSession(request);
+export const loader = pageAccessLoader("profile", async (user, request) => {
+  // user is already authenticated and authorized
   return { user };
-};
+});
 
 export const action = async ({ request }: any) => {
-  const { requireAuth, getUserFromSession } = await import(
-    "~/modules/auth.server"
+  const { handleProfileAction } = await import(
+    "~/modules/services/ProfileService"
   );
-  const { db } = await import("~/db");
-  const { usersTable } = await import("~/db/schema");
-  const { eq } = await import("drizzle-orm");
-  await requireAuth(request);
-  const user = await getUserFromSession(request);
-  const formData = await request.formData();
-  const username = String(formData.get("username"));
-  const email = String(formData.get("email"));
-  let errors: any = {};
-  if (!username) errors.username = "Username is required.";
-  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))
-    errors.email = "Valid email is required.";
-  if (Object.keys(errors).length > 0) {
-    return { errors };
-  }
-  await db
-    .update(usersTable)
-    .set({ username, email })
-    .where(eq(usersTable.id, user.id));
-  return { success: true };
+  return handleProfileAction(request);
+};
+
+type User = {
+  id: string;
+  username: string;
+  email: string;
+};
+
+type LoaderData = {
+  user: User;
+};
+
+type ActionData = {
+  errors?: { username?: string; email?: string };
+  success?: boolean;
 };
 
 export default function Profile() {
-  const { user } = useLoaderData() as any;
-  const fetcher = useFetcher();
+  const { user } = useLoaderData() as LoaderData;
+  const fetcher = useFetcher<ActionData>();
   const [editMode, setEditMode] = useState(false);
   const [form, setForm] = useState({
     username: user.username,
@@ -51,13 +45,28 @@ export default function Profile() {
   const errors = fetcher.data?.errors;
   const success = fetcher.data?.success;
 
+  const toastCtx = useContext(ToastContext);
+
+  const [toastShown, setToastShown] = useState(false);
+  useEffect(() => {
+    if (success && toastCtx && !toastShown) {
+      toastCtx.addToast("Profile updated successfully.", "success");
+      setEditMode(false);
+      setToastShown(true);
+    }
+    if (!success) {
+      setToastShown(false);
+    }
+    // eslint-disable-next-line
+  }, [success, toastCtx, toastShown]);
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
   function handleEdit(e: React.FormEvent) {
     e.preventDefault();
-    fetcher.submit(form, { method: "post" });
+    fetcher.submit({ ...form, intent: "updateProfile" }, { method: "post" });
   }
 
   return (
@@ -86,7 +95,9 @@ export default function Profile() {
             method="post"
             className="space-y-4"
             onSubmit={handleEdit}
+            aria-live="polite"
           >
+            <input type="hidden" name="intent" value="updateProfile" />
             <div>
               <label
                 className="block text-slate-400 text-sm mb-1"
@@ -103,6 +114,7 @@ export default function Profile() {
                 onChange={handleChange}
                 required
                 aria-label="Username"
+                disabled={fetcher.state === "submitting"}
               />
               {errors?.username && (
                 <p className="text-red-400 text-sm mt-1">{errors.username}</p>
@@ -124,6 +136,7 @@ export default function Profile() {
                 onChange={handleChange}
                 required
                 aria-label="Email"
+                disabled={fetcher.state === "submitting"}
               />
               {errors?.email && (
                 <p className="text-red-400 text-sm mt-1">{errors.email}</p>
@@ -133,21 +146,25 @@ export default function Profile() {
               <button
                 type="submit"
                 className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-lg"
+                disabled={fetcher.state === "submitting"}
               >
-                Save Changes
+                {fetcher.state === "submitting" ? "Saving..." : "Save Changes"}
               </button>
               <button
                 type="button"
                 className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg"
                 onClick={() => setEditMode(false)}
+                disabled={fetcher.state === "submitting"}
               >
                 Cancel
               </button>
             </div>
-            {success && (
-              <p className="text-green-400 text-sm mt-2">
-                Profile updated successfully.
-              </p>
+            {/* Error summary for screen readers */}
+            {(errors?.username || errors?.email) && (
+              <div className="sr-only" aria-live="polite">
+                {errors?.username && <div>{errors.username}</div>}
+                {errors?.email && <div>{errors.email}</div>}
+              </div>
             )}
           </fetcher.Form>
         )}
