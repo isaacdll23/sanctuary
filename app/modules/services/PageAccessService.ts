@@ -9,21 +9,22 @@ export type PageAccessAction = {
   action: "grant" | "revoke";
 };
 
-export async function handlePageAccessAction(request: Request) {
+export async function handlePageAccessAction(request: Request, formData?: FormData) {
   // Verify that the current user is an admin
   const currentUser = await getUserFromSession(request);
   if (currentUser.role !== "admin") {
     throw new Error("Unauthorized: Only admins can manage page access");
   }
 
-  const formData = await request.formData();
-  const intent = formData.get("intent");
+  // Use provided formData or parse from request
+  const data = formData || await request.formData();
+  const intent = data.get("intent");
 
   // Handle page access updates
   if (intent === "updatePageAccess") {
-    const userId = Number(formData.get("userId"));
-    const pageId = formData.get("pageId") as string;
-    const action = formData.get("action") as "grant" | "revoke";
+    const userId = Number(data.get("userId"));
+    const pageId = data.get("pageId") as string;
+    const action = data.get("action") as "grant" | "revoke";
 
     if (!userId || !pageId || !action) {
       throw new Error("Missing required parameters for updating page access");

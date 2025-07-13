@@ -88,6 +88,10 @@ if (intent === "createTask") {
 - **Responsive design**: Mobile-first with `md:` breakpoints
 - **Loading states**: Use fetcher.state === "submitting" for button states
 - **Modals**: Fixed overlays with backdrop-blur and scale animations
+- **Icons**: Always use Hero Icons from `@heroicons/react/24/outline` instead of manually drawn SVGs
+  - Import icons: `import { IconName } from "@heroicons/react/24/outline"`
+  - Usage: `<IconName className="w-6 h-6" />`
+  - Never draw custom SVG icons when Hero Icons equivalents exist
 
 ## Common Commands
 

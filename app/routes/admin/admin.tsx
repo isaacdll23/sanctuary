@@ -1,9 +1,16 @@
 import { useLoaderData } from "react-router";
+import { useState } from "react";
 import PageAccessManager from "~/components/admin/PageAccessManager";
+import UserEditModal from "~/components/admin/UserEditModal";
 import {
   adminOnlyLoader,
   adminOnlyAction,
 } from "~/modules/middleware/adminOnly";
+import {
+  UsersIcon,
+  ShieldCheckIcon,
+  UserIcon,
+} from "@heroicons/react/24/outline";
 
 // Use React Router v7's auto-generated types (no need for manual import)
 
@@ -29,9 +36,25 @@ export const action = adminOnlyAction(async (adminUser, request) => {
   const { handlePageAccessAction } = await import(
     "~/modules/services/PageAccessService"
   );
+  const { handleUserManagementAction } = await import(
+    "~/modules/services/UserManagementService"
+  );
 
-  // Handle page access actions (grant/revoke permissions)
-  return handlePageAccessAction(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  // Route to appropriate service based on intent
+  if (intent === "updatePageAccess") {
+    return handlePageAccessAction(request, formData);
+  } else if (
+    ["editUser", "changeRole", "deleteUser", "resetPassword"].includes(
+      intent as string
+    )
+  ) {
+    return handleUserManagementAction(request, formData);
+  }
+
+  return { success: false, message: "Unknown action" };
 });
 
 export default function Admin() {
@@ -39,6 +62,19 @@ export default function Admin() {
     users: any[];
     currentUser: any;
   }>();
+
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedUser(null);
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
@@ -56,6 +92,51 @@ export default function Admin() {
         </header>
 
         <main className="grid gap-8">
+          {/* Admin Stats */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
+                  <UsersIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400">Total Users</p>
+                  <p className="text-2xl font-bold text-white">
+                    {users.length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
+                  <ShieldCheckIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400">Admins</p>
+                  <p className="text-2xl font-bold text-white">
+                    {users.filter((user) => user.role === "admin").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-green-500/20 text-green-400">
+                  <UserIcon className="w-8 h-8" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-400">Regular Users</p>
+                  <p className="text-2xl font-bold text-white">
+                    {users.filter((user) => user.role === "user").length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Users section */}
           <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-6">User Management</h2>
@@ -106,12 +187,12 @@ export default function Admin() {
                       <td className="p-4">
                         <div className="flex gap-2">
                           <button
-                            className="px-4 py-2 min-w-[44px] min-h-[44px] bg-slate-700 hover:bg-slate-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                            aria-label={`View details for ${user.username}`}
+                            onClick={() => handleEditUser(user)}
+                            className="px-4 py-2 min-w-[44px] min-h-[44px] bg-blue-600 hover:bg-blue-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                            aria-label={`Edit ${user.username}`}
                           >
-                            View
+                            Edit
                           </button>
-                          {/* Additional action buttons would go here */}
                         </div>
                       </td>
                     </tr>
@@ -148,12 +229,12 @@ export default function Admin() {
                   </div>
                   <div className="flex gap-2 mt-2">
                     <button
-                      className="px-4 py-2 min-w-[44px] min-h-[44px] bg-slate-700 hover:bg-slate-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full"
-                      aria-label={`View details for ${user.username}`}
+                      onClick={() => handleEditUser(user)}
+                      className="px-4 py-2 min-w-[44px] min-h-[44px] bg-blue-600 hover:bg-blue-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full transition-colors"
+                      aria-label={`Edit ${user.username}`}
                     >
-                      View
+                      Edit
                     </button>
-                    {/* Additional action buttons would go here */}
                   </div>
                 </div>
               ))}
@@ -163,6 +244,14 @@ export default function Admin() {
           {/* Page Access Management section */}
           <PageAccessManager users={users} />
         </main>
+
+        {/* User Edit Modal */}
+        <UserEditModal
+          user={selectedUser}
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          currentUserId={currentUser.id}
+        />
       </div>
     </div>
   );
