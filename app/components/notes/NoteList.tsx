@@ -30,14 +30,14 @@ export function NoteList({
                 ${
                   selectedNoteId === n.id
                     ? "bg-purple-600 ring-2 ring-purple-400 shadow-lg"
-                    : "bg-slate-800 hover:bg-slate-700 shadow-md"
+                    : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 shadow-md"
                 }
               `}
             >
-              <h3 className="font-semibold text-slate-100 truncate">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {n.title || "Untitled Note"}
               </h3>
-              <p className="text-sm text-slate-400 truncate mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
                 {n.content?.substring(0, 80) || "No content..."}
               </p>
               {currentFolder && (
@@ -50,7 +50,9 @@ export function NoteList({
           );
         })
       ) : (
-        <p className="text-slate-400 text-center py-4">No notes found.</p>
+        <p className="text-gray-600 dark:text-gray-400 text-center py-4">
+          No notes found.
+        </p>
       )}
     </div>
   );

@@ -46,7 +46,7 @@ export default function TaskItem({
       <li
         onClick={() => setIsModalOpen(true)}
         className={`
-          bg-slate-800/70 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg 
+          bg-white/90 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg 
           transition-all duration-300 ease-in-out cursor-pointer group
           hover:border-purple-500/70 hover:shadow-purple-500/20 hover:shadow-xl hover:scale-[1.02]
           ${task.completedAt ? "opacity-60 hover:opacity-80" : ""}
@@ -57,7 +57,7 @@ export default function TaskItem({
           {/* Task Header: Title and Category */}
           <div className={`${isCompactView ? "mb-2" : "mb-3"}`}>
             <h3
-              className={`font-semibold text-slate-100 group-hover:text-purple-400 transition-colors duration-300 truncate ${
+              className={`font-semibold text-gray-900 dark:text-gray-100 group-hover:text-purple-400 transition-colors duration-300 truncate ${
                 isCompactView ? "text-base sm:text-lg" : "text-lg sm:text-xl"
               }`}
             >
@@ -72,7 +72,7 @@ export default function TaskItem({
           </div>
           {/* Task Description (truncated) */}
           {task.description && !isCompactView && (
-            <p className="text-sm text-slate-400 mb-4 line-clamp-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
               {task.description}
             </p>
           )}
@@ -92,13 +92,13 @@ export default function TaskItem({
           <div className="mt-auto">
             {/* Dates and Status */}
             <div
-              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 ${
+              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-500 ${
                 isCompactView ? "mb-2 text-[0.7rem]" : "mb-4"
               }`}
             >
               <div className="flex items-center mb-1 sm:mb-0">
                 <CalendarDaysIcon
-                  className={`mr-1.5 flex-shrink-0 text-slate-400 ${
+                  className={`mr-1.5 flex-shrink-0 text-gray-500 dark:text-gray-400 ${
                     isCompactView ? "h-3 w-3" : "h-3.5 w-3.5"
                   }`}
                 />
@@ -150,7 +150,7 @@ export default function TaskItem({
             </div>
             {/* Actions: Simplified to a "View Details" prompt */}
             {!isCompactView && (
-              <div className="flex justify-end items-center pt-2 border-t border-slate-700/50">
+              <div className="flex justify-end items-center pt-2 border-t border-gray-200 dark:border-gray-700/50">
                 <span className="text-xs text-purple-400 group-hover:text-purple-300 flex items-center">
                   View Details{" "}
                   <EllipsisHorizontalIcon className="h-5 w-5 ml-1" />

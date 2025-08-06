@@ -82,12 +82,17 @@ if (intent === "createTask") {
 - Use transactions for related operations (e.g., task + steps)
 - Follow pattern: insert/update -> return success/error object
 
+
 ## Styling & UI Conventions
 
-- **Tailwind classes**: Consistent slate-800/900 backgrounds, gradient buttons
+- **Tailwind classes**: Use only gray color classes for backgrounds, text, and borders, always paired with `dark:` variants for dark mode support. Do not use any `slate-*` classes.
+  - **Backgrounds**: Use `bg-gray-100 dark:bg-gray-700` for surfaces, `bg-white dark:bg-gray-900` for main containers, and `bg-white/80 dark:bg-gray-800/80` for overlays.
+  - **Text**: Use `text-gray-900 dark:text-gray-100` for primary text, `text-gray-500 dark:text-gray-400` for secondary text, and similar patterns for headings and labels.
+  - **Borders**: Use `border-gray-300 dark:border-gray-700` or `border-gray-300 dark:border-gray-600` as appropriate.
+  - **Never use**: `bg-slate-*`, `text-slate-*`, `border-slate-*`, or any slate color classes.
 - **Responsive design**: Mobile-first with `md:` breakpoints
-- **Loading states**: Use fetcher.state === "submitting" for button states
-- **Modals**: Fixed overlays with backdrop-blur and scale animations
+- **Loading states**: Use `fetcher.state === "submitting"` for button states
+- **Modals**: Fixed overlays with `backdrop-blur` and scale animations, always using theme-aware backgrounds and borders
 - **Icons**: Always use Hero Icons from `@heroicons/react/24/outline` instead of manually drawn SVGs
   - Import icons: `import { IconName } from "@heroicons/react/24/outline"`
   - Usage: `<IconName className="w-6 h-6" />`
@@ -102,12 +107,14 @@ npm run typecheck    # Type checking
 npx drizzle-kit push # Database migrations
 ```
 
+
 ## Error Patterns to Avoid
 
 - Don't use direct database imports in components (use loaders/actions)
 - Don't bypass middleware - always use `pageAccessLoader`/`adminOnlyLoader`
 - Don't forget `userId` filtering in database queries
 - Don't mix server-only imports with client code (use dynamic imports in loaders)
+- **Never use any `slate-*` Tailwind classes**. All color styling must use gray + dark: variants as described above.
 
 ## Testing Data Flow
 

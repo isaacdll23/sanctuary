@@ -147,7 +147,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -157,7 +157,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 Expenses
               </span>
             </h1>
-            <p className="mt-2 text-lg text-slate-400 text-center md:text-left">
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 text-center md:text-left">
               Track and manage your monthly expenses.
             </p>
           </div>
@@ -184,8 +184,8 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Monthly Summary */}
-          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-semibold mb-4 text-slate-200 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -204,7 +204,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Total Monthly Expenses:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Total Monthly Expenses:
+                </span>
                 <span className="text-xl font-medium text-rose-400">
                   $
                   {(totalMonthlyCost / 100).toLocaleString(undefined, {
@@ -214,7 +216,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               </div>
               {annualGrossIncome !== 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Net Remaining Monthly:</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Net Remaining Monthly:
+                  </span>
                   <span className="text-xl font-medium text-emerald-400">
                     $
                     {(netRemainingMonthly / 100).toLocaleString(undefined, {
@@ -227,8 +231,8 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
           </div>
 
           {/* Yearly Summary */}
-          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-semibold mb-4 text-slate-200 flex items-center gap-2">
+          <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl p-6">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -247,7 +251,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-slate-400">Total Yearly Expenses:</span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  Total Yearly Expenses:
+                </span>
                 <span className="text-xl font-medium text-rose-400">
                   $
                   {(totalYearlyCost / 100).toLocaleString(undefined, {
@@ -257,7 +263,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               </div>
               {annualGrossIncome !== 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-slate-400">Net Remaining Yearly:</span>
+                  <span className="text-gray-600 dark:text-gray-400">
+                    Net Remaining Yearly:
+                  </span>
                   <span className="text-xl font-medium text-emerald-400">
                     $
                     {(netRemainingYearly / 100).toLocaleString(undefined, {
@@ -271,22 +279,22 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Category Filter */}
-        <div className="relative z-20 mb-6 bg-slate-800/60 backdrop-blur-md border border-slate-700 rounded-xl shadow-lg p-4">
+        <div className="relative z-20 mb-6 bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/60 dark:border-gray-700 rounded-xl shadow-lg p-4">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-            <label className="text-sm font-medium text-slate-300 min-w-[120px]">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]">
               Filter by Category:
             </label>
             <div className="relative w-full">
               <button
                 type="button"
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="w-full px-4 py-2 text-sm bg-slate-700/50 border border-slate-600 rounded-lg text-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors text-left flex justify-between items-center"
+                className="w-full px-4 py-2 text-sm bg-gray-100 border border-gray-300 dark:bg-gray-700/50 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors text-left flex justify-between items-center"
               >
                 {filterCategories.length > 0
                   ? filterCategories.join(", ")
                   : "All Categories"}
                 <svg
-                  className="w-5 h-5 text-slate-400"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -300,11 +308,11 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 </svg>
               </button>{" "}
               {showDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 dark:bg-gray-700 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {distinctCategories.map((cat) => (
                     <label
                       key={cat}
-                      className="flex items-center px-4 py-2.5 hover:bg-slate-600 cursor-pointer"
+                      className="flex items-center px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
                     >
                       <input
                         type="checkbox"
@@ -313,14 +321,16 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                         onChange={() => toggleCategory(cat)}
                         className="mr-2 rounded text-rose-500 focus:ring-rose-400"
                       />
-                      <span className="text-slate-200">{cat}</span>
+                      <span className="text-gray-900 dark:text-gray-200">
+                        {cat}
+                      </span>
                     </label>
                   ))}
                   {filterCategories.length > 0 && (
-                    <div className="border-t border-slate-600 p-2">
+                    <div className="border-t border-gray-300 dark:border-gray-600 p-2">
                       <button
                         onClick={() => setFilterCategories([])}
-                        className="w-full px-3 py-1.5 text-xs text-center bg-slate-600 hover:bg-slate-500 rounded text-white transition-colors"
+                        className="w-full px-3 py-1.5 text-xs text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded text-gray-900 dark:text-white transition-colors"
                       >
                         Clear Filters
                       </button>
@@ -333,38 +343,38 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Expenses Table */}
-        <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-slate-700/70">
+              <thead className="bg-gray-100 dark:bg-gray-700/70">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Monthly Cost
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Charge Day
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Category
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-700/50">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
                 {expenses.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
-                      className="px-4 py-8 text-center text-slate-400"
+                      className="px-4 py-8 text-center text-gray-600 dark:text-gray-400"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="mx-auto h-12 w-12 text-slate-500"
+                        className="mx-auto h-12 w-12 text-gray-500 dark:text-gray-500"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -387,16 +397,16 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     (expense: typeof financeExpensesTable.$inferSelect) => (
                       <tr
                         key={expense.id}
-                        className="hover:bg-slate-700/30 transition-colors"
+                        className="hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors"
                       >
-                        <td className="px-4 py-4 text-sm font-medium text-slate-200">
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-200">
                           {expense.name}
                         </td>
                         <td className="px-4 py-4 text-sm">
                           <div className="font-medium text-rose-400">
                             ${(expense.monthlyCost / 100).toFixed(2)}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-gray-600 dark:text-gray-400">
                             {(
                               (expense.monthlyCost / totalMonthlyCost) *
                               100
@@ -405,12 +415,12 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                           </div>
                         </td>
                         <td className="px-4 py-4 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                             Day {expense.chargeDay}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
                             {expense.category}
                           </span>
                         </td>
@@ -459,14 +469,14 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
       {/* Add Expense Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
+          <div className="bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
                 Add New Expense
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 aria-label="Close modal"
               >
                 <svg
@@ -492,7 +502,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Expense Name
                 </label>
@@ -501,7 +511,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   name="name"
                   id="name"
                   placeholder="e.g., Netflix, Rent, Groceries"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
                   required
                 />
               </div>
@@ -509,12 +519,12 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="monthlyCost"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Monthly Cost
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-600 dark:text-gray-400">
                     $
                   </span>
                   <input
@@ -523,7 +533,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     name="monthlyCost"
                     id="monthlyCost"
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                    className="w-full pl-8 pr-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
                     required
                   />
                 </div>
@@ -532,7 +542,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="chargeDay"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Day of Month Charged
                 </label>
@@ -543,10 +553,10 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   placeholder="1-31"
                   min="1"
                   max="31"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
                   required
                 />
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   Enter the day of the month when this expense is charged.
                 </p>
               </div>
@@ -554,7 +564,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="category"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Category
                 </label>
@@ -564,7 +574,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   id="category"
                   placeholder="e.g., Entertainment, Housing, Food"
                   list="categories"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
                   required
                 />
                 <datalist id="categories">
@@ -574,7 +584,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                       <option key={cat} value={cat} />
                     ))}
                 </datalist>
-                <p className="mt-1 text-xs text-slate-400">
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   Enter an existing category or create a new one.
                 </p>
               </div>
@@ -630,7 +640,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                  className="flex-1 py-2.5 px-4 border border-gray-400 dark:border-gray-600 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white transition-colors duration-200"
                 >
                   Cancel
                 </button>
@@ -643,14 +653,14 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
       {/* Edit Expense Modal */}
       {editingExpense && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
+          <div className="bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-green-600">
                 Edit Expense
               </h2>
               <button
                 onClick={() => setEditingExpense(null)}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 aria-label="Close modal"
               >
                 <svg
@@ -677,7 +687,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-name"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Expense Name
                 </label>
@@ -686,7 +696,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   name="name"
                   id="edit-name"
                   defaultValue={editingExpense.name}
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   required
                 />
               </div>
@@ -694,12 +704,12 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-monthlyCost"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Monthly Cost
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-600 dark:text-gray-400">
                     $
                   </span>
                   <input
@@ -708,7 +718,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     name="monthlyCost"
                     id="edit-monthlyCost"
                     defaultValue={(editingExpense.monthlyCost / 100).toFixed(2)}
-                    className="w-full pl-8 pr-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full pl-8 pr-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     required
                   />
                 </div>
@@ -717,7 +727,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-chargeDay"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Day of Month Charged
                 </label>
@@ -728,7 +738,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   defaultValue={editingExpense.chargeDay}
                   min="1"
                   max="31"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   required
                 />
               </div>
@@ -736,7 +746,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-category"
-                  className="block text-sm font-medium text-slate-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Category
                 </label>
@@ -746,7 +756,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   id="edit-category"
                   defaultValue={editingExpense.category}
                   list="edit-categories"
-                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 />
                 <datalist id="edit-categories">
                   {distinctCategories
@@ -804,7 +814,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 <button
                   type="button"
                   onClick={() => setEditingExpense(null)}
-                  className="flex-1 py-2.5 px-4 border border-slate-600 rounded-lg text-slate-300 hover:bg-slate-700 hover:text-white transition-colors duration-200"
+                  className="flex-1 py-2.5 px-4 border border-gray-400 dark:border-gray-600 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white transition-colors duration-200"
                 >
                   Cancel
                 </button>

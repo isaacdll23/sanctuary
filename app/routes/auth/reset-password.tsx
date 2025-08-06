@@ -113,12 +113,12 @@ export default function ResetPassword() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 md:p-8">
-      <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-8 md:p-10 flex flex-col items-center gap-8 w-full max-w-md md:w-96">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-gray-100/80 dark:bg-gray-700/80 backdrop-blur-md border border-gray-300 dark:border-gray-600 rounded-2xl shadow-xl p-8 md:p-10 flex flex-col items-center gap-8 w-full max-w-md md:w-96">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-600 mb-6">
           Reset Password
         </h1>
-        <p className="text-slate-400 text-sm text-center mb-4">
+        <p className="text-gray-500 dark:text-gray-300 text-sm text-center mb-4">
           Enter a new password for {email}
         </p>
         <fetcher.Form method="post" className="w-full">
@@ -132,7 +132,7 @@ export default function ResetPassword() {
 
             <div className="w-full relative">
               <input
-                className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
                 type={showPassword ? "text" : "password"}
                 placeholder="New Password"
                 name="password"
@@ -141,7 +141,7 @@ export default function ResetPassword() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-gray-400 dark:hover:text-gray-200"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -155,7 +155,7 @@ export default function ResetPassword() {
 
             <div className="w-full relative">
               <input
-                className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 pr-10 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm New Password"
                 name="confirmPassword"
@@ -164,7 +164,7 @@ export default function ResetPassword() {
               />
               <button
                 type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-gray-400 dark:hover:text-gray-200"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 aria-label={
                   showConfirmPassword ? "Hide password" : "Show password"

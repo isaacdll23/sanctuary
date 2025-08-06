@@ -108,15 +108,15 @@ export default function UserEditModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
-          <h2 className="text-xl font-bold text-slate-100">
+        <div className="flex items-center justify-between p-6 border-b border-gray-300 dark:border-gray-700">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Edit User: {user.username}
           </h2>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition-colors"
+            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
             aria-label="Close modal"
           >
             <XMarkIcon className="w-6 h-6" />
@@ -127,14 +127,14 @@ export default function UserEditModal({
         <div className="p-6 space-y-6">
           {/* Basic Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-200">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
               Basic Information
             </h3>
 
             <div>
               <label
                 htmlFor="username"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Username
               </label>
@@ -144,7 +144,7 @@ export default function UserEditModal({
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isSubmitting}
               />
             </div>
@@ -152,7 +152,7 @@ export default function UserEditModal({
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Email
               </label>
@@ -162,7 +162,7 @@ export default function UserEditModal({
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isSubmitting}
               />
             </div>
@@ -180,14 +180,14 @@ export default function UserEditModal({
 
           {/* Role Management */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-200">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
               Role Management
             </h3>
 
             <div>
               <label
                 htmlFor="role"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 Role
               </label>
@@ -196,14 +196,14 @@ export default function UserEditModal({
                 name="role"
                 value={formData.role}
                 onChange={handleInputChange}
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isSubmitting || isCurrentUser}
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
               </select>
               {isCurrentUser && (
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   You cannot change your own role
                 </p>
               )}
@@ -224,14 +224,14 @@ export default function UserEditModal({
 
           {/* Password Reset */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-slate-200">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
               Password Reset
             </h3>
 
             <div>
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-slate-300 mb-2"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
               >
                 New Password
               </label>
@@ -242,7 +242,7 @@ export default function UserEditModal({
                 value={formData.newPassword}
                 onChange={handleInputChange}
                 placeholder="Enter new password (min 6 characters)"
-                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={isSubmitting}
               />
             </div>
@@ -263,7 +263,7 @@ export default function UserEditModal({
           </div>
 
           {/* Danger Zone */}
-          <div className="space-y-4 border-t border-slate-700 pt-6">
+          <div className="space-y-4 border-t border-gray-300 dark:border-gray-700 pt-6">
             <h3 className="text-lg font-semibold text-red-400">Danger Zone</h3>
 
             <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
@@ -279,7 +279,7 @@ export default function UserEditModal({
                 {isSubmitting ? "Deleting..." : "Delete User"}
               </button>
               {isCurrentUser && (
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   You cannot delete your own account
                 </p>
               )}

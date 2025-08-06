@@ -107,7 +107,7 @@ export default function Sidebar({
       {/* Hamburger Menu - Mobile */}
       <button
         onClick={toggleMobileMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
         aria-controls="sidebar"
         aria-expanded={isMobileMenuOpen}
         aria-label="Open sidebar"
@@ -130,7 +130,7 @@ export default function Sidebar({
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed top-0 left-0 z-40 h-screen bg-slate-800 text-white transition-all duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 z-40 h-screen bg-gray-50 text-gray-900 dark:bg-gray-800 dark:text-white border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 ${
           isDesktopCollapsed ? "md:w-20" : "md:w-64" // Dynamic width for desktop
@@ -156,7 +156,7 @@ export default function Sidebar({
           {/* Mobile Close Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            className="md:hidden p-2 rounded-md text-indigo-600 hover:text-indigo-800 hover:bg-gray-100 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             aria-label="Close sidebar"
           >
             <svg
@@ -177,7 +177,7 @@ export default function Sidebar({
           {/* Desktop Collapse/Expand Button */}
           <button
             onClick={toggleDesktopCollapse}
-            className="hidden md:block p-2 rounded-md text-indigo-200 hover:text-white hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+            className="hidden md:block p-2 rounded-md text-indigo-600 hover:text-indigo-800 hover:bg-gray-100 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             aria-label={
               isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }
@@ -207,7 +207,7 @@ export default function Sidebar({
       {/* Overlay for mobile when sidebar is open */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black opacity-50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={toggleMobileMenu}
           aria-hidden="true"
         ></div>

@@ -74,7 +74,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           content="black-translucent"
         />{" "}
       </head>
-      <body className="m-0 p-0 h-screen flex">
+      <body className="m-0 p-0 h-screen flex bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
         <ToastProvider>
           <Sidebar
             isAuthenticated={isAuthenticated}
@@ -92,9 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <main className="flex-1 overflow-y-auto p-4 md:p-6">
-      {" "}
-      {/* Adjusted padding and overflow */}
+    <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       <Outlet />
     </main>
   );
@@ -117,11 +115,11 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
+    <main className="pt-16 p-4 container mx-auto bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <h1 className="text-2xl font-bold mb-4">{message}</h1>
+      <p className="mb-4">{details}</p>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
+        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-gray-800 rounded-lg">
           <code>{stack}</code>
         </pre>
       )}

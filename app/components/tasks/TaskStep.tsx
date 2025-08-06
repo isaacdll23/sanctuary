@@ -22,8 +22,8 @@ export default function TaskStep({
         transition-colors duration-200 
         ${
           isCompleted
-            ? "bg-slate-700/50 opacity-70"
-            : "bg-slate-700/80 hover:bg-slate-600/80"
+            ? "bg-gray-100 dark:bg-gray-700/50 opacity-70"
+            : "bg-gray-100 dark:bg-gray-700/80 hover:bg-gray-200 dark:hover:bg-gray-600/80"
         }
         ${isCompactView ? "p-2" : "p-3"}
       `}
@@ -52,7 +52,7 @@ export default function TaskStep({
               ${
                 isCompleted
                   ? "bg-green-500 border-green-600 focus:ring-green-500/50"
-                  : "bg-slate-600 border-slate-500 hover:border-purple-500 focus:ring-purple-500/50"
+                  : "bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 hover:border-purple-500 focus:ring-purple-500/50"
               }
               text-green-500 focus:ring-offset-0 focus:ring-2 cursor-pointer
               ${isCompactView ? "h-4 w-4" : "h-5 w-5"}
@@ -61,7 +61,11 @@ export default function TaskStep({
           <span
             className={`
               ml-3 
-              ${isCompleted ? "text-slate-400 line-through" : "text-slate-200"}
+              ${
+                isCompleted
+                  ? "text-gray-500 dark:text-gray-300 line-through"
+                  : "text-gray-900 dark:text-gray-100"
+              }
               ${isCompactView ? "text-xs" : "text-sm"}
             `}
           >
@@ -78,7 +82,7 @@ export default function TaskStep({
               e.preventDefault();
             }
           }}
-          className={`text-slate-500 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${
+          className={`text-gray-400 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${
             isCompactView ? "p-1" : "p-1.5"
           }`}
           aria-label="Delete step"

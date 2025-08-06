@@ -234,11 +234,11 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-900 text-slate-100 relative">
+    <div className="flex h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 relative">
       {/* Toggle Button */}
       <button
         onClick={handleToggleLeftColumn}
-        className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-slate-700 hover:bg-slate-600 rounded-full text-white transition-all duration-300 ease-in-out
+        className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-gray-700 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-white transition-all duration-300 ease-in-out
           ${isLeftColumnCollapsed ? "left-1" : "left-[calc(33.333333%-22px)]"}
         `}
         aria-label={
@@ -257,7 +257,7 @@ export default function NotesPage() {
         className={`
           ${
             isLeftColumnCollapsed ? "w-0 p-0" : "w-1/3 p-4"
-          } border-r border-slate-700 flex flex-col transition-all duration-300 ease-in-out overflow-hidden
+          } border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out overflow-hidden
         `}
       >
         {!isLeftColumnCollapsed && (
@@ -340,32 +340,32 @@ export default function NotesPage() {
               <div className="flex space-x-2">
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-purple-400 transition-colors"
+                  className="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-purple-600 dark:text-purple-400 transition-colors"
                   aria-label="Edit note"
                 >
                   <PencilSquareIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(selectedNote.id)}
-                  className="p-2 rounded-md bg-slate-700 hover:bg-slate-600 text-red-500 transition-colors"
+                  className="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-500 transition-colors"
                   aria-label="Delete note"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>
-            <div className="prose prose-invert prose-sm md:prose-base max-w-none bg-slate-800 p-4 rounded-lg">
+            <div className="prose prose-gray dark:prose-invert prose-sm md:prose-base max-w-none bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
               <ReactMarkdown>{selectedNote.content}</ReactMarkdown>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-center">
-              <PencilSquareIcon className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-slate-400">
+              <PencilSquareIcon className="h-16 w-16 text-gray-500 dark:text-gray-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400">
                 Select a note to view or edit
               </h2>
-              <p className="text-slate-500">
+              <p className="text-gray-500 dark:text-gray-500">
                 Or, create a new one using the button on the left.
               </p>
             </div>

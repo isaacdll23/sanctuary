@@ -28,8 +28,8 @@ export default function SidebarLink({
         ${isCollapsed ? "justify-center" : ""} 
         ${
           isActive
-            ? "bg-indigo-700 text-white"
-            : "text-indigo-100 hover:bg-indigo-700 hover:text-white"
+            ? "bg-indigo-600 text-white dark:bg-indigo-600 dark:text-white"
+            : "text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
         }`
       }
       {...rest}
