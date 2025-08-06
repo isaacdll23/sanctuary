@@ -104,6 +104,11 @@ export async function hasPageAccess(
     return true;
   }
 
+  // Everyone has access to dashboard and profile by default
+  if (pageId === "dashboard" || pageId === "profile") {
+    return true;
+  }
+
   // Check if the pageId is in the allowedPages array
   const allowedPages: string[] = user.allowedPages
     ? typeof user.allowedPages === "string"
@@ -150,9 +155,12 @@ export async function getUserAccessiblePages(
       : user.allowedPages
     : [];
 
-  // Everyone has access to dashboard by default
+  // Everyone has access to dashboard and profile by default
   if (!allowedPages.includes("dashboard")) {
     allowedPages.push("dashboard");
+  }
+  if (!allowedPages.includes("profile")) {
+    allowedPages.push("profile");
   }
 
   return allowedPages;
