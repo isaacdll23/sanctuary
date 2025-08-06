@@ -58,7 +58,7 @@ export default function Dashboard() {
   }>();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <header className="mb-8 md:mb-12 text-center md:text-left">
@@ -67,19 +67,19 @@ export default function Dashboard() {
               Dashboard
             </span>
           </h1>
-          <p className="mt-3 text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto md:mx-0">
+          <p className="mt-3 text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto md:mx-0">
             Your personal overview with stats and insights.
           </p>
         </header>
 
         {/* Stats Section */}
         <section className="mb-12">
-          <h2 className="text-xl font-semibold mb-6 text-slate-300 border-b border-slate-800 pb-2">
+          <h2 className="text-xl font-semibold mb-6 text-gray-700 dark:text-gray-300 border-b border-gray-200 dark:border-gray-800 pb-2">
             Task Performance Overview
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* New Tasks - 7 Days */}
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6 hover:shadow-indigo-500/10 hover:border-slate-600 transition-all duration-300">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6 hover:shadow-indigo-500/10 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400">
                   <svg
@@ -98,19 +98,23 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">New Tasks</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    New Tasks
+                  </p>
                   <div className="flex items-end gap-1">
-                    <p className="text-2xl font-bold text-white mr-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mr-1">
                       {newTasksLast7Days}
                     </p>
-                    <p className="text-xs text-slate-500 mb-1">last 7 days</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+                      last 7 days
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Completed Tasks - 7 Days */}
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6 hover:shadow-emerald-500/10 hover:border-slate-600 transition-all duration-300">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6 hover:shadow-emerald-500/10 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
                   <svg
@@ -129,19 +133,23 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Completed Tasks</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Completed Tasks
+                  </p>
                   <div className="flex items-end gap-1">
-                    <p className="text-2xl font-bold text-white mr-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mr-1">
                       {completedTasksLast7Days}
                     </p>
-                    <p className="text-xs text-slate-500 mb-1">last 7 days</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+                      last 7 days
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* New Tasks - 30 Days */}
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6 hover:shadow-indigo-500/10 hover:border-slate-600 transition-all duration-300">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6 hover:shadow-indigo-500/10 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-400">
                   <svg
@@ -160,19 +168,23 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">New Tasks</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    New Tasks
+                  </p>
                   <div className="flex items-end gap-1">
-                    <p className="text-2xl font-bold text-white mr-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mr-1">
                       {newTasksLast30Days}
                     </p>
-                    <p className="text-xs text-slate-500 mb-1">last 30 days</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+                      last 30 days
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Completed Tasks - 30 Days */}
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6 hover:shadow-emerald-500/10 hover:border-slate-600 transition-all duration-300">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6 hover:shadow-emerald-500/10 hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-300">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400">
                   <svg
@@ -191,12 +203,16 @@ export default function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Completed Tasks</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Completed Tasks
+                  </p>
                   <div className="flex items-end gap-1">
-                    <p className="text-2xl font-bold text-white mr-1">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mr-1">
                       {completedTasksLast30Days}
                     </p>
-                    <p className="text-xs text-slate-500 mb-1">last 30 days</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">
+                      last 30 days
+                    </p>
                   </div>
                 </div>
               </div>
@@ -207,8 +223,8 @@ export default function Dashboard() {
         {/* Performance Metrics */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Completion Rate Card */}
-          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6">
-            <h3 className="text-lg font-semibold mb-4 text-slate-200 flex items-center gap-2">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -228,7 +244,9 @@ export default function Dashboard() {
             <div>
               <div className="mb-4">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-slate-400">Last 7 Days</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Last 7 Days
+                  </span>
                   <span className="text-sm font-medium text-indigo-400">
                     {newTasksLast7Days === 0
                       ? 0
@@ -238,7 +256,7 @@ export default function Dashboard() {
                     %
                   </span>
                 </div>
-                <div className="w-full bg-slate-700/50 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700/50 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full"
                     style={{
@@ -259,7 +277,9 @@ export default function Dashboard() {
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-slate-400">Last 30 Days</span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    Last 30 Days
+                  </span>
                   <span className="text-sm font-medium text-indigo-400">
                     {newTasksLast30Days === 0
                       ? 0
@@ -269,7 +289,7 @@ export default function Dashboard() {
                     %
                   </span>
                 </div>
-                <div className="w-full bg-slate-700/50 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700/50 rounded-full h-2">
                   <div
                     className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full"
                     style={{
@@ -293,8 +313,8 @@ export default function Dashboard() {
           </div>
 
           {/* Productivity Insights */}
-          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-xl p-6">
-            <h3 className="text-lg font-semibold mb-4 text-slate-200 flex items-center gap-2">
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-6">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
@@ -312,29 +332,35 @@ export default function Dashboard() {
               Productivity Insights
             </h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                 <div>
-                  <p className="text-sm text-slate-300">
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
                     Daily Task Completion
                   </p>
-                  <p className="text-xs text-slate-400">Average over 30 days</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Average over 30 days
+                  </p>
                 </div>
-                <div className="text-xl font-semibold text-white">
+                <div className="text-xl font-semibold text-gray-900 dark:text-white">
                   {(completedTasksLast30Days / 30).toFixed(1)}
                 </div>
               </div>
 
-              <div className="flex justify-between items-center p-3 bg-slate-700/30 rounded-lg">
+              <div className="flex justify-between items-center p-3 bg-gray-100 dark:bg-gray-700/30 rounded-lg">
                 <div>
-                  <p className="text-sm text-slate-300">Weekly Task Creation</p>
-                  <p className="text-xs text-slate-400">Average over 30 days</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    Weekly Task Creation
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Average over 30 days
+                  </p>
                 </div>
-                <div className="text-xl font-semibold text-white">
+                <div className="text-xl font-semibold text-gray-900 dark:text-white">
                   {(newTasksLast30Days / 4.29).toFixed(1)}
                 </div>
               </div>
 
-              <p className="text-sm text-slate-400 italic mt-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 italic mt-4">
                 {completedTasksLast7Days > completedTasksLast7Days / 4
                   ? "Your productivity is trending upward this week! Keep up the great work."
                   : "Focus on completing more tasks to boost your productivity metrics."}

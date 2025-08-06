@@ -89,7 +89,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
@@ -97,7 +97,7 @@ export default function Admin() {
               Admin Portal
             </h1>
           </div>
-          <p className="text-slate-400 text-lg max-w-3xl">
+          <p className="text-gray-600 dark:text-gray-400 text-lg max-w-3xl">
             Manage users, monitor system status, and configure application
             settings.
           </p>
@@ -105,7 +105,7 @@ export default function Admin() {
 
         <main className="grid gap-8">
           {/* Test Email Section */}
-          <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+          <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
             <h2 className="text-xl font-bold mb-4">Send Test Email</h2>
             <fetcher.Form
               method="post"
@@ -115,7 +115,7 @@ export default function Admin() {
               <div>
                 <label
                   htmlFor="testEmail"
-                  className="block text-slate-300 font-medium mb-1"
+                  className="block text-gray-700 dark:text-gray-300 font-medium mb-1"
                 >
                   Email Address
                 </label>

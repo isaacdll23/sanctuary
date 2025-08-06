@@ -52,7 +52,7 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
   };
 
   return (
-    <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+    <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Page Access Management</h2>
 
       <div className="space-y-4">
@@ -67,12 +67,12 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
           return (
             <div
               key={user.id}
-              className="border border-slate-700 rounded-xl overflow-hidden"
+              className="border border-gray-300 dark:border-gray-700 rounded-xl overflow-hidden"
             >
               {/* User header - clickable to expand */}
               <div
-                className={`flex justify-between items-center p-4 cursor-pointer hover:bg-slate-700/30 ${
-                  isExpanded ? "bg-slate-700/50" : ""
+                className={`flex justify-between items-center p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/30 ${
+                  isExpanded ? "bg-gray-50 dark:bg-gray-700/50" : ""
                 }`}
                 onClick={() => toggleUserExpansion(user.id)}
               >
@@ -88,7 +88,7 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
                     {user.role}
                   </span>
                 </div>
-                <div className="text-slate-400">
+                <div className="text-gray-600 dark:text-gray-400">
                   {isExpanded ? (
                     <ChevronUpIcon className="h-5 w-5" />
                   ) : (
@@ -99,7 +99,7 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
 
               {/* Expanded content with page access controls */}
               {isExpanded && (
-                <div className="p-4 pt-0 bg-slate-700/20">
+                <div className="p-4 pt-0 bg-gray-50 dark:bg-gray-700/20">
                   {/* Add gap above the grid without reintroducing the colored line */}
                   <div style={{ height: "0.75rem" }} />
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -129,19 +129,21 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
                                 ${
                                   hasAccess
                                     ? "text-blue-500 border-blue-500"
-                                    : "text-slate-400 border-slate-500"
+                                    : "text-gray-500 dark:text-gray-400 border-gray-300 dark:border-gray-500"
                                 }
                               `}
                             />
                             <span
                               className={`text-base ${
-                                hasAccess ? "font-medium" : "text-slate-400"
+                                hasAccess
+                                  ? "font-medium"
+                                  : "text-gray-500 dark:text-gray-400"
                               }`}
                             >
                               {page.label}
                             </span>
                             {isAdminUser && (
-                              <span className="text-xs text-slate-500 ml-auto italic opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-xs text-gray-500 dark:text-gray-500 ml-auto italic opacity-0 group-hover:opacity-100 transition-opacity">
                                 (Always allowed)
                               </span>
                             )}

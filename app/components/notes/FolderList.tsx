@@ -35,16 +35,16 @@ export function FolderList({
     <div>
       <button
         onClick={() => setShowFolderInput((v: boolean) => !v)}
-        className="w-full flex items-center justify-center px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-600 transition-colors"
+        className="w-full flex items-center justify-center px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
       >
         <FolderPlusIcon className="h-5 w-5 mr-2" />
         {showFolderInput ? "Cancel" : "New Folder"}
       </button>
       {showFolderInput && (
-        <div className="flex p-2 bg-slate-800 rounded-lg shadow">
+        <div className="flex p-2 bg-gray-100 dark:bg-gray-800 rounded-lg shadow">
           <input
             type="text"
-            className="flex-1 bg-slate-700 border border-slate-600 rounded-l-lg p-2 focus:ring-purple-500 focus:border-purple-500 placeholder-slate-400"
+            className="flex-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-l-lg p-2 focus:ring-purple-500 focus:border-purple-500 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100"
             placeholder="Enter folder name..."
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
@@ -63,13 +63,13 @@ export function FolderList({
           className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-2
             ${
               dragOverTargetId === "all"
-                ? "bg-purple-800 ring-2 ring-purple-400"
+                ? "bg-purple-600 dark:bg-purple-800 ring-2 ring-purple-400"
                 : ""
             }
             ${
               selectedFolderId === null
-                ? "bg-slate-700 ring-2 ring-purple-500"
-                : "bg-slate-800 hover:bg-slate-700"
+                ? "bg-gray-200 dark:bg-gray-700 ring-2 ring-purple-500"
+                : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
             }
           `}
           onClick={() => handleFolderSelect(null)}
@@ -100,7 +100,7 @@ export function FolderList({
           }}
         >
           <div className="flex items-center">
-            <FolderIcon className="h-5 w-5 mr-2 text-slate-400" />
+            <FolderIcon className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
             All Notes
           </div>
         </div>
@@ -110,13 +110,13 @@ export function FolderList({
             className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors cursor-pointer mb-1
               ${
                 dragOverTargetId === folder.id
-                  ? "bg-purple-800 ring-2 ring-purple-400"
+                  ? "bg-purple-600 dark:bg-purple-800 ring-2 ring-purple-400"
                   : ""
               }
               ${
                 selectedFolderId === folder.id
-                  ? "bg-slate-700 ring-2 ring-purple-500"
-                  : "bg-slate-800 hover:bg-slate-700"
+                  ? "bg-gray-200 dark:bg-gray-700 ring-2 ring-purple-500"
+                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
               }
             `}
             onClick={() =>

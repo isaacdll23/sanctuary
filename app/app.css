@@ -4,13 +4,22 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  
+  /* Enable dark mode via media query */
+  --color-scheme: system;
 }
 
 html,
 body {
-  @apply bg-white dark:bg-gray-900;
-
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  background-color: white;
+  color: rgb(17 24 39); /* gray-900 */
+  
   @media (prefers-color-scheme: dark) {
+    background-color: rgb(17 24 39); /* gray-900 */
+    color: rgb(243 244 246); /* gray-100 */
     color-scheme: dark;
   }
 }
@@ -27,21 +36,6 @@ body {
   }
 }
 
-/* Apply the animation using a utility class if preferred, or directly */
 .animate-modal-pop-in {
   animation: modal-pop-in 0.2s ease-out forwards;
 }
-
-/* You can define custom base styles or component layers here if needed, for example: */
-/*
-@layer base {
-  body {
-    @apply bg-slate-900 text-slate-100; 
-  }
-}
-*/
-
-/* Ensure your tailwind.config.ts is set up correctly for v4,
-   and the @tailwindcss/vite plugin is in use if you're using Vite.
-   The basic @tailwind directives are generally not needed in app.css for v4.
-*/

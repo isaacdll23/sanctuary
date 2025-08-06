@@ -100,7 +100,7 @@ export default function Tasks() {
 
   return (
     <div
-      className={`min-h-screen bg-slate-900 text-slate-100 ${
+      className={`min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${
         isCompactView ? "p-2 md:p-4" : "p-4 md:p-8"
       }`}
     >
@@ -122,7 +122,7 @@ export default function Tasks() {
               </span>
             </h1>
             {!isCompactView && (
-              <p className="mt-2 text-lg text-slate-400 text-center sm:text-left">
+              <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 text-center sm:text-left">
                 Organize, track, and complete your work.
               </p>
             )}
@@ -140,18 +140,18 @@ export default function Tasks() {
 
         {/* Filters and Open Tasks Count */}
         <div
-          className={`mb-8 p-4 bg-slate-800/60 backdrop-blur-md border border-slate-700 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 ${
+          className={`mb-8 p-4 bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 ${
             isCompactView ? "mb-4 p-2 text-sm" : ""
           }`}
         >
           <p
-            className={`text-slate-300 font-medium ${
+            className={`text-gray-700 dark:text-gray-300 font-medium ${
               isCompactView ? "text-xs" : "text-sm"
             }`}
           >
             {openTasks.length}{" "}
             <span
-              className={`font-normal text-slate-400 ${
+              className={`font-normal text-gray-500 dark:text-gray-400 ${
                 isCompactView ? "" : ""
               }`}
             >
@@ -161,7 +161,7 @@ export default function Tasks() {
           <div className="flex flex-col sm:flex-row items-center gap-4">
             <button
               onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
-              className={`flex items-center gap-2 text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors duration-200 ${
+              className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
                 isCompactView
                   ? "px-3 py-1.5 text-xs"
                   : "px-4 py-2 text-xs sm:text-sm"
@@ -180,14 +180,14 @@ export default function Tasks() {
             </button>
             <div className="relative">
               <AdjustmentsHorizontalIcon
-                className={`text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
+                className={`text-gray-500 dark:text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                   isCompactView ? "h-4 w-4 left-2" : "h-5 w-5"
                 }`}
               />
               <select
                 value={filterCategory}
                 onChange={(e) => setFilterCategory(e.target.value)}
-                className={`border border-slate-600 rounded-lg text-slate-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors duration-200 appearance-none bg-slate-700/50 ${
+                className={`border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors duration-200 appearance-none bg-white dark:bg-gray-700/50 ${
                   isCompactView
                     ? "pl-8 pr-3 py-1.5 text-xs"
                     : "pl-10 pr-4 py-2 text-xs sm:text-sm"
@@ -204,7 +204,7 @@ export default function Tasks() {
             {/* New Compact View Toggle Button */}
             <button
               onClick={() => setIsCompactView(!isCompactView)}
-              className={`flex items-center gap-2 text-slate-300 hover:text-white bg-slate-700/50 hover:bg-slate-600/50 rounded-lg transition-colors duration-200 ${
+              className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
                 isCompactView
                   ? "px-3 py-1.5 text-xs"
                   : "px-4 py-2 text-xs sm:text-sm"
@@ -233,7 +233,7 @@ export default function Tasks() {
               viewBox="0 0 24 24"
               strokeWidth={1.5}
               stroke="currentColor"
-              className={`text-slate-500 mx-auto mb-4 ${
+              className={`text-gray-500 dark:text-gray-500 mx-auto mb-4 ${
                 isCompactView ? "w-12 h-12 mb-2" : "w-16 h-16"
               }`}
             >
@@ -244,14 +244,14 @@ export default function Tasks() {
               />
             </svg>
             <p
-              className={`text-slate-400 ${
+              className={`text-gray-600 dark:text-gray-400 ${
                 isCompactView ? "text-base" : "text-lg"
               }`}
             >
               No tasks match your current filters.
             </p>
             {!isCompactView && (
-              <p className="text-slate-500 text-sm">
+              <p className="text-gray-500 dark:text-gray-500 text-sm">
                 Try adjusting your filters or adding a new task.
               </p>
             )}
@@ -281,7 +281,7 @@ export default function Tasks() {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div
-            className={`bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in ${
+            className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in ${
               isCompactView ? "p-4" : ""
             }`}
           >
@@ -299,7 +299,7 @@ export default function Tasks() {
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-200 transition-colors"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                 aria-label="Close modal"
               >
                 <svg
@@ -325,7 +325,7 @@ export default function Tasks() {
               <div>
                 <label
                   htmlFor="title"
-                  className={`block font-medium text-slate-300 mb-1 ${
+                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
                     isCompactView ? "text-xs" : "text-sm"
                   }`}
                 >
@@ -336,7 +336,7 @@ export default function Tasks() {
                   name="title"
                   id="title"
                   placeholder="What needs to be done?"
-                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                   required
@@ -345,7 +345,7 @@ export default function Tasks() {
               <div>
                 <label
                   htmlFor="description"
-                  className={`block font-medium text-slate-300 mb-1 ${
+                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
                     isCompactView ? "text-xs" : "text-sm"
                   }`}
                 >
@@ -356,7 +356,7 @@ export default function Tasks() {
                   id="description"
                   placeholder="Add more details..."
                   rows={isCompactView ? 2 : 3}
-                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                 />
@@ -364,7 +364,7 @@ export default function Tasks() {
               <div>
                 <label
                   htmlFor="category"
-                  className={`block font-medium text-slate-300 mb-1 ${
+                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
                     isCompactView ? "text-xs" : "text-sm"
                   }`}
                 >
@@ -377,7 +377,7 @@ export default function Tasks() {
                   placeholder="e.g., Work, Personal, Project X"
                   defaultValue={filterCategory || ""}
                   list="categories-datalist"
-                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                 />
@@ -403,7 +403,7 @@ export default function Tasks() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className={`w-full flex-1 bg-slate-600 hover:bg-slate-500 text-slate-100 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-opacity-75 ${
+                  className={`w-full flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 ${
                     isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
                   }`}
                 >
