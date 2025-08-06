@@ -162,7 +162,7 @@ export function FolderList({
                       setEditingFolderName("");
                     }
                   }}
-                  className="flex-1 bg-slate-700 border border-purple-500 rounded-md p-1 text-sm focus:ring-1 focus:ring-purple-400"
+                  className="flex-1 bg-gray-100 border border-purple-500 text-gray-900 dark:bg-gray-700 dark:text-gray-100 rounded-md p-1 text-sm focus:ring-1 focus:ring-purple-400"
                   autoFocus
                   onBlur={() => {
                     setTimeout(() => {
@@ -186,7 +186,7 @@ export function FolderList({
                     setEditingFolderId(null);
                     setEditingFolderName("");
                   }}
-                  className="p-1 text-slate-400 hover:text-slate-300"
+                  className="p-1 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
                   aria-label="Cancel rename"
                 >
                   <XMarkIcon className="h-4 w-4" />
@@ -208,7 +208,7 @@ export function FolderList({
                     setEditingFolderId(folder.id);
                     setEditingFolderName(folder.name);
                   }}
-                  className="p-1 text-slate-400 hover:text-purple-400"
+                  className="p-1 text-gray-600 hover:text-purple-400 dark:text-gray-400 dark:hover:text-purple-400"
                   aria-label="Rename folder"
                 >
                   <PencilIcon className="h-4 w-4" />
@@ -218,7 +218,7 @@ export function FolderList({
                     e.stopPropagation();
                     handleDeleteFolder(folder.id, folder.name);
                   }}
-                  className="p-1 text-slate-400 hover:text-red-500"
+                  className="p-1 text-gray-600 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-500"
                   aria-label="Delete folder"
                 >
                   <TrashIcon className="h-4 w-4" />

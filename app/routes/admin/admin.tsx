@@ -126,7 +126,7 @@ export default function Admin() {
                   required
                   value={testEmail}
                   onChange={(e) => setTestEmail(e.target.value)}
-                  className="bg-slate-700 border border-slate-600 text-slate-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors w-72"
+                  className="bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors w-72"
                   placeholder="you@example.com"
                 />
               </div>
@@ -156,42 +156,48 @@ export default function Admin() {
           </section>
           {/* Admin Stats */}
           <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
                   <UsersIcon className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Total Users</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Total Users
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {users.length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
                   <ShieldCheckIcon className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Admins</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Admins
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {users.filter((user) => user.role === "admin").length}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-green-500/20 text-green-400">
                   <UserIcon className="w-8 h-8" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Regular Users</p>
-                  <p className="text-2xl font-bold text-white">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Regular Users
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                     {users.filter((user) => user.role === "user").length}
                   </p>
                 </div>
@@ -200,13 +206,13 @@ export default function Admin() {
           </section>
 
           {/* Users section */}
-          <section className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-lg p-6">
+          <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
             <h2 className="text-2xl font-bold mb-6">User Management</h2>
             {/* Responsive user list: table on md+, cards on mobile */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full border-collapse" aria-label="User list">
                 <caption className="sr-only">List of users</caption>
-                <thead className="bg-slate-900/50">
+                <thead className="bg-gray-100 dark:bg-gray-900/50">
                   <tr>
                     <th scope="col" className="text-left p-4 rounded-tl-lg">
                       Username
@@ -225,9 +231,12 @@ export default function Admin() {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-700">
+                <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
                   {users.map((user: any) => (
-                    <tr key={user.id} className="hover:bg-slate-700/50">
+                    <tr
+                      key={user.id}
+                      className="hover:bg-gray-100 dark:hover:bg-gray-700/50"
+                    >
                       <td className="p-4">{user.username}</td>
                       <td className="p-4">{user.email}</td>
                       <td className="p-4">
@@ -267,7 +276,7 @@ export default function Admin() {
               {users.map((user: any) => (
                 <div
                   key={user.id}
-                  className="bg-slate-900/60 rounded-xl p-4 flex flex-col gap-2 shadow border border-slate-700"
+                  className="bg-gray-100 dark:bg-gray-900/60 rounded-xl p-4 flex flex-col gap-2 shadow border border-gray-300 dark:border-gray-700"
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-lg">
@@ -285,8 +294,10 @@ export default function Admin() {
                       {user.role}
                     </span>
                   </div>
-                  <div className="text-slate-400 text-sm">{user.email}</div>
-                  <div className="text-slate-400 text-xs">
+                  <div className="text-gray-500 dark:text-gray-400 text-sm">
+                    {user.email}
+                  </div>
+                  <div className="text-gray-500 dark:text-gray-400 text-xs">
                     Created: {new Date(user.createdAt).toLocaleDateString()}
                   </div>
                   <div className="flex gap-2 mt-2">

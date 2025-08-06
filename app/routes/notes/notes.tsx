@@ -354,18 +354,18 @@ export default function NotesPage() {
                 </button>
               </div>
             </div>
-            <div className="prose prose-invert prose-sm md:prose-base max-w-none bg-slate-800 p-4 rounded-lg">
+            <div className="prose prose-gray dark:prose-invert prose-sm md:prose-base max-w-none bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
               <ReactMarkdown>{selectedNote.content}</ReactMarkdown>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="text-center">
-              <PencilSquareIcon className="h-16 w-16 text-slate-600 mx-auto mb-4" />
-              <h2 className="text-xl font-semibold text-slate-400">
+              <PencilSquareIcon className="h-16 w-16 text-gray-500 dark:text-gray-600 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400">
                 Select a note to view or edit
               </h2>
-              <p className="text-slate-500">
+              <p className="text-gray-500 dark:text-gray-500">
                 Or, create a new one using the button on the left.
               </p>
             </div>

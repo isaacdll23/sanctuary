@@ -197,7 +197,7 @@ export function NoteEditor({
       <div>
         <label
           htmlFor="note-title"
-          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" // Adjusted margin
         >
           Title
         </label>
@@ -207,7 +207,7 @@ export function NoteEditor({
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="flex-1 bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
+            className="flex-1 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 rounded-md p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
             placeholder="Enter note title"
             autoFocus
           />
@@ -251,7 +251,7 @@ export function NoteEditor({
         {/* Added flex-grow for content area */}
         <label
           htmlFor="note-content"
-          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" // Adjusted margin
         >
           Content
         </label>
@@ -259,7 +259,7 @@ export function NoteEditor({
           id="note-content"
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full flex-grow bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm resize-none" // Refined styling, flex-grow, resize-none
+          className="w-full flex-grow bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 rounded-md p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm resize-none" // Refined styling, flex-grow, resize-none
           placeholder="Enter note content"
           rows={15} // Increased rows for more vertical space
         />
@@ -267,7 +267,7 @@ export function NoteEditor({
       <div>
         <label
           htmlFor="note-folder"
-          className="block text-sm font-medium text-slate-300 mb-1.5" // Adjusted margin
+          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5" // Adjusted margin
         >
           Folder
         </label>
@@ -277,7 +277,7 @@ export function NoteEditor({
           onChange={(e) =>
             setSelectedFolder(e.target.value ? parseInt(e.target.value) : null)
           }
-          className="w-full bg-slate-800 border border-slate-700 rounded-md p-3 text-slate-100 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
+          className="w-full bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 rounded-md p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 shadow-sm" // Refined styling
         >
           <option value="">No Folder</option>
           {folders.map((folder) => (
@@ -293,7 +293,7 @@ export function NoteEditor({
         <button
           type="button" // Explicitly set type to button
           onClick={onCancel}
-          className="px-4 py-2 rounded-md bg-slate-600 text-slate-100 font-medium hover:bg-slate-500 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-900" // Refined styling for secondary button
+          className="px-4 py-2 rounded-md bg-gray-300 text-gray-800 hover:bg-gray-400 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2" // Refined styling for secondary button
         >
           Cancel
         </button>
