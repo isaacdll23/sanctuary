@@ -7,6 +7,7 @@ const APP_PAGES = [
   { id: "dashboard", label: "Dashboard" },
   { id: "tasks", label: "Tasks" },
   { id: "finance", label: "Finance" },
+  { id: "finance/budgets/shared", label: "Shared Budgets" },
   { id: "principles", label: "Principles" },
   { id: "utilities/commands", label: "Utilities Commands" },
 ];

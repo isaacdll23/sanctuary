@@ -33,32 +33,52 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
-  let isAuthenticated = await isSessionCreated(request);
-  let isAdmin = false;
-  let accessiblePages: string[] = [];
+  try {
+    let isAuthenticated = await isSessionCreated(request);
+    let isAdmin = false;
+    let accessiblePages: string[] = [];
 
-  if (isAuthenticated) {
-    isAdmin = await isUserAdmin(request);
+    if (isAuthenticated) {
+      try {
+        isAdmin = await isUserAdmin(request);
 
-    // Get the user and their accessible pages
-    try {
-      const user = await getUserFromSession(request);
-      accessiblePages = await getUserAccessiblePages(user.id);
-    } catch (error) {
-      // If there's an error getting the user or their pages, fallback to an empty list
-      console.error("Error fetching user accessible pages:", error);
+        // Get the user and their accessible pages
+        const user = await getUserFromSession(request);
+        accessiblePages = await getUserAccessiblePages(user.id);
+      } catch (error) {
+        // If there's an error getting the user or their pages, fallback to defaults
+        console.error("Error fetching user data:", error);
+        isAuthenticated = false;
+        isAdmin = false;
+        accessiblePages = [];
+      }
     }
-  }
 
-  return { isAuthenticated, isAdmin, accessiblePages };
+    return { isAuthenticated, isAdmin, accessiblePages };
+  } catch (error) {
+    console.error("Error in root loader:", error);
+    // Return default values to prevent the app from crashing
+    return {
+      isAuthenticated: false,
+      isAdmin: false,
+      accessiblePages: [],
+    };
+  }
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isAdmin, accessiblePages } = useLoaderData<{
+  const loaderData = useLoaderData<{
     isAuthenticated: boolean;
     isAdmin: boolean;
     accessiblePages: string[];
   }>();
+
+  // Provide fallback values if loader data is undefined
+  const {
+    isAuthenticated = false,
+    isAdmin = false,
+    accessiblePages = [],
+  } = loaderData || {};
 
   return (
     <html lang="en">
@@ -67,11 +87,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        <link
-          rel="icon"
-          href="/sanctuary-logo-192.png"
-          type="image/png"
-        />
+        <link rel="icon" href="/sanctuary-logo-192.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta

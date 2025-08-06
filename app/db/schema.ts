@@ -80,6 +80,61 @@ export const financeIncomeTable = pgTable("finance_income", {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+// Shared Budgets Tables
+import { uuid, decimal, date, pgEnum } from "drizzle-orm/pg-core";
+
+export const budgetPeriodEnum = pgEnum("budget_period", [
+  "monthly",
+  "weekly",
+  "yearly",
+]);
+export const budgetRoleEnum = pgEnum("budget_role", ["owner", "contributor"]);
+export const budgetMemberStatusEnum = pgEnum("budget_member_status", [
+  "active",
+  "pending",
+  "removed",
+]);
+
+export const budgetsTable = pgTable("budgets", {
+  id: uuid().primaryKey().defaultRandom(),
+  name: varchar({ length: 255 }).notNull(),
+  description: text(),
+  totalAmount: decimal({ precision: 12, scale: 2 }).notNull(),
+  period: budgetPeriodEnum().notNull(),
+  createdById: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
+
+export const budgetMembersTable = pgTable("budget_members", {
+  id: uuid().primaryKey().defaultRandom(),
+  budgetId: uuid()
+    .notNull()
+    .references(() => budgetsTable.id),
+  userId: integer().references(() => usersTable.id), // nullable for pending invites
+  email: varchar({ length: 255 }).notNull(),
+  role: budgetRoleEnum().notNull(),
+  status: budgetMemberStatusEnum().notNull().default("pending"),
+  invitedAt: timestamp().defaultNow().notNull(),
+  joinedAt: timestamp(),
+});
+
+export const budgetTransactionsTable = pgTable("budget_transactions", {
+  id: uuid().primaryKey().defaultRandom(),
+  budgetId: uuid()
+    .notNull()
+    .references(() => budgetsTable.id),
+  addedById: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  amount: decimal({ precision: 12, scale: 2 }).notNull(),
+  description: varchar({ length: 1024 }),
+  category: varchar({ length: 255 }),
+  transactionDate: date().notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+});
 
 // Notes & Folders Tables
 export const foldersTable = pgTable("folders", {
