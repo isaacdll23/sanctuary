@@ -34,6 +34,12 @@ const navItemsAuth = [
     pageId: "finance",
   },
   {
+    to: "/finance/budgets/shared",
+    label: "Shared Budgets",
+    icon: ClipboardDocumentListIcon,
+    pageId: "finance/budgets/shared",
+  },
+  {
     to: "/tasks",
     label: "Tasks",
     icon: ClipboardDocumentListIcon,
@@ -87,19 +93,19 @@ export default function Sidebar({
   }
 
   // Determine which nav items to show based on auth status, admin role, and page access
-  let navItems = isAuthenticated
-    ? navItemsAuth.filter((item) => {
-        // Special pages like logout are always accessible
-        if (item.pageId === "logout") return true;
-
-        // Check if the page is in the accessible pages list
-        return accessiblePages.includes(item.pageId);
-      })
-    : navItemsUnauth;
-
-  // Add admin nav items if the user is an admin (admins always have access to admin pages)
-  if (isAuthenticated && isAdmin) {
-    navItems = [...navItemsAdmin, ...navItems];
+  let navItems;
+  if (!isAuthenticated) {
+    navItems = navItemsUnauth;
+  } else if (isAdmin) {
+    // Admins see all pages
+    navItems = [...navItemsAdmin, ...navItemsAuth];
+  } else {
+    navItems = navItemsAuth.filter((item) => {
+      // Special pages like logout are always accessible
+      if (item.pageId === "logout") return true;
+      // Check if the page is in the accessible pages list
+      return accessiblePages.includes(item.pageId);
+    });
   }
 
   return (

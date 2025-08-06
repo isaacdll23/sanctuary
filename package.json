@@ -39,6 +39,7 @@
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.4",
     "drizzle-kit": "^0.31.1",
+    "jsonwebtoken": "^9.0.2",
     "react-router-devtools": "^5.0.5",
     "tailwindcss": "^4.1.6",
     "tsx": "^4.19.4",
