@@ -217,7 +217,7 @@ export function NoteEditor({
             disabled={isGeneratingTitle}
             title="Generate title from content"
             aria-label="Generate title from content"
-            className="flex-shrink-0 px-4 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900" // Added focus styling
+            className="flex-shrink-0 px-4 py-2 rounded-md bg-purple-600 text-white font-medium hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-700" // Added focus styling
           >
             {isGeneratingTitle ? (
               <svg
@@ -300,7 +300,7 @@ export function NoteEditor({
         <button
           type="submit"
           disabled={!isNew && !hasChanges}
-          className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-900 shadow-md" // Refined styling for primary button
+          className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium hover:from-purple-700 hover:to-pink-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-700 shadow-md" // Refined styling for primary button
         >
           {isNew ? "Create Note" : "Save Changes"}
         </button>

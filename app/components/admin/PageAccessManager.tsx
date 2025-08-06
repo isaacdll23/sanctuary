@@ -124,7 +124,7 @@ export default function PageAccessManager({ users }: PageAccessManagerProps) {
                                 )
                               }
                               className={`
-                                form-checkbox h-5 w-5 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-blue-500
+                                form-checkbox h-5 w-5 rounded-md focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-700 focus:ring-blue-500
                                 ${isAdminUser ? "opacity-60" : "opacity-100"}
                                 ${
                                   hasAccess

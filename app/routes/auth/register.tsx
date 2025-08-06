@@ -100,7 +100,7 @@ export default function Register(_: Route.ComponentProps) {
               </p>
             ) : null}
             <input
-              className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+              className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
               type="password"
               placeholder="Password (min. 8 characters)"
               name="password"
@@ -108,7 +108,7 @@ export default function Register(_: Route.ComponentProps) {
               aria-label="Password"
             />
             <input
-              className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+              className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
               type="password"
               placeholder="Confirm Password"
               name="confirmPassword"
@@ -127,7 +127,7 @@ export default function Register(_: Route.ComponentProps) {
             </button>
           </div>
         </fetcher.Form>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-gray-500 dark:text-gray-300">
           Already registered?{" "}
           <Link
             to="/auth/login"

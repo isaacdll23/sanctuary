@@ -103,17 +103,21 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-4 md:p-8">
-      <div className="bg-slate-800/80 border border-slate-700 rounded-2xl shadow-xl p-8 md:p-10 w-full max-w-md">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-gray-100/80 dark:bg-gray-700/80 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-xl p-8 md:p-10 w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6">Profile</h1>
         {!editMode ? (
           <div className="space-y-4">
             <div>
-              <span className="block text-slate-400 text-sm">Username</span>
+              <span className="block text-gray-500 dark:text-gray-300 text-sm">
+                Username
+              </span>
               <span className="font-semibold text-lg">{user.username}</span>
             </div>
             <div>
-              <span className="block text-slate-400 text-sm">Email</span>
+              <span className="block text-gray-500 dark:text-gray-300 text-sm">
+                Email
+              </span>
               <span className="font-semibold text-lg">{user.email}</span>
             </div>
             <div className="space-y-3 mt-6">
@@ -124,7 +128,7 @@ export default function Profile() {
                 Edit Profile
               </button>
               <button
-                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-gray-300 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
                 onClick={handlePasswordReset}
                 disabled={passwordResetFetcher.state === "submitting"}
               >
@@ -145,13 +149,13 @@ export default function Profile() {
             <input type="hidden" name="intent" value="updateProfile" />
             <div>
               <label
-                className="block text-slate-400 text-sm mb-1"
+                className="block text-gray-500 dark:text-gray-300 text-sm mb-1"
                 htmlFor="username"
               >
                 Username
               </label>
               <input
-                className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
                 type="text"
                 name="username"
                 id="username"
@@ -167,13 +171,13 @@ export default function Profile() {
             </div>
             <div>
               <label
-                className="block text-slate-400 text-sm mb-1"
+                className="block text-gray-500 dark:text-gray-300 text-sm mb-1"
                 htmlFor="email"
               >
                 Email
               </label>
               <input
-                className="w-full bg-slate-700/50 border border-slate-600 text-slate-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-slate-400"
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-300"
                 type="email"
                 name="email"
                 id="email"
@@ -197,7 +201,7 @@ export default function Profile() {
               </button>
               <button
                 type="button"
-                className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 rounded-lg transition-colors"
+                className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold py-2 rounded-lg transition-colors"
                 onClick={() => setEditMode(false)}
                 disabled={fetcher.state === "submitting"}
               >

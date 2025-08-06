@@ -62,14 +62,14 @@ export default function TaskModal({
       onClick={onClose}
     >
       <div
-        className={`bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out ${
+        className={`bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-2xl w-full max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] flex flex-col transform transition-all duration-300 ease-out ${
           isCompactView ? "max-w-md" : ""
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
         <div
-          className={`flex justify-between items-center border-b border-slate-700 ${
+          className={`flex justify-between items-center border-b border-gray-300 dark:border-gray-600 ${
             isCompactView ? "p-3 md:p-4" : "p-5 md:p-6"
           }`}
         >
@@ -79,7 +79,7 @@ export default function TaskModal({
               name="title"
               value={editableTitle}
               onChange={(e) => setEditableTitle(e.target.value)}
-              className={`font-semibold bg-slate-700 text-slate-100 rounded-md p-2 flex-grow mr-4 focus:ring-2 focus:ring-purple-500 ${
+              className={`font-semibold bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md p-2 flex-grow mr-4 focus:ring-2 focus:ring-purple-500 ${
                 isCompactView ? "text-lg md:text-xl" : "text-xl md:text-2xl"
               }`}
               form="updateTaskDetailsForm"
@@ -97,7 +97,7 @@ export default function TaskModal({
             {!isEditingDetails && (
               <button
                 onClick={() => setIsEditingDetails(true)}
-                className={`text-slate-400 hover:text-purple-400 p-2 rounded-md transition-colors ${
+                className={`text-gray-500 dark:text-gray-300 hover:text-purple-400 p-2 rounded-md transition-colors ${
                   isCompactView ? "mr-1" : "mr-2"
                 }`}
                 aria-label="Edit task details"
@@ -109,7 +109,7 @@ export default function TaskModal({
             )}
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-200 p-2 rounded-md transition-colors"
+              className="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100 p-2 rounded-md transition-colors"
               aria-label="Close modal"
             >
               <XMarkIcon
@@ -127,9 +127,9 @@ export default function TaskModal({
         >
           {/* Task Metadata (Created/Completed Dates) */}
           {!isCompactView && ( // New: Hide metadata in compact view
-            <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-slate-400 gap-2 sm:gap-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between text-xs text-gray-500 dark:text-gray-300 gap-2 sm:gap-4">
               <div className="flex items-center">
-                <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-slate-500 flex-shrink-0" />
+                <CalendarDaysIcon className="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-300 flex-shrink-0" />
                 <span>
                   Created: {format(new Date(task.createdAt), "MMM d, yyyy, p")}
                 </span>
@@ -161,7 +161,7 @@ export default function TaskModal({
             <div>
               <label
                 htmlFor="reminderDate"
-                className={`block font-medium text-slate-300 mb-1 ${
+                className={`block font-medium text-gray-700 dark:text-gray-200 mb-1 ${
                   isCompactView ? "text-xs" : "text-sm"
                 }`}
               >
@@ -180,7 +180,7 @@ export default function TaskModal({
                         )
                       : ""
                   }
-                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
                     isCompactView ? "text-xs py-2" : "text-sm py-2.5"
                   }`}
                 />
@@ -188,8 +188,8 @@ export default function TaskModal({
                 <p
                   className={`min-h-[40px] ${
                     isCompactView
-                      ? "text-xs text-slate-400"
-                      : "text-sm text-slate-300"
+                      ? "text-xs text-gray-500 dark:text-gray-300"
+                      : "text-sm text-gray-700 dark:text-gray-200"
                   }`}
                 >
                   {task.reminderDate ? (
@@ -198,7 +198,7 @@ export default function TaskModal({
                       {format(new Date(task.reminderDate), "MMM d, yyyy, p")}
                     </>
                   ) : (
-                    <span className="text-slate-500 italic">
+                    <span className="text-gray-400 dark:text-gray-300 italic">
                       No reminder set.
                     </span>
                   )}
@@ -208,7 +208,7 @@ export default function TaskModal({
             <div>
               <label
                 htmlFor="taskDescription"
-                className={`block font-medium text-slate-300 mb-1 ${
+                className={`block font-medium text-gray-700 dark:text-gray-200 mb-1 ${
                   isCompactView ? "text-xs" : "text-sm"
                 }`}
               >
@@ -221,7 +221,7 @@ export default function TaskModal({
                   value={editableDescription}
                   onChange={(e) => setEditableDescription(e.target.value)}
                   rows={isCompactView ? 2 : 3} // New: Adjust rows for compact view
-                  className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
                     isCompactView ? "text-xs" : "text-sm"
                   }`} // New: Adjust font size for compact view
                   placeholder="Add more details..."
@@ -230,12 +230,12 @@ export default function TaskModal({
                 <p
                   className={`whitespace-pre-wrap min-h-[40px] ${
                     isCompactView
-                      ? "text-xs text-slate-400"
-                      : "text-sm text-slate-300"
+                      ? "text-xs text-gray-500 dark:text-gray-300"
+                      : "text-sm text-gray-700 dark:text-gray-200"
                   }`}
                 >
                   {task.description || (
-                    <span className="text-slate-500 italic">
+                    <span className="text-gray-400 dark:text-gray-300 italic">
                       No description provided.
                     </span>
                   )}
@@ -245,7 +245,7 @@ export default function TaskModal({
             <div>
               <label
                 htmlFor="taskCategory"
-                className={`block font-medium text-slate-300 mb-1 ${
+                className={`block font-medium text-gray-700 dark:text-gray-200 mb-1 ${
                   isCompactView ? "text-xs" : "text-sm"
                 }`}
               >
@@ -254,7 +254,7 @@ export default function TaskModal({
               {isEditingDetails ? (
                 <div className="relative">
                   <TagIcon
-                    className={`text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
+                    className={`text-gray-500 dark:text-gray-300 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                       isCompactView ? "h-4 w-4" : "h-5 w-5"
                     }`}
                   />
@@ -265,7 +265,7 @@ export default function TaskModal({
                     value={editableCategory}
                     onChange={(e) => setEditableCategory(e.target.value)}
                     list="modal-categories-datalist"
-                    className={`w-full bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                    className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
                       isCompactView
                         ? "pl-9 pr-3 py-2 text-xs"
                         : "pl-10 pr-4 py-2.5 text-sm"
@@ -282,8 +282,8 @@ export default function TaskModal({
                 <div
                   className={`flex items-center min-h-[40px] ${
                     isCompactView
-                      ? "text-xs text-slate-400"
-                      : "text-sm text-slate-300"
+                      ? "text-xs text-gray-500 dark:text-gray-300"
+                      : "text-sm text-gray-700 dark:text-gray-200"
                   }`}
                 >
                   {task.category ? (
@@ -296,7 +296,7 @@ export default function TaskModal({
                       {task.category}
                     </>
                   ) : (
-                    <span className="text-slate-500 italic">
+                    <span className="text-gray-400 dark:text-gray-300 italic">
                       No category assigned.
                     </span>
                   )}
@@ -313,7 +313,7 @@ export default function TaskModal({
                     setEditableDescription(task.description || "");
                     setEditableCategory(task.category || "");
                   }}
-                  className={`bg-slate-600 hover:bg-slate-500 text-slate-100 font-semibold rounded-lg transition-colors ${
+                  className={`bg-gray-300 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold rounded-lg transition-colors ${
                     isCompactView ? "py-1.5 px-3 text-xs" : "py-2 px-4 text-sm"
                   }`} // New: Adjust padding and font size for compact view
                 >
@@ -336,12 +336,12 @@ export default function TaskModal({
           {/* Progress Section */}
           {totalSteps > 0 && (
             <div
-              className={`pt-4 border-t border-slate-700/50 ${
+              className={`pt-4 border-t border-gray-300 dark:border-gray-600/50 ${
                 isCompactView ? "pt-3" : ""
               }`}
             >
               <h3
-                className={`font-semibold text-slate-200 mb-2 ${
+                className={`font-semibold text-gray-900 dark:text-gray-100 mb-2 ${
                   isCompactView ? "text-sm" : "text-md"
                 }`}
               >
@@ -358,11 +358,13 @@ export default function TaskModal({
           {/* Task Steps Section */}
           <div
             className={`${
-              totalSteps > 0 ? "border-t border-slate-700/50" : ""
+              totalSteps > 0
+                ? "border-t border-gray-300 dark:border-gray-600/50"
+                : ""
             } ${isCompactView ? "pt-3" : "pt-4"}`}
           >
             <h3
-              className={`font-semibold text-slate-200 mb-3 ${
+              className={`font-semibold text-gray-900 dark:text-gray-100 mb-3 ${
                 isCompactView ? "text-sm mb-2" : "text-md"
               }`}
             >
@@ -391,7 +393,7 @@ export default function TaskModal({
                 type="text"
                 name="stepDescription"
                 placeholder="Add a new step..."
-                className={`flex-grow bg-slate-700 border border-slate-600 text-slate-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                className={`flex-grow bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
                   isCompactView ? "p-2 text-xs" : "p-2.5 text-sm"
                 }`} // New: Adjust padding and font size for compact view
                 required
@@ -413,7 +415,7 @@ export default function TaskModal({
 
         {/* Modal Footer - Actions */}
         <div
-          className={`border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-3 bg-slate-800/50 rounded-b-2xl ${
+          className={`border-t border-gray-300 dark:border-gray-600 flex flex-col sm:flex-row justify-between items-center gap-3 bg-gray-100/50 dark:bg-gray-700/50 rounded-b-2xl ${
             isCompactView ? "p-3 md:p-4" : "p-5 md:p-6"
           }`}
         >
