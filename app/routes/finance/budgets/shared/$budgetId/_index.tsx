@@ -7,7 +7,12 @@ import { useFetcher, useLoaderData, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import BudgetProgressBar from "~/components/finance/BudgetProgressBar";
-import { CogIcon, PlusIcon, UserIcon } from "@heroicons/react/24/outline";
+import {
+  CogIcon,
+  PlusIcon,
+  UserIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
 export const loader = pageAccessLoader("finance", async (user, request) => {
   const url = new URL(request.url);
@@ -57,8 +62,14 @@ export default function SharedBudgetDetails() {
     );
   }
 
-  const { budget, members, transactions, spentAmount, currentUserRole } =
-    loaderData.data!;
+  const {
+    budget,
+    members,
+    transactions,
+    spentAmount,
+    currentUserRole,
+    currentUserId,
+  } = loaderData.data!;
   const totalAmount = parseFloat(budget.totalAmount);
   const isOwnerOrContributor =
     currentUserRole === "owner" || currentUserRole === "contributor";
@@ -303,34 +314,73 @@ export default function SharedBudgetDetails() {
                   )}
                 </div>
               ) : (
-                transactions.slice(0, 10).map((transaction: any) => (
-                  <div
-                    key={transaction.id}
-                    className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
-                  >
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-gray-100">
-                        {transaction.description || "Untitled Transaction"}
+                transactions.slice(0, 10).map((transaction: any) => {
+                  // Check if current user can delete this transaction
+                  const canDelete =
+                    currentUserRole === "owner" ||
+                    transaction.addedBy?.id === currentUserId;
+
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {transaction.description || "Untitled Transaction"}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {transaction.category && (
+                            <span className="mr-2">{transaction.category}</span>
+                          )}
+                          Added by {transaction.addedBy?.username || "Unknown"}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {transaction.category && (
-                          <span className="mr-2">{transaction.category}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="font-bold text-red-500">
+                            ${parseFloat(transaction.amount).toLocaleString()}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {new Date(
+                              transaction.transactionDate
+                            ).toLocaleDateString()}
+                          </div>
+                        </div>
+                        {canDelete && (
+                          <fetcher.Form method="post" className="inline">
+                            <input
+                              type="hidden"
+                              name="intent"
+                              value="deleteTransaction"
+                            />
+                            <input
+                              type="hidden"
+                              name="transactionId"
+                              value={transaction.id}
+                            />
+                            <button
+                              type="submit"
+                              onClick={(e) => {
+                                if (
+                                  !confirm(
+                                    "Are you sure you want to delete this transaction?"
+                                  )
+                                ) {
+                                  e.preventDefault();
+                                }
+                              }}
+                              className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition"
+                              title="Delete transaction"
+                            >
+                              <TrashIcon className="w-4 h-4" />
+                            </button>
+                          </fetcher.Form>
                         )}
-                        Added by {transaction.addedBy?.username || "Unknown"}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-bold text-red-500">
-                        ${parseFloat(transaction.amount).toLocaleString()}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(
-                          transaction.transactionDate
-                        ).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

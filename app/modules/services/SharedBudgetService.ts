@@ -27,6 +27,12 @@ export async function handleSharedBudgetAction(
         formData
       );
     }
+    if (intent === "deleteTransaction") {
+      return await deleteTransaction(
+        String(formData.get("transactionId") || ""),
+        String(user.id)
+      );
+    }
     if (intent === "inviteMember") {
       return await inviteMember(
         String(formData.get("budgetId") || ""),
@@ -226,6 +232,7 @@ export async function getBudgetDetails(budgetId: string, userId: string) {
       transactions,
       spentAmount,
       currentUserRole: member[0].role,
+      currentUserId: parseInt(userId),
     },
   };
 }
@@ -304,6 +311,64 @@ export async function addTransaction(
   });
 
   return { success: true, message: "Transaction added" };
+}
+
+export async function deleteTransaction(transactionId: string, userId: string) {
+  // First, get the transaction to verify ownership/permissions
+  const transaction = await db
+    .select({
+      transaction: budgetTransactionsTable,
+      budget: budgetsTable,
+    })
+    .from(budgetTransactionsTable)
+    .leftJoin(
+      budgetsTable,
+      eq(budgetTransactionsTable.budgetId, budgetsTable.id)
+    )
+    .where(eq(budgetTransactionsTable.id, transactionId));
+
+  if (!transaction.length) {
+    return { success: false, message: "Transaction not found" };
+  }
+
+  const { transaction: trans, budget } = transaction[0];
+
+  // Check if user has permission to delete this transaction
+  // User can delete if they are:
+  // 1. The person who added the transaction, OR
+  // 2. The budget owner
+  const userMembership = await db
+    .select()
+    .from(budgetMembersTable)
+    .where(
+      and(
+        eq(budgetMembersTable.budgetId, trans.budgetId),
+        eq(budgetMembersTable.userId, parseInt(userId)),
+        eq(budgetMembersTable.status, "active")
+      )
+    );
+
+  if (!userMembership.length) {
+    return { success: false, message: "Access denied" };
+  }
+
+  const isTransactionOwner = trans.addedById === parseInt(userId);
+  const isBudgetOwner = userMembership[0].role === "owner";
+
+  if (!isTransactionOwner && !isBudgetOwner) {
+    return {
+      success: false,
+      message:
+        "You can only delete transactions you added or be the budget owner",
+    };
+  }
+
+  // Delete the transaction
+  await db
+    .delete(budgetTransactionsTable)
+    .where(eq(budgetTransactionsTable.id, transactionId));
+
+  return { success: true, message: "Transaction deleted successfully" };
 }
 
 export async function inviteMember(
