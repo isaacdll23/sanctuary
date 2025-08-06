@@ -14,7 +14,9 @@ export async function sendBudgetInvite(
   inviterName: string
 ) {
   const token = generateInviteToken(budgetId, email);
-  const inviteUrl = `${process.env.APP_URL}/budgets/join?token=${token}`;
+  const inviteUrl = `${
+    process.env.BASE_URL || "http://localhost:5173"
+  }/finance/budgets/join/${token}`;
   await sendEmail({
     to: email,
     subject: `Budget Invite from ${inviterName}`,

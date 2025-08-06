@@ -367,7 +367,7 @@ export async function inviteMember(
       const { generateInviteToken } = await import("./BudgetInviteService");
       const inviteToken = generateInviteToken(budgetId, email);
       const joinUrl = `${
-        process.env.APP_URL || "http://localhost:5173"
+        process.env.BASE_URL || "http://localhost:5173"
       }/finance/budgets/join/${inviteToken}`;
 
       // Send invitation email
