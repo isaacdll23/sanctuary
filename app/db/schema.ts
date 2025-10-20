@@ -6,6 +6,11 @@ import {
   text,
   json,
   serial,
+  uuid,
+  date,
+  time,
+  decimal,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 
 // Core Tables
@@ -16,6 +21,7 @@ export const usersTable = pgTable("users", {
   passwordHash: varchar({ length: 1024 }).notNull(),
   role: varchar({ length: 50 }).default("user").notNull(),
   allowedPages: json(), // JSON array of page identifiers that the user can access
+  timeZone: varchar({ length: 100 }).default("America/Chicago").notNull(), // User's timezone preference
   resetPasswordToken: varchar({ length: 255 }), // Token for password reset
   resetPasswordExpires: timestamp(), // When the reset token expires
   createdAt: timestamp().defaultNow().notNull(),
@@ -81,7 +87,6 @@ export const financeIncomeTable = pgTable("finance_income", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 // Shared Budgets Tables
-import { uuid, decimal, date, pgEnum } from "drizzle-orm/pg-core";
 
 export const budgetPeriodEnum = pgEnum("budget_period", [
   "monthly",
@@ -183,3 +188,35 @@ export const utilitiesCommandsVersionsTable = pgTable(
     createdAt: timestamp().defaultNow().notNull(),
   }
 );
+
+// Day Planner Tables
+
+export const dayPlansTable = pgTable("day_plans", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  planDate: date().notNull(), // The specific date this plan is for
+  timeZone: varchar({ length: 100 }).notNull().default("America/Chicago"), // Timezone for this plan
+  viewStartTime: time().notNull().default("06:00:00"), // Calendar view start (visual only)
+  viewEndTime: time().notNull().default("22:00:00"), // Calendar view end (visual only)
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
+
+export const dayPlanSectionsTable = pgTable("day_plan_sections", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: integer()
+    .notNull()
+    .references(() => usersTable.id),
+  planId: uuid()
+    .notNull()
+    .references(() => dayPlansTable.id),
+  title: varchar({ length: 255 }).notNull(), // Task title/name
+  description: text(), // Detailed description (nullable)
+  startTime: time().notNull(), // Task start time
+  durationMinutes: integer().notNull().default(30), // Task duration (15, 30, 60, or custom)
+  completedAt: timestamp(), // When marked complete (nullable)
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});

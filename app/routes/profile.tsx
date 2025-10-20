@@ -24,6 +24,7 @@ type User = {
   id: string;
   username: string;
   email: string;
+  timeZone: string;
 };
 
 type LoaderData = {
@@ -44,6 +45,7 @@ export default function Profile() {
   const [form, setForm] = useState({
     username: user.username,
     email: user.email,
+    timeZone: user.timeZone,
   });
   const errors = fetcher.data?.errors;
   const success = fetcher.data?.success;
@@ -86,7 +88,33 @@ export default function Profile() {
     // eslint-disable-next-line
   }, [passwordResetFetcher.data, toastCtx, passwordResetToastShown]);
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+  const timezoneFetcher = useFetcher<ActionData>();
+  const [timezoneToastShown, setTimezoneToastShown] = useState(false);
+
+  useEffect(() => {
+    if (timezoneFetcher.data && toastCtx && !timezoneToastShown) {
+      if (timezoneFetcher.data.success) {
+        toastCtx.addToast(
+          timezoneFetcher.data.message || "Timezone updated!",
+          "success"
+        );
+      } else {
+        toastCtx.addToast(
+          timezoneFetcher.data.message || "Failed to update timezone.",
+          "error"
+        );
+      }
+      setTimezoneToastShown(true);
+    }
+    if (!timezoneFetcher.data) {
+      setTimezoneToastShown(false);
+    }
+    // eslint-disable-next-line
+  }, [timezoneFetcher.data, toastCtx, timezoneToastShown]);
+
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
@@ -98,6 +126,15 @@ export default function Profile() {
   function handlePasswordReset() {
     passwordResetFetcher.submit(
       { intent: "requestPasswordReset" },
+      { method: "post" }
+    );
+  }
+
+  function handleTimezoneChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    const newTimeZone = e.target.value;
+    setForm({ ...form, timeZone: newTimeZone });
+    timezoneFetcher.submit(
+      { intent: "updateTimeZone", timeZone: newTimeZone },
       { method: "post" }
     );
   }
@@ -119,6 +156,34 @@ export default function Profile() {
                 Email
               </span>
               <span className="font-semibold text-lg">{user.email}</span>
+            </div>
+            <div>
+              <label className="block text-gray-500 dark:text-gray-300 text-sm mb-2">
+                Timezone
+              </label>
+              <select
+                name="timeZone"
+                value={form.timeZone}
+                onChange={handleTimezoneChange}
+                disabled={timezoneFetcher.state === "submitting"}
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              >
+                <option value="America/New_York">Eastern (ET)</option>
+                <option value="America/Chicago">Central (CT)</option>
+                <option value="America/Denver">Mountain (MT)</option>
+                <option value="America/Los_Angeles">Pacific (PT)</option>
+                <option value="America/Anchorage">Alaska (AKT)</option>
+                <option value="Pacific/Honolulu">Hawaii (HT)</option>
+                <option value="Europe/London">London (GMT)</option>
+                <option value="Europe/Paris">Paris (CET)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Australia/Sydney">Sydney (AEDT)</option>
+              </select>
+              {timezoneFetcher.state === "submitting" && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Updating timezone...
+                </span>
+              )}
             </div>
             <div className="space-y-3 mt-6">
               <button
@@ -190,6 +255,33 @@ export default function Profile() {
               {errors?.email && (
                 <p className="text-red-400 text-sm mt-1">{errors.email}</p>
               )}
+            </div>
+            <div>
+              <label
+                className="block text-gray-500 dark:text-gray-300 text-sm mb-1"
+                htmlFor="timeZone"
+              >
+                Timezone
+              </label>
+              <select
+                name="timeZone"
+                id="timeZone"
+                value={form.timeZone}
+                onChange={handleChange}
+                disabled={fetcher.state === "submitting"}
+                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+              >
+                <option value="America/New_York">Eastern (ET)</option>
+                <option value="America/Chicago">Central (CT)</option>
+                <option value="America/Denver">Mountain (MT)</option>
+                <option value="America/Los_Angeles">Pacific (PT)</option>
+                <option value="America/Anchorage">Alaska (AKT)</option>
+                <option value="Pacific/Honolulu">Hawaii (HT)</option>
+                <option value="Europe/London">London (GMT)</option>
+                <option value="Europe/Paris">Paris (CET)</option>
+                <option value="Asia/Tokyo">Tokyo (JST)</option>
+                <option value="Australia/Sydney">Sydney (AEDT)</option>
+              </select>
             </div>
             <div className="flex gap-2 mt-6">
               <button

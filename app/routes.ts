@@ -23,6 +23,7 @@ export default [
   ),
   // ...existing code...
   route("tasks", "routes/tasks/tasks.tsx"),
+  route("day-planner", "routes/day-planner/day-planner.tsx"),
   route("notes", "routes/notes/notes.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
   route("admin", "routes/admin/admin.tsx"),

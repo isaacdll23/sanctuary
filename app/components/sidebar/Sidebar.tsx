@@ -46,6 +46,12 @@ const navItemsAuth = [
     pageId: "tasks",
   },
   {
+    to: "/day-planner",
+    label: "Day Planner",
+    icon: ClipboardDocumentListIcon,
+    pageId: "day-planner",
+  },
+  {
     to: "/notes",
     label: "Notes",
     icon: BookOpenIcon,

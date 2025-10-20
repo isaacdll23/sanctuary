@@ -9,7 +9,10 @@ export type PageAccessAction = {
   action: "grant" | "revoke";
 };
 
-export async function handlePageAccessAction(request: Request, formData?: FormData) {
+export async function handlePageAccessAction(
+  request: Request,
+  formData?: FormData
+) {
   // Verify that the current user is an admin
   const currentUser = await getUserFromSession(request);
   if (currentUser.role !== "admin") {
@@ -17,7 +20,7 @@ export async function handlePageAccessAction(request: Request, formData?: FormDa
   }
 
   // Use provided formData or parse from request
-  const data = formData || await request.formData();
+  const data = formData || (await request.formData());
   const intent = data.get("intent");
 
   // Handle page access updates
@@ -141,6 +144,7 @@ export async function getUserAccessiblePages(
       "dashboard",
       "finance",
       "tasks",
+      "day-planner",
       "notes", // Updated from principles to notes
       "utilities/commands",
       "admin",

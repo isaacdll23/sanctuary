@@ -27,6 +27,18 @@ export async function handleProfileAction(request: Request) {
     return { success: true };
   }
 
+  if (intent === "updateTimeZone") {
+    const timeZone = String(formData.get("timeZone"));
+    if (!timeZone) {
+      return { success: false, message: "Timezone is required" };
+    }
+    await db
+      .update(usersTable)
+      .set({ timeZone })
+      .where(eq(usersTable.id, user.id));
+    return { success: true, message: "Timezone updated successfully" };
+  }
+
   if (intent === "requestPasswordReset") {
     // Generate a secure random token
     const resetToken = crypto.randomBytes(32).toString("hex");
