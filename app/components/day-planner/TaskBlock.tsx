@@ -16,12 +16,16 @@ type TaskBlockProps = {
   task: Task;
   onEdit: (task: Task) => void;
   viewStartHour: number;
+  onDragStart?: (task: Task) => void;
+  onDragEnd?: () => void;
 };
 
 export default function TaskBlock({
   task,
   onEdit,
   viewStartHour,
+  onDragStart: onDragStartCallback,
+  onDragEnd: onDragEndCallback,
 }: TaskBlockProps) {
   const completeFetcher = useFetcher();
   const deleteFetcher = useFetcher();
@@ -177,10 +181,16 @@ export default function TaskBlock({
     setIsDragging(true);
     e.dataTransfer.setData("text/plain", task.id); // Use text/plain for better compatibility
     e.dataTransfer.effectAllowed = "move";
+    if (onDragStartCallback) {
+      onDragStartCallback(task);
+    }
   }
 
   function handleDragEnd() {
     setIsDragging(false);
+    if (onDragEndCallback) {
+      onDragEndCallback();
+    }
   }
 
   return (

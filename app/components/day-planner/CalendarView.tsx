@@ -30,6 +30,12 @@ export default function CalendarView({
 }: CalendarViewProps) {
   const moveFetcher = useFetcher();
   const [dragOverTime, setDragOverTime] = useState<number | null>(null);
+  const [dragPreviewPosition, setDragPreviewPosition] = useState<{
+    top: number;
+    hour: number;
+    minutes: number;
+  } | null>(null);
+  const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   // Generate hour markers
   const startHour = parseInt(viewStartTime.split(":")[0], 10);
   const endHour = parseInt(viewEndTime.split(":")[0], 10);
@@ -65,6 +71,24 @@ export default function CalendarView({
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
     setDragOverTime(hour);
+
+    // Calculate snap preview position
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relativeY = e.clientY - rect.top;
+
+    // Convert pixel position to minutes (120px = 60 minutes)
+    const exactMinutes = (relativeY / 120) * 60;
+
+    // Snap to nearest 15-minute increment
+    const snappedMinutes = Math.round(exactMinutes / 15) * 15;
+
+    // Ensure minutes stay within 0-45 range
+    const minutes = Math.min(Math.max(snappedMinutes, 0), 45);
+
+    // Calculate top position in pixels
+    const topPx = (minutes / 60) * 120;
+
+    setDragPreviewPosition({ top: topPx, hour, minutes });
   }
 
   function handleDragLeave(e: React.DragEvent) {
@@ -75,6 +99,7 @@ export default function CalendarView({
     const y = e.clientY;
     if (x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom) {
       setDragOverTime(null);
+      setDragPreviewPosition(null);
     }
   }
 
@@ -82,6 +107,8 @@ export default function CalendarView({
     e.preventDefault();
     e.stopPropagation();
     setDragOverTime(null);
+    setDragPreviewPosition(null);
+    setDraggedTask(null);
 
     const taskId = e.dataTransfer.getData("text/plain"); // Match the format from TaskBlock
     if (!taskId) return;
@@ -89,9 +116,15 @@ export default function CalendarView({
     // Calculate minutes from the drop position within the hour slot
     const rect = e.currentTarget.getBoundingClientRect();
     const relativeY = e.clientY - rect.top;
-    const minuteOffset = Math.round(((relativeY / 120) * 60) / 15) * 15; // Snap to 15-min increments
-    const totalMinutes = minuteOffset;
-    const minutes = totalMinutes % 60;
+
+    // Convert pixel position to minutes (120px = 60 minutes)
+    const exactMinutes = (relativeY / 120) * 60;
+
+    // Snap to nearest 15-minute increment
+    const snappedMinutes = Math.round(exactMinutes / 15) * 15;
+
+    // Ensure minutes stay within 0-59 range
+    const minutes = Math.min(Math.max(snappedMinutes, 0), 45);
 
     const newStartTime = `${String(hour).padStart(2, "0")}:${String(
       minutes
@@ -166,6 +199,28 @@ export default function CalendarView({
               </div>
             ))}
 
+            {/* Drag preview indicator */}
+            {dragPreviewPosition && dragOverTime !== null && (
+              <div
+                className="absolute left-0 right-0 pointer-events-none"
+                style={{
+                  top: `${
+                    (dragOverTime - startHour) * 120 + dragPreviewPosition.top
+                  }px`,
+                  height: draggedTask
+                    ? `${(draggedTask.durationMinutes / 60) * 120}px`
+                    : "30px",
+                }}
+              >
+                <div className="mx-2 h-full border-2 border-dashed border-indigo-500 dark:border-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+                  <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                    {String(dragOverTime).padStart(2, "0")}:
+                    {String(dragPreviewPosition.minutes).padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Tasks overlay */}
             <div className="absolute inset-0 px-2 pointer-events-none">
               {tasks.map((task) => (
@@ -183,6 +238,8 @@ export default function CalendarView({
                     task={task}
                     onEdit={onEditTask}
                     viewStartHour={startHour}
+                    onDragStart={(task) => setDraggedTask(task)}
+                    onDragEnd={() => setDraggedTask(null)}
                   />
                 </div>
               ))}
