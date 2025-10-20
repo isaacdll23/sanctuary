@@ -216,6 +216,7 @@ export const dayPlanSectionsTable = pgTable("day_plan_sections", {
   description: text(), // Detailed description (nullable)
   startTime: time().notNull(), // Task start time
   durationMinutes: integer().notNull().default(30), // Task duration (15, 30, 60, or custom)
+  color: varchar({ length: 50 }).notNull().default("indigo"), // Task color (indigo, blue, purple, pink, red, orange, amber, yellow, lime, green, emerald, teal, cyan, sky)
   completedAt: timestamp(), // When marked complete (nullable)
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),

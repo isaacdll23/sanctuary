@@ -9,6 +9,7 @@ type Task = {
   description: string | null;
   startTime: string;
   durationMinutes: number;
+  color?: string;
   completedAt: string | null;
 };
 
@@ -158,9 +159,9 @@ export default function CalendarView({
                 }`}
               >
                 {/* 15-minute markers */}
-                <div className="h-[30px] border-b border-gray-100 dark:border-gray-900" />
-                <div className="h-[30px] border-b border-gray-100 dark:border-gray-900" />
-                <div className="h-[30px] border-b border-gray-100 dark:border-gray-900" />
+                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
+                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
+                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
                 <div className="h-[30px]" />
               </div>
             ))}

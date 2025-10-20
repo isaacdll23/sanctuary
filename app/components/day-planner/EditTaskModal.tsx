@@ -8,6 +8,7 @@ type Task = {
   description: string | null;
   startTime: string;
   durationMinutes: number;
+  color?: string;
   completedAt: string | null;
 };
 
@@ -24,6 +25,84 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
     task.startTime.substring(0, 5) // Remove seconds
   );
   const [durationMinutes, setDurationMinutes] = useState(task.durationMinutes);
+  const [color, setColor] = useState(task.color || "indigo");
+
+  const colorOptions = [
+    {
+      name: "Indigo",
+      value: "indigo",
+      bg: "bg-indigo-500",
+      border: "border-indigo-500",
+    },
+    {
+      name: "Blue",
+      value: "blue",
+      bg: "bg-blue-500",
+      border: "border-blue-500",
+    },
+    {
+      name: "Purple",
+      value: "purple",
+      bg: "bg-purple-500",
+      border: "border-purple-500",
+    },
+    {
+      name: "Pink",
+      value: "pink",
+      bg: "bg-pink-500",
+      border: "border-pink-500",
+    },
+    { name: "Red", value: "red", bg: "bg-red-500", border: "border-red-500" },
+    {
+      name: "Orange",
+      value: "orange",
+      bg: "bg-orange-500",
+      border: "border-orange-500",
+    },
+    {
+      name: "Amber",
+      value: "amber",
+      bg: "bg-amber-500",
+      border: "border-amber-500",
+    },
+    {
+      name: "Yellow",
+      value: "yellow",
+      bg: "bg-yellow-500",
+      border: "border-yellow-500",
+    },
+    {
+      name: "Lime",
+      value: "lime",
+      bg: "bg-lime-500",
+      border: "border-lime-500",
+    },
+    {
+      name: "Green",
+      value: "green",
+      bg: "bg-green-500",
+      border: "border-green-500",
+    },
+    {
+      name: "Emerald",
+      value: "emerald",
+      bg: "bg-emerald-500",
+      border: "border-emerald-500",
+    },
+    {
+      name: "Teal",
+      value: "teal",
+      bg: "bg-teal-500",
+      border: "border-teal-500",
+    },
+    {
+      name: "Cyan",
+      value: "cyan",
+      bg: "bg-cyan-500",
+      border: "border-cyan-500",
+    },
+    { name: "Sky", value: "sky", bg: "bg-sky-500", border: "border-sky-500" },
+  ];
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,6 +114,7 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
         description,
         startTime: `${startTime}:00`,
         durationMinutes: durationMinutes.toString(),
+        color,
       },
       { method: "post" }
     );
@@ -126,6 +206,30 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
                 <option value={120}>2 hours</option>
                 <option value={180}>3 hours</option>
               </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Task Color
+            </label>
+            <div className="grid grid-cols-7 gap-2">
+              {colorOptions.map((colorOption) => (
+                <button
+                  key={colorOption.value}
+                  type="button"
+                  onClick={() => setColor(colorOption.value)}
+                  className={`w-10 h-10 rounded-lg ${
+                    colorOption.bg
+                  } transition-all ${
+                    color === colorOption.value
+                      ? "ring-4 ring-gray-400 dark:ring-gray-500 scale-110"
+                      : "hover:scale-105"
+                  }`}
+                  title={colorOption.name}
+                  aria-label={`Select ${colorOption.name}`}
+                />
+              ))}
             </div>
           </div>
 

@@ -8,6 +8,7 @@ type Task = {
   description: string | null;
   startTime: string;
   durationMinutes: number;
+  color?: string;
   completedAt: string | null;
 };
 
@@ -28,6 +29,107 @@ export default function TaskBlock({
   const [isDragging, setIsDragging] = useState(false);
 
   const isCompleted = !!task.completedAt;
+
+  // Map color names to Tailwind classes
+  function getColorClasses(colorName: string = "indigo") {
+    const colorMap: Record<
+      string,
+      {
+        bg: string;
+        border: string;
+        bgCompleted: string;
+        borderCompleted: string;
+      }
+    > = {
+      indigo: {
+        bg: "bg-indigo-100 dark:bg-indigo-900/30",
+        border: "border-indigo-400 dark:border-indigo-600",
+        bgCompleted: "bg-indigo-200 dark:bg-indigo-900/50",
+        borderCompleted: "border-indigo-500 dark:border-indigo-700",
+      },
+      blue: {
+        bg: "bg-blue-100 dark:bg-blue-900/30",
+        border: "border-blue-400 dark:border-blue-600",
+        bgCompleted: "bg-blue-200 dark:bg-blue-900/50",
+        borderCompleted: "border-blue-500 dark:border-blue-700",
+      },
+      purple: {
+        bg: "bg-purple-100 dark:bg-purple-900/30",
+        border: "border-purple-400 dark:border-purple-600",
+        bgCompleted: "bg-purple-200 dark:bg-purple-900/50",
+        borderCompleted: "border-purple-500 dark:border-purple-700",
+      },
+      pink: {
+        bg: "bg-pink-100 dark:bg-pink-900/30",
+        border: "border-pink-400 dark:border-pink-600",
+        bgCompleted: "bg-pink-200 dark:bg-pink-900/50",
+        borderCompleted: "border-pink-500 dark:border-pink-700",
+      },
+      red: {
+        bg: "bg-red-100 dark:bg-red-900/30",
+        border: "border-red-400 dark:border-red-600",
+        bgCompleted: "bg-red-200 dark:bg-red-900/50",
+        borderCompleted: "border-red-500 dark:border-red-700",
+      },
+      orange: {
+        bg: "bg-orange-100 dark:bg-orange-900/30",
+        border: "border-orange-400 dark:border-orange-600",
+        bgCompleted: "bg-orange-200 dark:bg-orange-900/50",
+        borderCompleted: "border-orange-500 dark:border-orange-700",
+      },
+      amber: {
+        bg: "bg-amber-100 dark:bg-amber-900/30",
+        border: "border-amber-400 dark:border-amber-600",
+        bgCompleted: "bg-amber-200 dark:bg-amber-900/50",
+        borderCompleted: "border-amber-500 dark:border-amber-700",
+      },
+      yellow: {
+        bg: "bg-yellow-100 dark:bg-yellow-900/30",
+        border: "border-yellow-400 dark:border-yellow-600",
+        bgCompleted: "bg-yellow-200 dark:bg-yellow-900/50",
+        borderCompleted: "border-yellow-500 dark:border-yellow-700",
+      },
+      lime: {
+        bg: "bg-lime-100 dark:bg-lime-900/30",
+        border: "border-lime-400 dark:border-lime-600",
+        bgCompleted: "bg-lime-200 dark:bg-lime-900/50",
+        borderCompleted: "border-lime-500 dark:border-lime-700",
+      },
+      green: {
+        bg: "bg-green-100 dark:bg-green-900/30",
+        border: "border-green-400 dark:border-green-600",
+        bgCompleted: "bg-green-200 dark:bg-green-900/50",
+        borderCompleted: "border-green-500 dark:border-green-700",
+      },
+      emerald: {
+        bg: "bg-emerald-100 dark:bg-emerald-900/30",
+        border: "border-emerald-400 dark:border-emerald-600",
+        bgCompleted: "bg-emerald-200 dark:bg-emerald-900/50",
+        borderCompleted: "border-emerald-500 dark:border-emerald-700",
+      },
+      teal: {
+        bg: "bg-teal-100 dark:bg-teal-900/30",
+        border: "border-teal-400 dark:border-teal-600",
+        bgCompleted: "bg-teal-200 dark:bg-teal-900/50",
+        borderCompleted: "border-teal-500 dark:border-teal-700",
+      },
+      cyan: {
+        bg: "bg-cyan-100 dark:bg-cyan-900/30",
+        border: "border-cyan-400 dark:border-cyan-600",
+        bgCompleted: "bg-cyan-200 dark:bg-cyan-900/50",
+        borderCompleted: "border-cyan-500 dark:border-cyan-700",
+      },
+      sky: {
+        bg: "bg-sky-100 dark:bg-sky-900/30",
+        border: "border-sky-400 dark:border-sky-600",
+        bgCompleted: "bg-sky-200 dark:bg-sky-900/50",
+        borderCompleted: "border-sky-500 dark:border-sky-700",
+      },
+    };
+    return colorMap[colorName] || colorMap.indigo;
+  }
+
+  const colors = getColorClasses(task.color);
 
   function handleToggleComplete(e: React.MouseEvent) {
     e.stopPropagation();
@@ -87,8 +189,8 @@ export default function TaskBlock({
         isDragging ? "opacity-50 scale-95" : ""
       } ${
         isCompleted
-          ? "bg-green-100 dark:bg-green-900/30 border-green-400 dark:border-green-600"
-          : "bg-indigo-100 dark:bg-indigo-900/30 border-indigo-400 dark:border-indigo-600"
+          ? `${colors.bgCompleted} ${colors.borderCompleted}`
+          : `${colors.bg} ${colors.border}`
       }`}
       style={{ height: `${heightPx}px` }}
       draggable

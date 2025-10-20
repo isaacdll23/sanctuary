@@ -111,6 +111,7 @@ async function createTask(user: User, formData: FormData) {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const startTime = formData.get("startTime") as string;
+  const color = (formData.get("color") as string) || "indigo";
   const durationMinutes = parseInt(
     formData.get("durationMinutes") as string,
     10
@@ -141,6 +142,7 @@ async function createTask(user: User, formData: FormData) {
       description: description || null,
       startTime,
       durationMinutes,
+      color,
       completedAt: null,
     })
     .returning();
@@ -153,6 +155,7 @@ async function updateTask(user: User, formData: FormData) {
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const startTime = formData.get("startTime") as string;
+  const color = formData.get("color") as string;
   const durationMinutes = formData.get("durationMinutes")
     ? parseInt(formData.get("durationMinutes") as string, 10)
     : undefined;
@@ -168,6 +171,7 @@ async function updateTask(user: User, formData: FormData) {
   if (title !== undefined) updateData.title = title;
   if (description !== undefined) updateData.description = description || null;
   if (startTime !== undefined) updateData.startTime = startTime;
+  if (color !== undefined) updateData.color = color;
   if (durationMinutes !== undefined)
     updateData.durationMinutes = durationMinutes;
 
