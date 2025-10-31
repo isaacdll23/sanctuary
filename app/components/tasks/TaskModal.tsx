@@ -86,7 +86,7 @@ export default function TaskModal({
             />
           ) : (
             <h2
-              className={`font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 truncate pr-4 ${
+              className={`font-semibold text-gray-900 dark:text-gray-100 truncate pr-4 ${
                 isCompactView ? "text-lg md:text-xl" : "text-xl md:text-2xl"
               }`}
             >
@@ -97,7 +97,7 @@ export default function TaskModal({
             {!isEditingDetails && (
               <button
                 onClick={() => setIsEditingDetails(true)}
-                className={`text-gray-500 dark:text-gray-300 hover:text-purple-400 p-2 rounded-md transition-colors ${
+                className={`text-gray-500 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 p-2 rounded-md transition-colors ${
                   isCompactView ? "mr-1" : "mr-2"
                 }`}
                 aria-label="Edit task details"
@@ -180,7 +180,7 @@ export default function TaskModal({
                         )
                       : ""
                   }
-                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     isCompactView ? "text-xs py-2" : "text-sm py-2.5"
                   }`}
                 />
@@ -194,7 +194,7 @@ export default function TaskModal({
                 >
                   {task.reminderDate ? (
                     <>
-                      <CalendarDaysIcon className="inline-block w-4 h-4 mr-1 text-purple-400 align-text-bottom" />
+                      <CalendarDaysIcon className="inline-block w-4 h-4 mr-1 text-blue-600 dark:text-blue-400 align-text-bottom" />
                       {format(new Date(task.reminderDate), "MMM d, yyyy, p")}
                     </>
                   ) : (
@@ -221,7 +221,7 @@ export default function TaskModal({
                   value={editableDescription}
                   onChange={(e) => setEditableDescription(e.target.value)}
                   rows={isCompactView ? 2 : 3} // New: Adjust rows for compact view
-                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                  className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     isCompactView ? "text-xs" : "text-sm"
                   }`} // New: Adjust font size for compact view
                   placeholder="Add more details..."
@@ -265,7 +265,7 @@ export default function TaskModal({
                     value={editableCategory}
                     onChange={(e) => setEditableCategory(e.target.value)}
                     list="modal-categories-datalist"
-                    className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                    className={`w-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                       isCompactView
                         ? "pl-9 pr-3 py-2 text-xs"
                         : "pl-10 pr-4 py-2.5 text-sm"
@@ -289,7 +289,7 @@ export default function TaskModal({
                   {task.category ? (
                     <>
                       <TagIcon
-                        className={`mr-1.5 text-purple-400 flex-shrink-0 ${
+                        className={`mr-1.5 text-blue-600 dark:text-blue-400 flex-shrink-0 ${
                           isCompactView ? "h-3.5 w-3.5" : "h-4 w-4"
                         }`}
                       />
@@ -321,7 +321,7 @@ export default function TaskModal({
                 </button>
                 <button
                   type="submit"
-                  className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-colors flex items-center gap-2 ${
+                  className={`bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                     isCompactView ? "py-1.5 px-3 text-xs" : "py-2 px-4 text-sm"
                   }`} // New: Adjust padding and font size for compact view
                 >
@@ -393,14 +393,14 @@ export default function TaskModal({
                 type="text"
                 name="stepDescription"
                 placeholder="Add a new step..."
-                className={`flex-grow bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors ${
+                className={`flex-grow bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                   isCompactView ? "p-2 text-xs" : "p-2.5 text-sm"
                 }`} // New: Adjust padding and font size for compact view
                 required
               />
               <button
                 type="submit"
-                className={`bg-purple-500 hover:bg-purple-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center ${
+                className={`bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                   isCompactView ? "p-2" : "p-2.5"
                 }`} // New: Adjust padding for compact view
                 aria-label="Add step"

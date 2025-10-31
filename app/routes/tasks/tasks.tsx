@@ -122,13 +122,11 @@ export default function Tasks() {
         >
           <div>
             <h1
-              className={`text-4xl sm:text-5xl font-extrabold tracking-tight text-center sm:text-left ${
+              className={`text-4xl sm:text-5xl font-bold tracking-tight text-center sm:text-left text-gray-900 dark:text-gray-100 ${
                 isCompactView ? "text-3xl sm:text-4xl" : ""
               }`}
             >
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
-                My Tasks
-              </span>
+              Tasks
             </h1>
             {!isCompactView && (
               <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 text-center sm:text-left">
@@ -138,8 +136,8 @@ export default function Tasks() {
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className={`flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 ${
-              isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-6"
+            className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+              isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
             }`}
           >
             <PlusIcon className={`h-5 w-5 ${isCompactView ? "h-4 w-4" : ""}`} />
@@ -174,7 +172,7 @@ export default function Tasks() {
                 onClick={() => setViewMode("card")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
                   viewMode === "card"
-                    ? "bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm"
+                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
@@ -185,7 +183,7 @@ export default function Tasks() {
                 onClick={() => setViewMode("table")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
                   viewMode === "table"
-                    ? "bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm"
+                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
                     : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
                 }`}
               >
@@ -356,7 +354,7 @@ export default function Tasks() {
               }`}
             >
               <h2
-                className={`text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600 ${
+                className={`text-2xl font-semibold text-gray-900 dark:text-gray-100 ${
                   isCompactView ? "text-xl" : ""
                 }`}
               >
@@ -402,7 +400,7 @@ export default function Tasks() {
                   name="title"
                   id="title"
                   placeholder="What needs to be done?"
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                   required
@@ -422,7 +420,7 @@ export default function Tasks() {
                   id="description"
                   placeholder="Add more details..."
                   rows={isCompactView ? 2 : 3}
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                 />
@@ -443,7 +441,7 @@ export default function Tasks() {
                   placeholder="e.g., Work, Personal, Project X"
                   defaultValue={filterCategory || ""}
                   list="categories-datalist"
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
+                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
                     isCompactView ? "text-xs p-2" : "text-sm"
                   }`}
                 />
@@ -460,7 +458,7 @@ export default function Tasks() {
               >
                 <button
                   type="submit"
-                  className={`w-full flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-75 ${
+                  className={`w-full flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                     isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
                   }`}
                 >
@@ -469,7 +467,7 @@ export default function Tasks() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className={`w-full flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 ${
+                  className={`w-full flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 ${
                     isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
                   }`}
                 >
