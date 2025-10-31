@@ -47,6 +47,25 @@ export default function TaskModal({
     setIsEditingDetails(false);
   }, [task]);
 
+  // Auto-close modal when delete or complete/incomplete actions succeed
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      (fetcher.data as any).success === true
+    ) {
+      // Check if it was a delete, complete, or incomplete action
+      const message = (fetcher.data as any).message || "";
+      if (
+        message.includes("deleted") ||
+        message.includes("complete") ||
+        message.includes("incomplete")
+      ) {
+        onClose();
+      }
+    }
+  }, [fetcher.state, fetcher.data, onClose]);
+
   const completedSteps = taskSteps.filter(
     (step) => step.completedAt !== null
   ).length;
