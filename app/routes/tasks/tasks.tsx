@@ -65,6 +65,7 @@ export default function Tasks() {
   );
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [lastProcessedDataKey, setLastProcessedDataKey] = useState<string | null>(null);
 
   // Memoized derived data
   const distinctCategories = useMemo(
@@ -113,9 +114,21 @@ export default function Tasks() {
       (fetcher.data as any).success === true &&
       showAddModal
     ) {
-      setShowAddModal(false);
+      // Create a unique key for this response to ensure we only process it once
+      const dataKey = `${JSON.stringify(fetcher.data)}`;
+      if (dataKey !== lastProcessedDataKey) {
+        setShowAddModal(false);
+        setLastProcessedDataKey(dataKey);
+      }
     }
-  }, [fetcher.state, fetcher.data, showAddModal]);
+  }, [fetcher.state, fetcher.data, showAddModal, lastProcessedDataKey]);
+
+  // Validate that selected task still exists in the task list
+  useEffect(() => {
+    if (selectedTask && !userTasks.some((task) => task.id === selectedTask.id)) {
+      setSelectedTask(null);
+    }
+  }, [userTasks, selectedTask]);
 
   // Handler functions
   const handleTaskSelect = (task: Task) => {
@@ -128,6 +141,7 @@ export default function Tasks() {
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
+    setLastProcessedDataKey(null);
   };
 
   return (
