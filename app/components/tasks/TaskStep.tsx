@@ -1,9 +1,9 @@
 import type { FetcherWithComponents } from "react-router";
-import type { taskStepsTable } from "~/db/schema";
-import { TrashIcon } from "@heroicons/react/24/outline"; // For delete button
+import type { TaskStep as TaskStepType } from "~/types/task.types";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
 interface TaskStepProps {
-  taskStep: typeof taskStepsTable.$inferSelect;
+  taskStep: TaskStepType;
   fetcher: FetcherWithComponents<any>;
   isCompactView?: boolean;
 }

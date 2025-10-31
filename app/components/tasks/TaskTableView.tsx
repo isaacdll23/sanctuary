@@ -1,6 +1,6 @@
 import { useState, Fragment } from "react";
 import { useFetcher } from "react-router";
-import type { tasksTable, taskStepsTable } from "~/db/schema";
+import type { Task, TaskStep } from "~/types/task.types";
 import { format } from "date-fns";
 import {
   CheckCircleIcon,
@@ -16,10 +16,10 @@ type SortKey = "title" | "createdAt" | "dueDate" | "completedAt" | "category";
 type SortDir = "asc" | "desc";
 
 interface TaskTableViewProps {
-  tasks: (typeof tasksTable.$inferSelect)[];
-  taskSteps: (typeof taskStepsTable.$inferSelect)[];
+  tasks: Task[];
+  taskSteps: TaskStep[];
   distinctCategories: string[];
-  onTaskSelect?: (task: typeof tasksTable.$inferSelect) => void;
+  onTaskSelect?: (task: Task) => void;
 }
 
 export default function TaskTableView({

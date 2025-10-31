@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { tasksTable, taskStepsTable } from "~/db/schema";
 import { useFetcher } from "react-router";
+import type { Task, TaskStep } from "~/types/task.types";
 import TaskModal from "~/components/tasks/TaskModal";
 import ProgressBar from "./ProgressBar";
 import {
@@ -12,11 +12,11 @@ import {
 import { format } from "date-fns";
 
 interface TaskItemProps {
-  task: typeof tasksTable.$inferSelect;
-  taskSteps?: (typeof taskStepsTable.$inferSelect)[];
+  task: Task;
+  taskSteps?: TaskStep[];
   distinctCategories: string[];
   isCompactView?: boolean;
-  onSelect?: (task: typeof tasksTable.$inferSelect) => void;
+  onSelect?: (task: Task) => void;
 }
 
 export default function TaskItem({

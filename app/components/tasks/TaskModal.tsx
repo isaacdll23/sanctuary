@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { FetcherWithComponents } from "react-router";
-import type { tasksTable, taskStepsTable } from "~/db/schema";
+import type { Task, TaskStep as TaskStepType } from "~/types/task.types";
 import ProgressBar from "~/components/tasks/ProgressBar";
 import TaskStep from "./TaskStep";
 import { format } from "date-fns";
@@ -16,6 +16,15 @@ import {
   ArrowUturnLeftIcon,
 } from "@heroicons/react/24/outline";
 
+interface TaskModalProps {
+  task: Task;
+  taskSteps?: TaskStepType[];
+  fetcher: FetcherWithComponents<any>;
+  onClose: () => void;
+  distinctCategories?: string[];
+  isCompactView?: boolean;
+}
+
 export default function TaskModal({
   task,
   taskSteps = [],
@@ -23,14 +32,7 @@ export default function TaskModal({
   onClose,
   distinctCategories = [],
   isCompactView,
-}: {
-  task: typeof tasksTable.$inferSelect;
-  taskSteps?: (typeof taskStepsTable.$inferSelect)[];
-  fetcher: FetcherWithComponents<any>;
-  onClose: () => void;
-  distinctCategories?: string[];
-  isCompactView?: boolean;
-}) {
+}: TaskModalProps) {
   const [editableTitle, setEditableTitle] = useState(task.title);
   const [editableDescription, setEditableDescription] = useState(
     task.description || ""

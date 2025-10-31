@@ -1,19 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher, useSearchParams, useLoaderData } from "react-router";
+import type { Route } from "./+types/tasks";
 import TaskItem from "~/components/tasks/TaskItem";
 import TaskTableView from "~/components/tasks/TaskTableView";
 import TaskModal from "~/components/tasks/TaskModal";
-import {
-  PlusIcon,
-  AdjustmentsHorizontalIcon,
-  EyeSlashIcon,
-  EyeIcon,
-  ArrowsPointingOutIcon,
-  ArrowsPointingInIcon,
-  Bars3Icon,
-  QueueListIcon,
-} from "@heroicons/react/24/outline";
+import AddTaskModal from "~/components/tasks/AddTaskModal";
+import TaskFilterBar from "~/components/tasks/TaskFilterBar";
+import type { Task, TaskStep, ViewMode } from "~/types/task.types";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   pageAccessLoader,
   pageAccessAction,
@@ -24,7 +19,6 @@ export function meta() {
 }
 
 export const loader = pageAccessLoader("tasks", async (user, request) => {
-  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
   const { db } = await import("~/db");
   const { tasksTable, taskStepsTable } = await import("~/db/schema");
 
@@ -44,47 +38,64 @@ export const loader = pageAccessLoader("tasks", async (user, request) => {
 });
 
 export const action = pageAccessAction("tasks", async (user, request) => {
-  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
   const { handleTaskAction } = await import("~/modules/services/TaskService");
-
-  // Ensure the result of handleTaskAction is returned
   return handleTaskAction(request);
 });
 
 export default function Tasks() {
-  const loaderData = useLoaderData<{
-    userTasks: any[];
-    userTaskSteps: any[];
+  const { userTasks, userTaskSteps } = useLoaderData<{
+    userTasks: Task[];
+    userTaskSteps: TaskStep[];
   }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialHide = searchParams.get("hideCompletedTasks") === "true";
-  const initialCategory = searchParams.get("filterCategory") || "";
-  const initialCompactView = searchParams.get("compactView") === "true";
-  const initialViewMode = (searchParams.get("viewMode") || "card") as "card" | "table";
-  const [hideCompletedTasks, setHideCompletedTasks] = useState(initialHide);
-  const [filterCategory, setFilterCategory] = useState(initialCategory);
-  const [isCompactView, setIsCompactView] = useState(initialCompactView);
-  const [viewMode, setViewMode] = useState<"card" | "table">(initialViewMode);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<any>(null);
-  let fetcher = useFetcher();
+  const fetcher = useFetcher();
 
-  const distinctCategories = Array.from(
-    new Set(loaderData.userTasks.map((task) => task.category).filter(Boolean))
-  ) as string[];
+  // State initialization from URL params
+  const [hideCompletedTasks, setHideCompletedTasks] = useState(
+    searchParams.get("hideCompletedTasks") === "true"
+  );
+  const [filterCategory, setFilterCategory] = useState(
+    searchParams.get("filterCategory") || ""
+  );
+  const [isCompactView, setIsCompactView] = useState(
+    searchParams.get("compactView") === "true"
+  );
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    (searchParams.get("viewMode") as ViewMode) || "card"
+  );
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const filteredTasks = loaderData.userTasks.filter((task) => {
-    if (hideCompletedTasks && task.completedAt !== null) return false;
-    if (filterCategory && task.category !== filterCategory) return false;
-    return true;
-  });
-
-  const openTasks = loaderData.userTasks.filter(
-    (task) =>
-      task.completedAt === null &&
-      (filterCategory === "" || task.category === filterCategory)
+  // Memoized derived data
+  const distinctCategories = useMemo(
+    () =>
+      Array.from(
+        new Set(userTasks.map((task) => task.category).filter(Boolean))
+      ) as string[],
+    [userTasks]
   );
 
+  const filteredTasks = useMemo(
+    () =>
+      userTasks.filter((task) => {
+        if (hideCompletedTasks && task.completedAt !== null) return false;
+        if (filterCategory && task.category !== filterCategory) return false;
+        return true;
+      }),
+    [userTasks, hideCompletedTasks, filterCategory]
+  );
+
+  const openTasksCount = useMemo(
+    () =>
+      userTasks.filter(
+        (task) =>
+          task.completedAt === null &&
+          (filterCategory === "" || task.category === filterCategory)
+      ).length,
+    [userTasks, filterCategory]
+  );
+
+  // Sync state to URL params
   useEffect(() => {
     setSearchParams({
       hideCompletedTasks: hideCompletedTasks.toString(),
@@ -94,18 +105,30 @@ export default function Tasks() {
     });
   }, [hideCompletedTasks, filterCategory, isCompactView, viewMode, setSearchParams]);
 
+  // Auto-close add modal on successful submission
   useEffect(() => {
     if (
       fetcher.state === "idle" &&
       fetcher.data &&
       (fetcher.data as any).success === true &&
-      isModalOpen &&
-      !selectedTask
+      showAddModal
     ) {
-      setIsModalOpen(false);
-      fetcher.data = null;
+      setShowAddModal(false);
     }
-  }, [fetcher.state, fetcher.data, isModalOpen, selectedTask]);
+  }, [fetcher.state, fetcher.data, showAddModal]);
+
+  // Handler functions
+  const handleTaskSelect = (task: Task) => {
+    setSelectedTask(task);
+  };
+
+  const handleCloseTaskModal = () => {
+    setSelectedTask(null);
+  };
+
+  const handleCloseAddModal = () => {
+    setShowAddModal(false);
+  };
 
   return (
     <div
@@ -135,7 +158,7 @@ export default function Tasks() {
             )}
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setShowAddModal(true)}
             className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
               isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
             }`}
@@ -146,118 +169,18 @@ export default function Tasks() {
         </header>
 
         {/* Filters and Controls Bar */}
-        <div
-          className={`mb-8 p-4 bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 ${
-            isCompactView ? "mb-4 p-2 text-sm" : ""
-          }`}
-        >
-          <p
-            className={`text-gray-700 dark:text-gray-300 font-medium ${
-              isCompactView ? "text-xs" : "text-sm"
-            }`}
-          >
-            {openTasks.length}{" "}
-            <span
-              className={`font-normal text-gray-500 dark:text-gray-400 ${
-                isCompactView ? "" : ""
-              }`}
-            >
-              Open Task{openTasks.length !== 1 ? "s" : ""}
-            </span>
-          </p>
-          <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode("card")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-                  viewMode === "card"
-                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                }`}
-              >
-                <Bars3Icon className="h-4 w-4" />
-                <span className="text-xs sm:text-sm font-medium">Card</span>
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
-                  viewMode === "table"
-                    ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
-                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-                }`}
-              >
-                <QueueListIcon className="h-4 w-4" />
-                <span className="text-xs sm:text-sm font-medium">Table</span>
-              </button>
-            </div>
-
-            {/* Other Filters */}
-            <button
-              onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
-              className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
-                isCompactView
-                  ? "px-3 py-1.5 text-xs"
-                  : "px-4 py-2 text-xs sm:text-sm"
-              }`}
-            >
-              {hideCompletedTasks ? (
-                <EyeIcon
-                  className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                />
-              ) : (
-                <EyeSlashIcon
-                  className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                />
-              )}
-              {hideCompletedTasks ? "Show Completed" : "Hide Completed"}
-            </button>
-            <div className="relative">
-              <AdjustmentsHorizontalIcon
-                className={`text-gray-500 dark:text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
-                  isCompactView ? "h-4 w-4 left-2" : "h-5 w-5"
-                }`}
-              />
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className={`border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-colors duration-200 appearance-none bg-white dark:bg-gray-700/50 ${
-                  isCompactView
-                    ? "pl-8 pr-3 py-1.5 text-xs"
-                    : "pl-10 pr-4 py-2 text-xs sm:text-sm"
-                }`}
-              >
-                <option value="">All Categories</option>
-                {distinctCategories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {viewMode === "card" && (
-              <button
-                onClick={() => setIsCompactView(!isCompactView)}
-                className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
-                  isCompactView
-                    ? "px-3 py-1.5 text-xs"
-                    : "px-4 py-2 text-xs sm:text-sm"
-                }`}
-              >
-                {isCompactView ? (
-                  <ArrowsPointingOutIcon
-                    className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                  />
-                ) : (
-                  <ArrowsPointingInIcon
-                    className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                  />
-                )}
-                {isCompactView ? "Standard" : "Compact"}
-              </button>
-            )}
-          </div>
-        </div>
+        <TaskFilterBar
+          openTasksCount={openTasksCount}
+          hideCompletedTasks={hideCompletedTasks}
+          onToggleHideCompleted={() => setHideCompletedTasks(!hideCompletedTasks)}
+          filterCategory={filterCategory}
+          onCategoryChange={setFilterCategory}
+          distinctCategories={distinctCategories}
+          isCompactView={isCompactView}
+          onToggleCompactView={() => setIsCompactView(!isCompactView)}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+        />
 
         {/* Task Views */}
         {filteredTasks.length === 0 ? (
@@ -294,12 +217,9 @@ export default function Tasks() {
         ) : viewMode === "table" ? (
           <TaskTableView
             tasks={filteredTasks}
-            taskSteps={loaderData.userTaskSteps}
+            taskSteps={userTaskSteps}
             distinctCategories={distinctCategories}
-            onTaskSelect={(task) => {
-              setSelectedTask(task);
-              setIsModalOpen(true);
-            }}
+            onTaskSelect={handleTaskSelect}
           />
         ) : (
           <ul
@@ -311,191 +231,41 @@ export default function Tasks() {
               <TaskItem
                 key={task.id}
                 task={task}
-                taskSteps={loaderData.userTaskSteps.filter(
+                taskSteps={userTaskSteps.filter(
                   (step) => step.taskId === task.id
                 )}
                 distinctCategories={distinctCategories}
                 isCompactView={isCompactView}
-                onSelect={(selectedTask) => {
-                  setSelectedTask(selectedTask);
-                  setIsModalOpen(true);
-                }}
+                onSelect={handleTaskSelect}
               />
             ))}
           </ul>
         )}
       </div>
 
-      {/* Add Task Modal */}
-      {isModalOpen && selectedTask ? (
+      {/* Modals */}
+      {selectedTask && (
         <TaskModal
           task={selectedTask}
-          taskSteps={loaderData.userTaskSteps.filter(
+          taskSteps={userTaskSteps.filter(
             (step) => step.taskId === selectedTask.id
           )}
           fetcher={fetcher}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedTask(null);
-          }}
+          onClose={handleCloseTaskModal}
           distinctCategories={distinctCategories}
           isCompactView={isCompactView}
         />
-      ) : isModalOpen && !selectedTask ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div
-            className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in ${
-              isCompactView ? "p-4" : ""
-            }`}
-          >
-            <div
-              className={`flex justify-between items-center mb-6 ${
-                isCompactView ? "mb-4" : ""
-              }`}
-            >
-              <h2
-                className={`text-2xl font-semibold text-gray-900 dark:text-gray-100 ${
-                  isCompactView ? "text-xl" : ""
-                }`}
-              >
-                Add New Task
-              </h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
-                aria-label="Close modal"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className={`w-6 h-6 ${isCompactView ? "w-5 h-5" : ""}`}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <fetcher.Form
-              method="post"
-              className={`space-y-4 ${isCompactView ? "space-y-3" : ""}`}
-            >
-              <input type="hidden" name="intent" value="createTask" />
-              <div>
-                <label
-                  htmlFor="title"
-                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
-                    isCompactView ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  Title
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  id="title"
-                  placeholder="What needs to be done?"
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
-                    isCompactView ? "text-xs p-2" : "text-sm"
-                  }`}
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
-                    isCompactView ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  Description (Optional)
-                </label>
-                <textarea
-                  name="description"
-                  id="description"
-                  placeholder="Add more details..."
-                  rows={isCompactView ? 2 : 3}
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
-                    isCompactView ? "text-xs p-2" : "text-sm"
-                  }`}
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="category"
-                  className={`block font-medium text-gray-700 dark:text-gray-300 mb-1 ${
-                    isCompactView ? "text-xs" : "text-sm"
-                  }`}
-                >
-                  Category (Optional)
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  id="category"
-                  placeholder="e.g., Work, Personal, Project X"
-                  defaultValue={filterCategory || ""}
-                  list="categories-datalist"
-                  className={`w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors placeholder-gray-500 dark:placeholder-gray-400 ${
-                    isCompactView ? "text-xs p-2" : "text-sm"
-                  }`}
-                />
-                <datalist id="categories-datalist">
-                  {distinctCategories.map((cat) => (
-                    <option key={cat} value={cat} />
-                  ))}
-                </datalist>
-              </div>
-              <div
-                className={`flex flex-col sm:flex-row gap-3 pt-2 ${
-                  isCompactView ? "pt-1" : ""
-                }`}
-              >
-                <button
-                  type="submit"
-                  className={`w-full flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                    isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
-                  }`}
-                >
-                  Add Task
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className={`w-full flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 ${
-                    isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
-                  }`}
-                >
-                  Cancel
-                </button>
-              </div>
-            </fetcher.Form>
-          </div>
-        </div>
-      ) : null}
+      )}
+
+      {showAddModal && (
+        <AddTaskModal
+          fetcher={fetcher}
+          onClose={handleCloseAddModal}
+          distinctCategories={distinctCategories}
+          filterCategory={filterCategory}
+          isCompactView={isCompactView}
+        />
+      )}
     </div>
   );
 }
-
-// Add this to your app.css or a global stylesheet for the modal animation
-/*
-@keyframes modal-pop-in {
-  0% {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.animate-modal-pop-in {
-  animation: modal-pop-in 0.3s ease-out forwards;
-}
-*/
