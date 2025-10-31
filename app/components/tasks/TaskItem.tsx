@@ -16,6 +16,7 @@ interface TaskItemProps {
   taskSteps?: (typeof taskStepsTable.$inferSelect)[];
   distinctCategories: string[];
   isCompactView?: boolean;
+  onSelect?: (task: typeof tasksTable.$inferSelect) => void;
 }
 
 export default function TaskItem({
@@ -23,6 +24,7 @@ export default function TaskItem({
   taskSteps,
   distinctCategories,
   isCompactView,
+  onSelect,
 }: TaskItemProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fetcher = useFetcher();
@@ -44,7 +46,7 @@ export default function TaskItem({
   return (
     <>
       <li
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => onSelect?.(task) || setIsModalOpen(true)}
         className={`
           bg-white/90 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg 
           transition-all duration-300 ease-in-out cursor-pointer group

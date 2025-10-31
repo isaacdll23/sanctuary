@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher, useSearchParams, useLoaderData } from "react-router";
 import TaskItem from "~/components/tasks/TaskItem";
+import TaskTableView from "~/components/tasks/TaskTableView";
+import TaskModal from "~/components/tasks/TaskModal";
 import {
   PlusIcon,
   AdjustmentsHorizontalIcon,
@@ -9,6 +11,8 @@ import {
   EyeIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
+  Bars3Icon,
+  QueueListIcon,
 } from "@heroicons/react/24/outline";
 import {
   pageAccessLoader,
@@ -55,11 +59,14 @@ export default function Tasks() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialHide = searchParams.get("hideCompletedTasks") === "true";
   const initialCategory = searchParams.get("filterCategory") || "";
-  const initialCompactView = searchParams.get("compactView") === "true"; // New: Initialize compact view state
+  const initialCompactView = searchParams.get("compactView") === "true";
+  const initialViewMode = (searchParams.get("viewMode") || "card") as "card" | "table";
   const [hideCompletedTasks, setHideCompletedTasks] = useState(initialHide);
   const [filterCategory, setFilterCategory] = useState(initialCategory);
-  const [isCompactView, setIsCompactView] = useState(initialCompactView); // New: Compact view state
+  const [isCompactView, setIsCompactView] = useState(initialCompactView);
+  const [viewMode, setViewMode] = useState<"card" | "table">(initialViewMode);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
   let fetcher = useFetcher();
 
   const distinctCategories = Array.from(
@@ -83,20 +90,22 @@ export default function Tasks() {
       hideCompletedTasks: hideCompletedTasks.toString(),
       filterCategory: filterCategory,
       compactView: isCompactView.toString(),
+      viewMode: viewMode,
     });
-  }, [hideCompletedTasks, filterCategory, isCompactView, setSearchParams]);
+  }, [hideCompletedTasks, filterCategory, isCompactView, viewMode, setSearchParams]);
 
   useEffect(() => {
     if (
       fetcher.state === "idle" &&
       fetcher.data &&
       (fetcher.data as any).success === true &&
-      isModalOpen
+      isModalOpen &&
+      !selectedTask
     ) {
       setIsModalOpen(false);
       fetcher.data = null;
     }
-  }, [fetcher.state, fetcher.data, isModalOpen]);
+  }, [fetcher.state, fetcher.data, isModalOpen, selectedTask]);
 
   return (
     <div
@@ -138,7 +147,7 @@ export default function Tasks() {
           </button>
         </header>
 
-        {/* Filters and Open Tasks Count */}
+        {/* Filters and Controls Bar */}
         <div
           className={`mb-8 p-4 bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg flex flex-col md:flex-row justify-between items-center gap-4 ${
             isCompactView ? "mb-4 p-2 text-sm" : ""
@@ -158,7 +167,34 @@ export default function Tasks() {
               Open Task{openTasks.length !== 1 ? "s" : ""}
             </span>
           </p>
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-2 md:gap-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                  viewMode === "card"
+                    ? "bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                }`}
+              >
+                <Bars3Icon className="h-4 w-4" />
+                <span className="text-xs sm:text-sm font-medium">Card</span>
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all ${
+                  viewMode === "table"
+                    ? "bg-white dark:bg-gray-600 text-purple-600 dark:text-purple-400 shadow-sm"
+                    : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                }`}
+              >
+                <QueueListIcon className="h-4 w-4" />
+                <span className="text-xs sm:text-sm font-medium">Table</span>
+              </button>
+            </div>
+
+            {/* Other Filters */}
             <button
               onClick={() => setHideCompletedTasks(!hideCompletedTasks)}
               className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
@@ -201,30 +237,31 @@ export default function Tasks() {
                 ))}
               </select>
             </div>
-            {/* New Compact View Toggle Button */}
-            <button
-              onClick={() => setIsCompactView(!isCompactView)}
-              className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
-                isCompactView
-                  ? "px-3 py-1.5 text-xs"
-                  : "px-4 py-2 text-xs sm:text-sm"
-              }`}
-            >
-              {isCompactView ? (
-                <ArrowsPointingOutIcon
-                  className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                />
-              ) : (
-                <ArrowsPointingInIcon
-                  className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
-                />
-              )}
-              {isCompactView ? "Standard View" : "Compact View"}
-            </button>
+            {viewMode === "card" && (
+              <button
+                onClick={() => setIsCompactView(!isCompactView)}
+                className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 rounded-lg transition-colors duration-200 ${
+                  isCompactView
+                    ? "px-3 py-1.5 text-xs"
+                    : "px-4 py-2 text-xs sm:text-sm"
+                }`}
+              >
+                {isCompactView ? (
+                  <ArrowsPointingOutIcon
+                    className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
+                  />
+                ) : (
+                  <ArrowsPointingInIcon
+                    className={`h-4 w-4 ${isCompactView ? "h-3 w-3" : ""}`}
+                  />
+                )}
+                {isCompactView ? "Standard" : "Compact"}
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Task List */}
+        {/* Task Views */}
         {filteredTasks.length === 0 ? (
           <div className={`text-center ${isCompactView ? "py-5" : "py-10"}`}>
             <svg
@@ -256,6 +293,16 @@ export default function Tasks() {
               </p>
             )}
           </div>
+        ) : viewMode === "table" ? (
+          <TaskTableView
+            tasks={filteredTasks}
+            taskSteps={loaderData.userTaskSteps}
+            distinctCategories={distinctCategories}
+            onTaskSelect={(task) => {
+              setSelectedTask(task);
+              setIsModalOpen(true);
+            }}
+          />
         ) : (
           <ul
             className={`space-y-4 md:space-y-6 ${
@@ -270,7 +317,11 @@ export default function Tasks() {
                   (step) => step.taskId === task.id
                 )}
                 distinctCategories={distinctCategories}
-                isCompactView={isCompactView} // Pass compact view state to TaskItem
+                isCompactView={isCompactView}
+                onSelect={(selectedTask) => {
+                  setSelectedTask(selectedTask);
+                  setIsModalOpen(true);
+                }}
               />
             ))}
           </ul>
@@ -278,7 +329,21 @@ export default function Tasks() {
       </div>
 
       {/* Add Task Modal */}
-      {isModalOpen && (
+      {isModalOpen && selectedTask ? (
+        <TaskModal
+          task={selectedTask}
+          taskSteps={loaderData.userTaskSteps.filter(
+            (step) => step.taskId === selectedTask.id
+          )}
+          fetcher={fetcher}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedTask(null);
+          }}
+          distinctCategories={distinctCategories}
+          isCompactView={isCompactView}
+        />
+      ) : isModalOpen && !selectedTask ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div
             className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in ${
@@ -322,6 +387,7 @@ export default function Tasks() {
               method="post"
               className={`space-y-4 ${isCompactView ? "space-y-3" : ""}`}
             >
+              <input type="hidden" name="intent" value="createTask" />
               <div>
                 <label
                   htmlFor="title"
@@ -413,7 +479,7 @@ export default function Tasks() {
             </fetcher.Form>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
