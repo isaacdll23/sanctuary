@@ -282,7 +282,7 @@ export default function Commands({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {" "}
         {/* Header */}

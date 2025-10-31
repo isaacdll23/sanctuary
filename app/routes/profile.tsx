@@ -140,8 +140,8 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 md:p-8">
-      <div className="bg-gray-100/80 dark:bg-gray-700/80 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-xl p-8 md:p-10 w-full max-w-md">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 flex items-center justify-center p-4 md:p-8">
+      <div className="bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-8 md:p-10 w-full max-w-md">
         <h1 className="text-3xl font-bold mb-6">Profile</h1>
         {!editMode ? (
           <div className="space-y-4">
