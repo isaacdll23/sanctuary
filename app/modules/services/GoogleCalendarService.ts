@@ -313,10 +313,27 @@ export function convertLocalTaskToGoogleEvent(
   // Extract just HH:MM from startTime (handles both "HH:MM" and "HH:MM:SS" PostgreSQL time format)
   const timeOnly = task.startTime.substring(0, 5); // "HH:MM"
   
-  // Create a date string in the format that Google Calendar expects
-  // The time is in the user's local timezone, so we pass it as-is with the timezone
+  // Create the start datetime string in ISO format
+  // This represents the local time in the user's timezone
   const startDateTime = `${planDate}T${timeOnly}:00`;
-  const endDateTime = new Date(new Date(startDateTime).getTime() + task.durationMinutes * 60000);
+  
+  // Calculate end time by adding duration minutes to the start time
+  // We must do this in local time (using the HH:MM representation), not UTC
+  const [hours, minutes] = timeOnly.split(":").map(Number);
+  let endHours = hours;
+  let endMinutes = minutes + task.durationMinutes;
+  
+  // Handle minute overflow
+  if (endMinutes >= 60) {
+    endHours += Math.floor(endMinutes / 60);
+    endMinutes = endMinutes % 60;
+  }
+  
+  // Handle hour overflow (shouldn't happen for a day planner, but be safe)
+  endHours = endHours % 24;
+  
+  const endTimeStr = `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}:00`;
+  const endDateTime = `${planDate}T${endTimeStr}`;
 
   return {
     summary: task.title,
@@ -326,7 +343,7 @@ export function convertLocalTaskToGoogleEvent(
       timeZone,
     },
     end: {
-      dateTime: endDateTime.toISOString().split('.')[0],
+      dateTime: endDateTime,
       timeZone,
     },
   };
@@ -688,5 +705,91 @@ export async function getTaskSyncStatus(userId: number, planDate: string) {
   } catch (error) {
     console.error("Error getting task sync status:", error);
     return new Map();
+  }
+}
+
+/**
+ * Auto-sync trigger - orchestrates sync based on user's sync direction preference
+ * Used internally for automatic syncing when tasks are created or page loads
+ * Errors are logged but not thrown to prevent blocking operations
+ */
+export async function triggerAutoSync(
+  userId: number,
+  planDate: string
+): Promise<{ success: boolean; syncAttempted: boolean; message: string }> {
+  try {
+    // Check if user has Google Calendar sync enabled
+    const account = await getGoogleCalendarAccount(userId);
+    if (!account || account.isSyncEnabled !== 1) {
+      return {
+        success: true,
+        syncAttempted: false,
+        message: "Google Calendar sync not enabled",
+      };
+    }
+
+    // Get valid access token
+    const accessToken = await getValidAccessToken(userId);
+    if (!accessToken) {
+      console.warn(`[Auto-Sync] Failed to get valid access token for user ${userId}`);
+      return {
+        success: true,
+        syncAttempted: false,
+        message: "Could not authenticate with Google Calendar",
+      };
+    }
+
+    // Perform sync based on direction preference
+    try {
+      switch (account.syncDirection) {
+        case "pull-only":
+          await syncGoogleEventsToLocalPlan(userId, planDate);
+          break;
+        case "push-only":
+          await syncLocalTasksToGoogle(userId, planDate);
+          break;
+        case "bidirectional":
+          await handleBidirectionalSync(userId, planDate);
+          break;
+        default:
+          console.warn(`[Auto-Sync] Unknown sync direction: ${account.syncDirection}`);
+          return {
+            success: true,
+            syncAttempted: false,
+            message: "Unknown sync direction",
+          };
+      }
+
+      // Update last sync timestamp
+      await db
+        .update(googleCalendarAccountsTable)
+        .set({
+          lastSyncAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(googleCalendarAccountsTable.userId, userId));
+
+      return {
+        success: true,
+        syncAttempted: true,
+        message: "Auto-sync completed successfully",
+      };
+    } catch (syncError) {
+      console.error(`[Auto-Sync] Sync operation failed for user ${userId}:`, syncError);
+      // Return success:true to indicate the auto-sync attempt was made (even if it failed)
+      // This prevents blocking the main operation
+      return {
+        success: true,
+        syncAttempted: true,
+        message: "Sync operation encountered an error but operation continued",
+      };
+    }
+  } catch (error) {
+    console.error(`[Auto-Sync] Unexpected error during auto-sync for user ${userId}:`, error);
+    return {
+      success: true,
+      syncAttempted: false,
+      message: "Auto-sync encountered an unexpected error",
+    };
   }
 }

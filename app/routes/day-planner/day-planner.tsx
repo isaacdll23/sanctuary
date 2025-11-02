@@ -19,7 +19,7 @@ export function meta() {
 
 export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const { getDayPlan } = await import("~/modules/services/DayPlannerService");
-  const { getGoogleCalendarAccount, getTaskSyncStatus } = await import(
+  const { getGoogleCalendarAccount, getTaskSyncStatus, triggerAutoSync } = await import(
     "~/modules/services/GoogleCalendarService"
   );
   const url = new URL(request.url);
@@ -33,12 +33,35 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const googleCalendarAccount = await getGoogleCalendarAccount(user.id);
   const taskSyncStatus = await getTaskSyncStatus(user.id, planDate);
 
+  // Auto-sync on page load if conditions are met
+  let autoSyncStatus = { syncAttempted: false, message: "Not triggered" };
+  if (googleCalendarAccount && googleCalendarAccount.isSyncEnabled === 1) {
+    // Check if last sync was more than 5 minutes ago (debounce to avoid excessive syncing)
+    const now = new Date();
+    const lastSync = googleCalendarAccount.lastSyncAt
+      ? new Date(googleCalendarAccount.lastSyncAt)
+      : null;
+    const shouldSync =
+      !lastSync || now.getTime() - lastSync.getTime() > 5 * 60 * 1000;
+
+    if (shouldSync) {
+      autoSyncStatus = await triggerAutoSync(user.id, planDate);
+    } else {
+      // Sync was done recently, skip to avoid excessive API calls
+      autoSyncStatus = {
+        syncAttempted: false,
+        message: "Sync skipped - recent sync within 5 minutes",
+      };
+    }
+  }
+
   return {
     user,
     plan,
     planDate,
     googleCalendarAccount,
     taskSyncStatus: Object.fromEntries(taskSyncStatus),
+    autoSyncStatus,
   };
 });
 
@@ -106,10 +129,14 @@ type LoaderData = {
       googleEventId: string;
     }
   >;
+  autoSyncStatus: {
+    syncAttempted: boolean;
+    message: string;
+  };
 };
 
 export default function DayPlanner() {
-  const { user, plan, planDate, googleCalendarAccount, taskSyncStatus } =
+  const { user, plan, planDate, googleCalendarAccount, taskSyncStatus, autoSyncStatus } =
     useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const fetcher = useFetcher();

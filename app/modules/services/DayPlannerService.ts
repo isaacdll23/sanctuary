@@ -147,7 +147,20 @@ async function createTask(user: User, formData: FormData) {
     })
     .returning();
 
-  return { success: true, message: "Task created", task };
+  // Trigger auto-sync to Google Calendar if enabled
+  const { triggerAutoSync } = await import("./GoogleCalendarService");
+  const planDate = new Date(plan.planDate).toISOString().split("T")[0];
+  const syncResult = await triggerAutoSync(user.id, planDate);
+
+  return {
+    success: true,
+    message: "Task created",
+    task,
+    syncStatus: {
+      attempted: syncResult.syncAttempted,
+      message: syncResult.message,
+    },
+  };
 }
 
 async function updateTask(user: User, formData: FormData) {
