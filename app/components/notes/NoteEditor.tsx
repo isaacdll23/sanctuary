@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { SparklesIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, CheckIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useToast } from "~/hooks/useToast";
 import { useAutoSave } from "~/hooks/useAutoSave";
 import ReactMarkdown from "react-markdown";
@@ -36,6 +36,13 @@ export function NoteEditor({
   const [editorPreferences, setEditorPreferences] = useState<EditorPreferences>(
     () => loadEditorPreferences()
   );
+  const [showPreview, setShowPreview] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("noteEditorShowPreview");
+      return saved ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
 
   const isNew = !note;
 
@@ -78,6 +85,13 @@ export function NoteEditor({
   const initialFolderIdForNewNoteRef = useRef<number | null | undefined>(
     undefined
   );
+
+  // Persist preview state to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("noteEditorShowPreview", JSON.stringify(showPreview));
+    }
+  }, [showPreview]);
 
   useEffect(() => {
     const currentKey = note ? note.id : isNew ? "new" : null;
@@ -232,12 +246,6 @@ export function NoteEditor({
     saveEditorPreferences(updatedPreferences);
   };
 
-  const handleLineWrappingToggle = (enabled: boolean) => {
-    const updatedPreferences = { ...editorPreferences, lineWrapping: enabled };
-    setEditorPreferences(updatedPreferences);
-    saveEditorPreferences(updatedPreferences);
-  };
-
   const handleTabSizeChange = (size: 2 | 4 | 8) => {
     const updatedPreferences = { ...editorPreferences, tabSize: size };
     setEditorPreferences(updatedPreferences);
@@ -359,12 +367,27 @@ export function NoteEditor({
 
       {/* Content Section */}
       <div className="flex-grow flex flex-col space-y-2 min-h-0">
-        <label
-          htmlFor="note-content"
-          className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-        >
-          Content
-        </label>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="note-content"
+            className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
+          >
+            Content
+          </label>
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            title={showPreview ? "Hide preview" : "Show preview"}
+            aria-label={showPreview ? "Hide preview" : "Show preview"}
+            className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+          >
+            {showPreview ? (
+              <EyeSlashIcon className="h-4 w-4" />
+            ) : (
+              <EyeIcon className="h-4 w-4" />
+            )}
+          </button>
+        </div>
         <div className="flex-grow flex flex-col min-h-0 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-gray-400 dark:focus-within:ring-gray-600">
           <SplitViewContainer
             leftPane={
@@ -372,7 +395,6 @@ export function NoteEditor({
                 <EditorSettings
                   preferences={editorPreferences}
                   onFontSizeChange={handleFontSizeChange}
-                  onLineWrappingToggle={handleLineWrappingToggle}
                   onTabSizeChange={handleTabSizeChange}
                 />
                 <AdvancedNoteEditor
@@ -391,7 +413,8 @@ export function NoteEditor({
                 fontSize={editorPreferences.fontSize}
               />
             }
-            storageKey="noteEditorSplitViewPosition"
+            dividerPosition={50}
+            showRightPane={showPreview}
           />
         </div>
       </div>

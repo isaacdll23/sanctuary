@@ -4,14 +4,12 @@ import type { EditorPreferences } from "~/utils/editorPreferences";
 interface EditorSettingsProps {
   preferences: EditorPreferences;
   onFontSizeChange: (size: number) => void;
-  onLineWrappingToggle: (enabled: boolean) => void;
   onTabSizeChange: (size: 2 | 4 | 8) => void;
 }
 
 export function EditorSettings({
   preferences,
   onFontSizeChange,
-  onLineWrappingToggle,
   onTabSizeChange,
 }: EditorSettingsProps) {
   const handleFontSizeIncrease = () => {
@@ -82,25 +80,6 @@ export function EditorSettings({
           <option value={4}>4 spaces</option>
           <option value={8}>8 spaces</option>
         </select>
-      </div>
-
-      {/* Line Wrapping Toggle */}
-      <div className="flex items-center gap-2">
-        <label
-          htmlFor="line-wrap-toggle"
-          className="flex items-center gap-2 cursor-pointer"
-        >
-          <input
-            id="line-wrap-toggle"
-            type="checkbox"
-            checked={preferences.lineWrapping}
-            onChange={(e) => onLineWrappingToggle(e.target.checked)}
-            className="w-4 h-4 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 cursor-pointer transition-all duration-150"
-          />
-          <span className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-            Wrap Lines
-          </span>
-        </label>
       </div>
     </div>
   );

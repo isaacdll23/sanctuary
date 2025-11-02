@@ -1,29 +1,19 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 
 interface SplitViewContainerProps {
   leftPane: React.ReactNode;
   rightPane: React.ReactNode;
-  dividerPosition?: number; // percentage (0-100)
-  onDividerPositionChange?: (position: number) => void;
-  storageKey?: string; // localStorage key for persisting divider position
+  dividerPosition?: number; // percentage (0-100), default 50
+  showRightPane?: boolean; // toggle right pane visibility
 }
 
 export function SplitViewContainer({
   leftPane,
   rightPane,
   dividerPosition = 50,
-  onDividerPositionChange,
-  storageKey = "splitViewDividerPosition",
+  showRightPane = true,
 }: SplitViewContainerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isDraggingRef = useRef(false);
-  const [currentPosition, setCurrentPosition] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? parseInt(saved) : dividerPosition;
-    }
-    return dividerPosition;
-  });
   const [isResponsive, setIsResponsive] = useState(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768; // md breakpoint
@@ -40,55 +30,6 @@ export function SplitViewContainer({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // Handle divider dragging
-  const handleMouseDown = useCallback(() => {
-    isDraggingRef.current = true;
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isDraggingRef.current = false;
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDraggingRef.current || !containerRef.current) return;
-
-      const container = containerRef.current;
-      const rect = container.getBoundingClientRect();
-      const newPosition = ((e.clientX - rect.left) / rect.width) * 100;
-
-      // Constrain position between 20% and 80%
-      const constrainedPosition = Math.max(20, Math.min(80, newPosition));
-
-      setCurrentPosition(constrainedPosition);
-      if (onDividerPositionChange) {
-        onDividerPositionChange(constrainedPosition);
-      }
-
-      // Persist to localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem(storageKey, String(constrainedPosition));
-      }
-    },
-    [onDividerPositionChange, storageKey]
-  );
-
-  useEffect(() => {
-    if (isDraggingRef.current) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-
-      return () => {
-        document.removeEventListener("mousemove", handleMouseMove);
-        document.removeEventListener("mouseup", handleMouseUp);
-        document.body.style.cursor = "auto";
-        document.body.style.userSelect = "auto";
-      };
-    }
-  }, [handleMouseMove, handleMouseUp]);
 
   if (isResponsive) {
     // Stack vertically on smaller screens
@@ -107,7 +48,7 @@ export function SplitViewContainer({
     );
   }
 
-  // Split view horizontally on larger screens
+  // Split view horizontally on larger screens (fixed, not draggable)
   return (
     <div
       ref={containerRef}
@@ -116,8 +57,7 @@ export function SplitViewContainer({
       {/* Left Pane */}
       <div
         style={{
-          width: `${currentPosition}%`,
-          minWidth: "200px",
+          width: showRightPane ? `${dividerPosition}%` : "100%",
         }}
         className="flex-shrink-0 overflow-hidden"
       >
@@ -125,24 +65,26 @@ export function SplitViewContainer({
       </div>
 
       {/* Divider */}
-      <div
-        onMouseDown={handleMouseDown}
-        className="w-1 flex-shrink-0 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 cursor-col-resize transition-colors duration-150 active:bg-gray-500 dark:active:bg-gray-400"
-        role="separator"
-        aria-label="Resize editor and preview"
-        aria-orientation="vertical"
-      />
+      {showRightPane && (
+        <div
+          className="w-1 flex-shrink-0 bg-gray-300 dark:bg-gray-600 transition-colors duration-150"
+          role="separator"
+          aria-label="Divider between editor and preview"
+          aria-orientation="vertical"
+        />
+      )}
 
       {/* Right Pane */}
-      <div
-        style={{
-          width: `${100 - currentPosition}%`,
-          minWidth: "200px",
-        }}
-        className="flex-grow overflow-hidden"
-      >
-        {rightPane}
-      </div>
+      {showRightPane && (
+        <div
+          style={{
+            width: `${100 - dividerPosition}%`,
+          }}
+          className="flex-grow overflow-hidden"
+        >
+          {rightPane}
+        </div>
+      )}
     </div>
   );
 }

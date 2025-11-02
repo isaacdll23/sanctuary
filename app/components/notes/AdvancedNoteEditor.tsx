@@ -24,7 +24,7 @@ export function AdvancedNoteEditor({
   onChange,
   disabled = false,
   fontSize = 14,
-  lineWrapping = true,
+  lineWrapping = false,
   tabSize = 2,
 }: AdvancedNoteEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,9 +32,10 @@ export function AdvancedNoteEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const [lineCount, setLineCount] = useState(1);
 
-  // Calculate line count
+  // Calculate line count (count newlines, not visual wraps)
   useEffect(() => {
-    const lines = value.split("\n").length;
+    // Count newlines in the content, plus 1 for the first line
+    const lines = (value.match(/\n/g) || []).length + 1;
     setLineCount(lines);
   }, [value]);
 
