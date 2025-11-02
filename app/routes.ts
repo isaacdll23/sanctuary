@@ -28,8 +28,10 @@ export default [
   route("utilities/commands", "routes/utilities/commands.tsx"),
   route("admin", "routes/admin/admin.tsx"),
   route("profile", "routes/profile.tsx"),
+  route("profile/calendar-settings", "routes/profile/calendar-settings.tsx"),
   route("auth/login", "routes/auth/login.tsx"),
   route("auth/logout", "routes/auth/logout.tsx"),
   route("auth/register", "routes/auth/register.tsx"),
   route("auth/reset-password", "routes/auth/reset-password.tsx"),
+  route("auth/google/callback", "routes/auth/google/callback.tsx"),
 ] satisfies RouteConfig;

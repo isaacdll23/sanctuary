@@ -13,12 +13,19 @@ type Task = {
   completedAt: string | null;
 };
 
+type SyncStatus = {
+  syncStatus: "synced" | "pending" | "conflict";
+  conflictResolution: string | null;
+  googleEventId: string;
+};
+
 type CalendarViewProps = {
   tasks: Task[];
   viewStartTime: string;
   viewEndTime: string;
   onAddTask: (startTime?: string) => void;
   onEditTask: (task: Task) => void;
+  taskSyncStatus?: Record<string, SyncStatus>;
 };
 
 export default function CalendarView({
@@ -27,6 +34,7 @@ export default function CalendarView({
   viewEndTime,
   onAddTask,
   onEditTask,
+  taskSyncStatus,
 }: CalendarViewProps) {
   const moveFetcher = useFetcher();
   const [dragOverTime, setDragOverTime] = useState<number | null>(null);
@@ -240,6 +248,7 @@ export default function CalendarView({
                     viewStartHour={startHour}
                     onDragStart={(task) => setDraggedTask(task)}
                     onDragEnd={() => setDraggedTask(null)}
+                    syncStatus={taskSyncStatus?.[task.id]}
                   />
                 </div>
               ))}

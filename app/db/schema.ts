@@ -24,6 +24,8 @@ export const usersTable = pgTable("users", {
   timeZone: varchar({ length: 100 }).default("America/Chicago").notNull(), // User's timezone preference
   resetPasswordToken: varchar({ length: 255 }), // Token for password reset
   resetPasswordExpires: timestamp(), // When the reset token expires
+  googleCalendarConnected: integer().default(0).notNull(), // Quick sync status flag
+  googleCalendarPreferences: json(), // User sync preferences: { syncCalendarColors: boolean, includeDescription: boolean, ... }
   createdAt: timestamp().defaultNow().notNull(),
 });
 
@@ -99,6 +101,18 @@ export const budgetMemberStatusEnum = pgEnum("budget_member_status", [
   "pending",
   "removed",
 ]);
+export const googleCalendarSyncDirectionEnum = pgEnum(
+  "google_calendar_sync_direction",
+  ["pull-only", "push-only", "bidirectional"]
+);
+export const googleCalendarSyncStatusEnum = pgEnum(
+  "google_calendar_sync_status",
+  ["synced", "pending", "conflict"]
+);
+export const googleCalendarConflictResolutionEnum = pgEnum(
+  "google_calendar_conflict_resolution",
+  ["local-wins", "remote-wins", "manual"]
+);
 
 export const budgetsTable = pgTable("budgets", {
   id: uuid().primaryKey().defaultRandom(),
@@ -221,3 +235,51 @@ export const dayPlanSectionsTable = pgTable("day_plan_sections", {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
 });
+
+// Google Calendar Tables
+
+export const googleCalendarAccountsTable = pgTable("google_calendar_accounts", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: integer()
+    .notNull()
+    .unique()
+    .references(() => usersTable.id),
+  googleAccountEmail: varchar({ length: 255 }).notNull(),
+  googleCalendarId: varchar({ length: 255 }).notNull(), // primary calendar ID from Google
+  accessToken: varchar({ length: 2048 }).notNull(), // encrypted
+  refreshToken: varchar({ length: 2048 }).notNull(), // encrypted
+  tokenExpiresAt: timestamp().notNull(),
+  isSyncEnabled: integer().default(1).notNull(),
+  syncDirection: googleCalendarSyncDirectionEnum()
+    .default("bidirectional")
+    .notNull(),
+  lastSyncAt: timestamp(),
+  connectedAt: timestamp().defaultNow().notNull(),
+  disconnectedAt: timestamp(),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
+
+export const dayPlannerGoogleSyncMappingTable = pgTable(
+  "day_planner_google_sync_mapping",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: integer()
+      .notNull()
+      .references(() => usersTable.id),
+    dayPlanSectionId: uuid()
+      .notNull()
+      .references(() => dayPlanSectionsTable.id),
+    googleEventId: varchar({ length: 255 }).notNull(),
+    googleCalendarId: varchar({ length: 255 }).notNull(),
+    localLastModified: timestamp(),
+    googleLastModified: timestamp(),
+    syncStatus: googleCalendarSyncStatusEnum()
+      .default("synced")
+      .notNull(),
+    conflictResolution: googleCalendarConflictResolutionEnum(),
+    createdAt: timestamp().defaultNow().notNull(),
+    updatedAt: timestamp().defaultNow().notNull(),
+  }
+);
+

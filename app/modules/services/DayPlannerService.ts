@@ -1,5 +1,5 @@
 import { db } from "~/db";
-import { dayPlansTable, dayPlanSectionsTable } from "~/db/schema";
+import { dayPlansTable, dayPlanSectionsTable, dayPlannerGoogleSyncMappingTable } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getUserFromSession } from "../auth.server";
 
@@ -195,6 +195,46 @@ async function deleteTask(user: User, formData: FormData) {
     return { success: false, message: "Missing task ID" };
   }
 
+  // Get the sync mapping if it exists
+  const mappings = await db
+    .select()
+    .from(dayPlannerGoogleSyncMappingTable)
+    .where(eq(dayPlannerGoogleSyncMappingTable.dayPlanSectionId, taskId));
+
+  // If there's a Google Calendar sync, delete the event from Google Calendar first
+  if (mappings.length > 0) {
+    try {
+      const { getValidAccessToken, getGoogleCalendarAccount } = await import(
+        "./GoogleCalendarService"
+      );
+      const mapping = mappings[0];
+      const account = await getGoogleCalendarAccount(user.id);
+      
+      if (account) {
+        const accessToken = await getValidAccessToken(user.id);
+        if (accessToken) {
+          const { googleCalendarApiClient } = await import(
+            "./GoogleCalendarApiClient"
+          );
+          await googleCalendarApiClient.deleteEvent(
+            account.googleCalendarId,
+            mapping.googleEventId,
+            accessToken
+          );
+        }
+      }
+    } catch (error) {
+      // Log the error but continue with local deletion
+      console.error("Error deleting Google Calendar event:", error);
+    }
+  }
+
+  // Delete the sync mapping
+  await db
+    .delete(dayPlannerGoogleSyncMappingTable)
+    .where(eq(dayPlannerGoogleSyncMappingTable.dayPlanSectionId, taskId));
+
+  // Then delete the task itself
   await db
     .delete(dayPlanSectionsTable)
     .where(
@@ -265,7 +305,64 @@ async function deletePlan(user: User, formData: FormData) {
     return { success: false, message: "Missing plan ID" };
   }
 
-  // Delete tasks first
+  // Get all task IDs for this plan to clean up sync mappings
+  const tasks = await db
+    .select({ id: dayPlanSectionsTable.id })
+    .from(dayPlanSectionsTable)
+    .where(
+      and(
+        eq(dayPlanSectionsTable.planId, planId),
+        eq(dayPlanSectionsTable.userId, user.id)
+      )
+    );
+
+  // Delete Google Calendar sync mappings and events for all tasks in this plan
+  try {
+    const { getValidAccessToken, getGoogleCalendarAccount } = await import(
+      "./GoogleCalendarService"
+    );
+    const account = await getGoogleCalendarAccount(user.id);
+    
+    if (account) {
+      const accessToken = await getValidAccessToken(user.id);
+      if (accessToken) {
+        const { googleCalendarApiClient } = await import(
+          "./GoogleCalendarApiClient"
+        );
+        
+        for (const task of tasks) {
+          const mappings = await db
+            .select()
+            .from(dayPlannerGoogleSyncMappingTable)
+            .where(eq(dayPlannerGoogleSyncMappingTable.dayPlanSectionId, task.id));
+          
+          for (const mapping of mappings) {
+            try {
+              await googleCalendarApiClient.deleteEvent(
+                account.googleCalendarId,
+                mapping.googleEventId,
+                accessToken
+              );
+            } catch (error) {
+              // Event might have already been deleted on Google
+              console.error("Error deleting Google Calendar event:", error);
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error deleting Google Calendar events during plan deletion:", error);
+  }
+
+  // Delete all sync mappings for tasks in this plan
+  for (const task of tasks) {
+    await db
+      .delete(dayPlannerGoogleSyncMappingTable)
+      .where(eq(dayPlannerGoogleSyncMappingTable.dayPlanSectionId, task.id));
+  }
+
+  // Delete tasks
   await db
     .delete(dayPlanSectionsTable)
     .where(

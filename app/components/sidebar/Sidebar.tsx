@@ -104,6 +104,12 @@ const navSectionsAuth: NavSection[] = [
         pageId: "profile",
       },
       {
+        to: "/profile/calendar-settings",
+        label: "Calendar Settings",
+        icon: CalendarIcon,
+        pageId: "calendar-settings",
+      },
+      {
         to: "/auth/logout",
         label: "Logout",
         icon: ArrowLeftEndOnRectangleIcon,

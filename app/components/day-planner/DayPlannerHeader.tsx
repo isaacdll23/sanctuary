@@ -1,5 +1,6 @@
 import { useFetcher } from "react-router";
 import { useState, useEffect } from "react";
+import GoogleCalendarButton from "./GoogleCalendarButton";
 
 type DayPlannerHeaderProps = {
   planDate: string;
@@ -8,6 +9,9 @@ type DayPlannerHeaderProps = {
   incrementMinutes: number;
   timeZone: string;
   onDateChange: (date: string) => void;
+  googleCalendarConnected?: boolean;
+  onManualSync?: () => void;
+  isSyncing?: boolean;
 };
 
 export default function DayPlannerHeader({
@@ -17,6 +21,9 @@ export default function DayPlannerHeader({
   incrementMinutes,
   timeZone,
   onDateChange,
+  googleCalendarConnected = false,
+  onManualSync,
+  isSyncing = false,
 }: DayPlannerHeaderProps) {
   const fetcher = useFetcher();
   const [localStartTime, setLocalStartTime] = useState(startTime);
@@ -60,9 +67,16 @@ export default function DayPlannerHeader({
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-        Day Planner
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          Day Planner
+        </h1>
+        <GoogleCalendarButton
+          isConnected={googleCalendarConnected}
+          onManualSync={onManualSync}
+          isSyncing={isSyncing}
+        />
+      </div>
 
       {/* Date Picker */}
       <div className="mb-4">

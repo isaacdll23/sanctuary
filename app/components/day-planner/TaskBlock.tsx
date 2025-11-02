@@ -1,6 +1,7 @@
 import { useFetcher } from "react-router";
 import { CheckIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
+import SyncStatusBadge from "./SyncStatusBadge";
 
 type Task = {
   id: string;
@@ -12,12 +13,19 @@ type Task = {
   completedAt: string | null;
 };
 
+type SyncStatus = {
+  syncStatus: "synced" | "pending" | "conflict";
+  conflictResolution: string | null;
+  googleEventId: string;
+};
+
 type TaskBlockProps = {
   task: Task;
   onEdit: (task: Task) => void;
   viewStartHour: number;
   onDragStart?: (task: Task) => void;
   onDragEnd?: () => void;
+  syncStatus?: SyncStatus;
 };
 
 export default function TaskBlock({
@@ -26,6 +34,7 @@ export default function TaskBlock({
   viewStartHour,
   onDragStart: onDragStartCallback,
   onDragEnd: onDragEndCallback,
+  syncStatus,
 }: TaskBlockProps) {
   const completeFetcher = useFetcher();
   const deleteFetcher = useFetcher();
@@ -215,6 +224,19 @@ export default function TaskBlock({
           <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
             {formatTime(task.startTime)} • {task.durationMinutes}min
           </span>
+          {syncStatus && (
+            <SyncStatusBadge
+              status={syncStatus.syncStatus}
+              conflictResolution={syncStatus.conflictResolution}
+              tooltipText={
+                syncStatus.syncStatus === "synced"
+                  ? "Synced with Google Calendar"
+                  : syncStatus.syncStatus === "pending"
+                  ? "Sync in progress"
+                  : "Sync conflict detected"
+              }
+            />
+          )}
         </div>
         <div className="flex gap-1 items-center flex-shrink-0">
           <button

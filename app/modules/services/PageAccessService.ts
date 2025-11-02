@@ -149,6 +149,7 @@ export async function getUserAccessiblePages(
       "utilities/commands",
       "admin",
       "profile", // Ensure admin always sees profile page
+      "calendar-settings",
     ];
   }
 
@@ -165,6 +166,9 @@ export async function getUserAccessiblePages(
   }
   if (!allowedPages.includes("profile")) {
     allowedPages.push("profile");
+  }
+  if (!allowedPages.includes("calendar-settings")) {
+    allowedPages.push("calendar-settings");
   }
 
   return allowedPages;

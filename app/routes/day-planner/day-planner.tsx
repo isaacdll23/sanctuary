@@ -3,6 +3,8 @@ import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import CalendarView from "~/components/day-planner/CalendarView";
 import AddTaskModal from "~/components/day-planner/AddTaskModal";
 import EditTaskModal from "~/components/day-planner/EditTaskModal";
+import GoogleCalendarButton from "~/components/day-planner/GoogleCalendarButton";
+import ConflictResolutionModal from "~/components/day-planner/ConflictResolutionModal";
 import { useEffect, useContext, useState } from "react";
 import { ToastContext } from "~/context/ToastContext";
 import {
@@ -17,6 +19,9 @@ export function meta() {
 
 export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const { getDayPlan } = await import("~/modules/services/DayPlannerService");
+  const { getGoogleCalendarAccount, getTaskSyncStatus } = await import(
+    "~/modules/services/GoogleCalendarService"
+  );
   const url = new URL(request.url);
   const dateParam = url.searchParams.get("date");
 
@@ -25,11 +30,15 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const planDate = dateParam || today;
 
   const plan = await getDayPlan(user.id, planDate);
+  const googleCalendarAccount = await getGoogleCalendarAccount(user.id);
+  const taskSyncStatus = await getTaskSyncStatus(user.id, planDate);
 
   return {
     user,
     plan,
     planDate,
+    googleCalendarAccount,
+    taskSyncStatus: Object.fromEntries(taskSyncStatus),
   };
 });
 
@@ -37,6 +46,21 @@ export const action = async ({ request }: any) => {
   const { handleDayPlannerAction } = await import(
     "~/modules/services/DayPlannerService"
   );
+  const { handleGoogleCalendarAction } = await import(
+    "~/modules/services/GoogleCalendarService"
+  );
+
+  const formData = await request.clone().formData();
+  const intent = formData.get("intent") as string;
+
+  // Route Google Calendar intents to the appropriate service
+  if (
+    intent === "manualSyncGoogleCalendar" ||
+    intent === "resolveSyncConflict"
+  ) {
+    return handleGoogleCalendarAction(request);
+  }
+
   return handleDayPlannerAction(request);
 };
 
@@ -68,10 +92,25 @@ type LoaderData = {
   };
   plan: Plan | null;
   planDate: string;
+  googleCalendarAccount: {
+    id: string;
+    userId: number;
+    isSyncEnabled: number;
+    syncDirection: "pull-only" | "push-only" | "bidirectional";
+  } | null;
+  taskSyncStatus: Record<
+    string,
+    {
+      syncStatus: "synced" | "pending" | "conflict";
+      conflictResolution: string | null;
+      googleEventId: string;
+    }
+  >;
 };
 
 export default function DayPlanner() {
-  const { user, plan, planDate } = useLoaderData<LoaderData>();
+  const { user, plan, planDate, googleCalendarAccount, taskSyncStatus } =
+    useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const fetcher = useFetcher();
   const toastCtx = useContext(ToastContext);
@@ -82,6 +121,23 @@ export default function DayPlanner() {
     string | undefined
   >();
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [conflictData, setConflictData] = useState<{
+    mappingId: string;
+    taskId: string;
+    localVersion: {
+      title: string;
+      description: string | null;
+      startTime: string;
+      durationMinutes: number;
+    };
+    googleVersion: {
+      title: string;
+      description?: string;
+      startTime: string;
+      durationMinutes: number;
+    };
+  } | null>(null);
 
   // Show toast on successful actions
   useEffect(() => {
@@ -133,6 +189,16 @@ export default function DayPlanner() {
     setShowEditModal(true);
   }
 
+  function handleManualSync() {
+    fetcher.submit(
+      {
+        intent: "manualSyncGoogleCalendar",
+        planDate,
+      },
+      { method: "post" }
+    );
+  }
+
   // Calculate completion stats
   const completionStats = plan
     ? {
@@ -142,24 +208,32 @@ export default function DayPlanner() {
     : null;
 
   const today = new Date().toISOString().split("T")[0];
+  const isSyncing = fetcher.state === "submitting";
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <CalendarIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+          <div className="flex items-center justify-between gap-3 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                <CalendarIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  Day Planner
+                </h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Plan and organize your tasks visually
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                Day Planner
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Plan and organize your tasks visually
-              </p>
-            </div>
+            <GoogleCalendarButton
+              isConnected={!!googleCalendarAccount && googleCalendarAccount.isSyncEnabled === 1}
+              onManualSync={handleManualSync}
+              isSyncing={isSyncing}
+            />
           </div>
 
           {/* Date Navigation */}
@@ -246,6 +320,7 @@ export default function DayPlanner() {
               viewEndTime={plan.viewEndTime}
               onAddTask={handleAddTask}
               onEditTask={handleEditTask}
+              taskSyncStatus={taskSyncStatus}
             />
           </>
         ) : (
@@ -294,6 +369,19 @@ export default function DayPlanner() {
             onClose={() => {
               setShowEditModal(false);
               setTaskToEdit(null);
+            }}
+          />
+        )}
+
+        {conflictData && (
+          <ConflictResolutionModal
+            isOpen={showConflictModal}
+            mappingId={conflictData.mappingId}
+            localVersion={conflictData.localVersion}
+            googleVersion={conflictData.googleVersion}
+            onClose={() => {
+              setShowConflictModal(false);
+              setConflictData(null);
             }}
           />
         )}
