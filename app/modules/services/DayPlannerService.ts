@@ -53,8 +53,6 @@ export async function handleDayPlannerAction(request: Request) {
 
 async function createOrUpdatePlan(user: User, formData: FormData) {
   const planDate = formData.get("planDate") as string;
-  const viewStartTime = (formData.get("viewStartTime") as string) || "06:00:00";
-  const viewEndTime = (formData.get("viewEndTime") as string) || "22:00:00";
   const timeZone = (formData.get("timeZone") as string) || user.timeZone;
 
   if (!planDate) {
@@ -81,8 +79,6 @@ async function createOrUpdatePlan(user: User, formData: FormData) {
     await db
       .update(dayPlansTable)
       .set({
-        viewStartTime,
-        viewEndTime,
         timeZone,
         updatedAt: new Date(),
       })
@@ -94,8 +90,6 @@ async function createOrUpdatePlan(user: User, formData: FormData) {
       .values({
         userId: user.id,
         planDate,
-        viewStartTime,
-        viewEndTime,
         timeZone,
       })
       .returning();
@@ -479,5 +473,102 @@ export async function getDayPlan(userId: number, planDate: string) {
   return {
     ...plan,
     tasks,
+  };
+}
+
+/**
+ * Calculates the most relevant task based on current time and proximity
+ * Returns the task ID and scroll offset for optimal positioning
+ */
+export function calculateFocusedTask(
+  tasks: Array<{
+    id: string;
+    startTime: string;
+    durationMinutes: number;
+    completedAt: Date | null;
+  }>,
+  viewStartTime: string,
+  viewEndTime: string
+) {
+  if (!tasks || tasks.length === 0) {
+    return null;
+  }
+
+  // Get current time
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+  // Convert view times to minutes for comparison
+  const viewStartMinutes = parseInt(viewStartTime.split(":")[0]) * 60 + parseInt(viewStartTime.split(":")[1]);
+  const viewEndMinutes = parseInt(viewEndTime.split(":")[0]) * 60 + parseInt(viewEndTime.split(":")[1]);
+
+  // Find tasks that are happening now or soon (within next 2 hours)
+  const upcomingTasks = tasks.filter((task) => {
+    // Skip completed tasks
+    if (task.completedAt) {
+      return false;
+    }
+
+    const taskStartMinutes = parseInt(task.startTime.split(":")[0]) * 60 + parseInt(task.startTime.split(":")[1]);
+    const taskEndMinutes = taskStartMinutes + task.durationMinutes;
+
+    // Task is happening now if current time is within the task's time window
+    const isHappeningNow = currentTimeInMinutes >= taskStartMinutes && currentTimeInMinutes < taskEndMinutes;
+    if (isHappeningNow) {
+      return true;
+    }
+
+    // Task is upcoming if it starts after now but within the next 2 hours
+    const isUpcoming = taskStartMinutes > currentTimeInMinutes && taskStartMinutes - currentTimeInMinutes <= 120;
+    return isUpcoming;
+  });
+
+  // If we have upcoming tasks, prioritize the first one (closest in time)
+  let focusedTask: {
+    id: string;
+    startTime: string;
+    durationMinutes: number;
+    completedAt: Date | null;
+  } | undefined = upcomingTasks[0];
+
+  // If no current/upcoming tasks, find the next task in the schedule
+  if (!focusedTask) {
+    focusedTask = tasks.find((task) => {
+      if (task.completedAt) {
+        return false;
+      }
+      const taskStartMinutes = parseInt(task.startTime.split(":")[0]) * 60 + parseInt(task.startTime.split(":")[1]);
+      return taskStartMinutes > currentTimeInMinutes;
+    });
+  }
+
+  // If still no task found, use the first non-completed task
+  if (!focusedTask) {
+    focusedTask = tasks.find((task) => !task.completedAt);
+  }
+
+  if (!focusedTask) {
+    return null;
+  }
+
+  // Calculate scroll position - position the task in the top 1/3 of the visible area
+  const taskStartMinutes = parseInt(focusedTask.startTime.split(":")[0]) * 60 + parseInt(focusedTask.startTime.split(":")[1]);
+  const relativeMinutesFromViewStart = taskStartMinutes - viewStartMinutes;
+  const totalVisibleMinutes = viewEndMinutes - viewStartMinutes;
+  
+  // Each minute represents a certain number of pixels (120px per 60 minutes)
+  const pixelsPerMinute = 120 / 60;
+  const taskPixelPosition = relativeMinutesFromViewStart * pixelsPerMinute;
+  
+  // Position task at top 1/3 of viewport by subtracting 1/3 of viewport height
+  // Assuming viewport height is around 600px for calendar view
+  const viewportHeight = 600;
+  const scrollOffset = Math.max(0, taskPixelPosition - viewportHeight / 3);
+
+  return {
+    taskId: focusedTask.id,
+    scrollOffset,
   };
 }

@@ -14,16 +14,18 @@ export function meta() {
 }
 
 export const loader = pageAccessLoader("calendar-settings", async (user, request) => {
-  const { getGoogleCalendarAccount } = await import(
+  const { getGoogleCalendarAccount, getCalendarPreferences } = await import(
     "~/modules/services/GoogleCalendarService"
   );
 
   const googleCalendarAccount = await getGoogleCalendarAccount(user.id);
+  const calendarPreferences = await getCalendarPreferences(user.id);
   const oauthUrl = getGoogleOAuthUrl();
 
   return {
     user,
     googleCalendarAccount,
+    calendarPreferences,
     oauthUrl,
   };
 });
@@ -47,6 +49,15 @@ type GoogleCalendarAccount = {
   disconnectedAt: Date | null;
 };
 
+type CalendarPreferences = {
+  id: string;
+  userId: number;
+  calendarViewStartTime: string;
+  calendarViewEndTime: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 type LoaderData = {
   user: {
     id: number;
@@ -56,6 +67,7 @@ type LoaderData = {
     googleCalendarConnected: number;
   };
   googleCalendarAccount: GoogleCalendarAccount | null;
+  calendarPreferences: CalendarPreferences | null;
   oauthUrl: string;
 };
 
@@ -65,7 +77,7 @@ type ActionData = {
 };
 
 export default function CalendarSettings() {
-  const { user, googleCalendarAccount, oauthUrl } = useLoaderData<LoaderData>();
+  const { user, googleCalendarAccount, calendarPreferences, oauthUrl } = useLoaderData<LoaderData>();
   const fetcher = useFetcher<ActionData>();
   const toastCtx = useContext(ToastContext);
   const [toastShown, setToastShown] = useState(false);
@@ -74,6 +86,20 @@ export default function CalendarSettings() {
   );
   const [syncCalendarColors, setSyncCalendarColors] = useState(true);
   const [includeDescription, setIncludeDescription] = useState(true);
+  const [calendarViewStartTime, setCalendarViewStartTime] = useState(() => {
+    if (calendarPreferences?.calendarViewStartTime) {
+      // Strip seconds from HH:MM:SS to get HH:MM for time input
+      return calendarPreferences.calendarViewStartTime.substring(0, 5);
+    }
+    return "06:00";
+  });
+  const [calendarViewEndTime, setCalendarViewEndTime] = useState(() => {
+    if (calendarPreferences?.calendarViewEndTime) {
+      // Strip seconds from HH:MM:SS to get HH:MM for time input
+      return calendarPreferences.calendarViewEndTime.substring(0, 5);
+    }
+    return "22:00";
+  });
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
 
   useEffect(() => {
@@ -98,6 +124,22 @@ export default function CalendarSettings() {
         syncDirection,
         syncCalendarColors: String(syncCalendarColors),
         includeDescription: String(includeDescription),
+      },
+      { method: "post" }
+    );
+  };
+
+  const handleUpdateCalendarPreferences = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Convert time format from HH:MM to HH:MM:SS
+    const startTimeWithSeconds = `${calendarViewStartTime}:00`;
+    const endTimeWithSeconds = `${calendarViewEndTime}:00`;
+    
+    fetcher.submit(
+      {
+        intent: "updateCalendarPreferences",
+        calendarViewStartTime: startTimeWithSeconds,
+        calendarViewEndTime: endTimeWithSeconds,
       },
       { method: "post" }
     );
@@ -274,6 +316,57 @@ export default function CalendarSettings() {
             </form>
           </div>
         )}
+
+        {/* Calendar View Preferences */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold mb-4">Calendar View</h2>
+
+          <form onSubmit={handleUpdateCalendarPreferences} className="space-y-4">
+            {/* Calendar View Start Time */}
+            <div>
+              <label htmlFor="calendarViewStartTime" className="block text-sm font-medium mb-2">
+                Calendar View Start Time
+              </label>
+              <input
+                type="time"
+                id="calendarViewStartTime"
+                value={calendarViewStartTime}
+                onChange={(e) => setCalendarViewStartTime(e.target.value)}
+                disabled={isLoading}
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                The earliest time shown in your calendar view
+              </p>
+            </div>
+
+            {/* Calendar View End Time */}
+            <div>
+              <label htmlFor="calendarViewEndTime" className="block text-sm font-medium mb-2">
+                Calendar View End Time
+              </label>
+              <input
+                type="time"
+                id="calendarViewEndTime"
+                value={calendarViewEndTime}
+                onChange={(e) => setCalendarViewEndTime(e.target.value)}
+                disabled={isLoading}
+                className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                The latest time shown in your calendar view
+              </p>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 mt-6"
+            >
+              {isLoading ? "Saving..." : "Save Calendar View"}
+            </button>
+          </form>
+        </div>
 
         {/* Disconnect Confirmation Modal */}
         {showDisconnectConfirm && (

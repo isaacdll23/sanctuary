@@ -23,8 +23,8 @@ export function meta() {
 }
 
 export const loader = pageAccessLoader("day-planner", async (user, request) => {
-  const { getDayPlan } = await import("~/modules/services/DayPlannerService");
-  const { getGoogleCalendarAccount, getTaskSyncStatus, triggerAutoSync } = await import(
+  const { getDayPlan, calculateFocusedTask } = await import("~/modules/services/DayPlannerService");
+  const { getGoogleCalendarAccount, getTaskSyncStatus, triggerAutoSync, getCalendarPreferences } = await import(
     "~/modules/services/GoogleCalendarService"
   );
   const url = new URL(request.url);
@@ -34,9 +34,20 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const today = new Date().toISOString().split("T")[0];
   const planDate = dateParam || today;
 
+  // Get user's calendar preferences
+  const calendarPreferences = await getCalendarPreferences(user.id);
+  const viewStartTime = calendarPreferences?.calendarViewStartTime || "06:00:00";
+  const viewEndTime = calendarPreferences?.calendarViewEndTime || "22:00:00";
+
   const plan = await getDayPlan(user.id, planDate);
   const googleCalendarAccount = await getGoogleCalendarAccount(user.id);
   const taskSyncStatus = await getTaskSyncStatus(user.id, planDate);
+
+  // Calculate the most relevant task for focusing
+  let focusedTaskData = null;
+  if (plan && plan.tasks.length > 0) {
+    focusedTaskData = calculateFocusedTask(plan.tasks, viewStartTime, viewEndTime);
+  }
 
   // Auto-sync on page load if conditions are met
   let autoSyncStatus = { syncAttempted: false, message: "Not triggered" };
@@ -67,6 +78,9 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
     googleCalendarAccount,
     taskSyncStatus: Object.fromEntries(taskSyncStatus),
     autoSyncStatus,
+    focusedTaskData,
+    viewStartTime,
+    viewEndTime,
   };
 });
 
@@ -138,10 +152,16 @@ type LoaderData = {
     syncAttempted: boolean;
     message: string;
   };
+  focusedTaskData: {
+    taskId: string;
+    scrollOffset: number;
+  } | null;
+  viewStartTime: string;
+  viewEndTime: string;
 };
 
 export default function DayPlanner() {
-  const { user, plan, planDate, googleCalendarAccount, taskSyncStatus, autoSyncStatus } =
+  const { user, plan, planDate, googleCalendarAccount, taskSyncStatus, autoSyncStatus, focusedTaskData, viewStartTime, viewEndTime } =
     useLoaderData<LoaderData>();
   const navigate = useNavigate();
   const fetcher = useFetcher();
@@ -157,6 +177,7 @@ export default function DayPlanner() {
   const [focusMode, setFocusMode] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const quickAddRef = useRef<HTMLDivElement>(null);
+  const calendarViewRef = useRef<HTMLDivElement>(null);
   const [conflictData, setConflictData] = useState<{
     mappingId: string;
     taskId: string;
@@ -232,6 +253,35 @@ export default function DayPlanner() {
     // eslint-disable-next-line
   }, [planDate]);
 
+  // Auto-scroll to focused task on page load
+  useEffect(() => {
+    if (focusedTaskData && calendarViewRef.current) {
+      // Delay slightly to allow DOM to render
+      const timer = setTimeout(() => {
+        const focusedElement = document.getElementById(`task-${focusedTaskData.taskId}`);
+        if (focusedElement && calendarViewRef.current) {
+          // Scroll the calendar view container smoothly
+          calendarViewRef.current.scrollTo({
+            top: focusedTaskData.scrollOffset,
+            behavior: "smooth",
+          });
+
+          // Add visual highlight to the focused task
+          focusedElement.classList.add("ring-2", "ring-yellow-400", "ring-opacity-75");
+          
+          // Remove highlight after 3 seconds
+          const highlightTimer = setTimeout(() => {
+            focusedElement.classList.remove("ring-2", "ring-yellow-400", "ring-opacity-75");
+          }, 3000);
+
+          return () => clearTimeout(highlightTimer);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [focusedTaskData, planDate]);
+
   function handleDateChange(newDate: string) {
     navigate(`/day-planner?date=${newDate}`);
   }
@@ -241,8 +291,8 @@ export default function DayPlanner() {
       {
         intent: "createOrUpdatePlan",
         planDate,
-        viewStartTime: "06:00:00",
-        viewEndTime: "22:00:00",
+        viewStartTime,
+        viewEndTime,
         timeZone: user.timeZone,
       },
       { method: "post" }
@@ -384,8 +434,8 @@ export default function DayPlanner() {
             {!focusMode && (
               <DayInsightsPanel
                 tasks={plan.tasks}
-                viewStartTime={plan.viewStartTime}
-                viewEndTime={plan.viewEndTime}
+                viewStartTime={viewStartTime}
+                viewEndTime={viewEndTime}
               />
             )}
 
@@ -404,9 +454,10 @@ export default function DayPlanner() {
               {/* Calendar View - Main Content */}
               <div className="flex-1 min-w-0">
                 <CalendarView
+                  ref={calendarViewRef}
                   tasks={plan.tasks}
-                  viewStartTime={plan.viewStartTime}
-                  viewEndTime={plan.viewEndTime}
+                  viewStartTime={viewStartTime}
+                  viewEndTime={viewEndTime}
                   onAddTask={handleAddTask}
                   onEditTask={handleEditTask}
                   taskSyncStatus={taskSyncStatus}

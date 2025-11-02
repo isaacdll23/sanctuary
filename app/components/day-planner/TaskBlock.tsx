@@ -205,6 +205,7 @@ export default function TaskBlock({
 
   return (
     <div
+      id={`task-${task.id}`}
       className={`absolute left-0 right-0 rounded-lg border-2 px-2 py-1.5 cursor-move transition-all flex flex-col group ${
         isDragging ? "opacity-50 scale-95" : ""
       } ${

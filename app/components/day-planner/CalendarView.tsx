@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useFetcher } from "react-router";
 import TaskBlock from "./TaskBlock";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -28,14 +28,15 @@ type CalendarViewProps = {
   taskSyncStatus?: Record<string, SyncStatus>;
 };
 
-export default function CalendarView({
-  tasks,
-  viewStartTime,
-  viewEndTime,
-  onAddTask,
-  onEditTask,
-  taskSyncStatus,
-}: CalendarViewProps) {
+const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
+  ({
+    tasks,
+    viewStartTime,
+    viewEndTime,
+    onAddTask,
+    onEditTask,
+    taskSyncStatus,
+  }, ref) => {
   const moveFetcher = useFetcher();
   const [dragOverTime, setDragOverTime] = useState<number | null>(null);
   const [dragPreviewPosition, setDragPreviewPosition] = useState<{
@@ -166,7 +167,7 @@ export default function CalendarView({
       </div>
 
       {/* Calendar Grid */}
-      <div className="relative max-h-[calc(100vh-400px)] md:max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
+      <div ref={ref} className="relative max-h-[calc(100vh-400px)] md:max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
         {/* Time ruler and grid */}
         <div className="flex">
           {/* Time labels - Sticky */}
@@ -277,4 +278,8 @@ export default function CalendarView({
       )}
     </div>
   );
-}
+});
+
+CalendarView.displayName = "CalendarView";
+
+export default CalendarView;

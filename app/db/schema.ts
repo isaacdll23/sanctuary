@@ -212,8 +212,6 @@ export const dayPlansTable = pgTable("day_plans", {
     .references(() => usersTable.id),
   planDate: date().notNull(), // The specific date this plan is for
   timeZone: varchar({ length: 100 }).notNull().default("America/Chicago"), // Timezone for this plan
-  viewStartTime: time().notNull().default("06:00:00"), // Calendar view start (visual only)
-  viewEndTime: time().notNull().default("22:00:00"), // Calendar view end (visual only)
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
 });
@@ -282,4 +280,17 @@ export const dayPlannerGoogleSyncMappingTable = pgTable(
     updatedAt: timestamp().defaultNow().notNull(),
   }
 );
+
+// Calendar Preferences Table
+export const calendarPreferencesTable = pgTable("calendar_preferences", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: integer()
+    .notNull()
+    .unique()
+    .references(() => usersTable.id),
+  calendarViewStartTime: time().notNull().default("06:00:00"), // User's preferred calendar view start time
+  calendarViewEndTime: time().notNull().default("22:00:00"), // User's preferred calendar view end time
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
 

@@ -5,6 +5,7 @@ import {
   dayPlanSectionsTable,
   dayPlansTable,
   usersTable,
+  calendarPreferencesTable,
 } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getUserFromSession, refreshGoogleAccessToken } from "~/modules/auth.server";
@@ -75,6 +76,9 @@ export async function handleGoogleCalendarAction(request: Request) {
 
     case "updateSyncPreferences":
       return await updateSyncPreferences(user.id, formData);
+
+    case "updateCalendarPreferences":
+      return await updateCalendarPreferences(user.id, formData);
 
     case "manualSyncGoogleCalendar":
       return await manualSyncGoogleCalendar(user.id, formData);
@@ -159,6 +163,92 @@ export async function updateSyncPreferences(userId: number, formData: FormData) 
   } catch (error) {
     console.error("Error updating sync preferences:", error);
     return { success: false, message: "Failed to update sync preferences" };
+  }
+}
+
+/**
+ * Updates user's calendar view preferences (start and end times)
+ */
+export async function updateCalendarPreferences(userId: number, formData: FormData) {
+  try {
+    let calendarViewStartTime = (formData.get("calendarViewStartTime") as string) || "06:00:00";
+    let calendarViewEndTime = (formData.get("calendarViewEndTime") as string) || "22:00:00";
+
+    // Normalize time format - ensure it's HH:MM:SS
+    // If input is HH:MM (from time input), convert to HH:MM:SS
+    const normalizeTime = (time: string): string => {
+      if (!time || typeof time !== "string") {
+        return "06:00:00";
+      }
+      
+      const parts = time.split(":");
+      if (parts.length === 2) {
+        // Add seconds if missing (HH:MM -> HH:MM:00)
+        const hour = parts[0].padStart(2, "0");
+        const minute = parts[1].padStart(2, "0");
+        return `${hour}:${minute}:00`;
+      } else if (parts.length === 3) {
+        // Ensure proper padding (HH:MM:SS)
+        const hour = parts[0].padStart(2, "0");
+        const minute = parts[1].padStart(2, "0");
+        const second = parts[2].padStart(2, "0");
+        return `${hour}:${minute}:${second}`;
+      }
+      
+      return "06:00:00";
+    };
+
+    calendarViewStartTime = normalizeTime(calendarViewStartTime);
+    calendarViewEndTime = normalizeTime(calendarViewEndTime);
+
+    // Validate time format (HH:MM:SS) - strict validation after normalization
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/;
+    if (!timeRegex.test(calendarViewStartTime)) {
+      return { success: false, message: `Invalid start time format: ${calendarViewStartTime}. Please use HH:MM:SS` };
+    }
+    if (!timeRegex.test(calendarViewEndTime)) {
+      return { success: false, message: `Invalid end time format: ${calendarViewEndTime}. Please use HH:MM:SS` };
+    }
+
+    // Validate that end time is after start time
+    const startMinutes = parseInt(calendarViewStartTime.split(":")[0]) * 60 + parseInt(calendarViewStartTime.split(":")[1]);
+    const endMinutes = parseInt(calendarViewEndTime.split(":")[0]) * 60 + parseInt(calendarViewEndTime.split(":")[1]);
+    
+    if (endMinutes <= startMinutes) {
+      return { success: false, message: "End time must be after start time" };
+    }
+
+    // Check if preferences exist for this user
+    const existingPreferences = await db
+      .select()
+      .from(calendarPreferencesTable)
+      .where(eq(calendarPreferencesTable.userId, userId));
+
+    if (existingPreferences.length > 0) {
+      // Update existing preferences
+      await db
+        .update(calendarPreferencesTable)
+        .set({
+          calendarViewStartTime,
+          calendarViewEndTime,
+          updatedAt: new Date(),
+        })
+        .where(eq(calendarPreferencesTable.userId, userId));
+    } else {
+      // Create new preferences
+      await db
+        .insert(calendarPreferencesTable)
+        .values({
+          userId,
+          calendarViewStartTime,
+          calendarViewEndTime,
+        });
+    }
+
+    return { success: true, message: "Calendar preferences updated successfully" };
+  } catch (error) {
+    console.error("Error updating calendar preferences:", error);
+    return { success: false, message: "Failed to update calendar preferences" };
   }
 }
 
@@ -251,6 +341,24 @@ export async function getGoogleCalendarAccount(userId: number) {
     .where(eq(googleCalendarAccountsTable.userId, userId));
 
   return accounts.length > 0 ? accounts[0] : null;
+}
+
+/**
+ * Gets user's calendar view preferences (start and end times)
+ */
+export async function getCalendarPreferences(userId: number) {
+  const preferences = await db
+    .select()
+    .from(calendarPreferencesTable)
+    .where(eq(calendarPreferencesTable.userId, userId));
+
+  return preferences.length > 0
+    ? preferences[0]
+    : {
+        userId,
+        calendarViewStartTime: "06:00:00",
+        calendarViewEndTime: "22:00:00",
+      };
 }
 
 /**
@@ -447,8 +555,6 @@ export async function syncGoogleEventsToLocalPlan(userId: number, planDate: stri
           userId,
           planDate,
           timeZone: userTimeZone,
-          viewStartTime: "06:00:00",
-          viewEndTime: "22:00:00",
         })
         .returning();
 
