@@ -2,6 +2,7 @@ import { useFetcher } from "react-router";
 import { CheckIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import SyncStatusBadge from "./SyncStatusBadge";
+import TaskPreviewTooltip from "./TaskPreviewTooltip";
 
 type Task = {
   id: string;
@@ -204,11 +205,11 @@ export default function TaskBlock({
 
   return (
     <div
-      className={`absolute left-0 right-0 rounded-lg border-2 px-2 py-1.5 cursor-move transition-all flex flex-col ${
+      className={`absolute left-0 right-0 rounded-lg border-2 px-2 py-1.5 cursor-move transition-all flex flex-col group ${
         isDragging ? "opacity-50 scale-95" : ""
       } ${
         isCompleted
-          ? `${colors.bgCompleted} ${colors.borderCompleted}`
+          ? `${colors.bgCompleted} ${colors.borderCompleted} opacity-60 hover:opacity-75`
           : `${colors.bg} ${colors.border}`
       }`}
       style={{ height: `${heightPx}px` }}
@@ -216,12 +217,27 @@ export default function TaskBlock({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
+      {/* Preview Tooltip */}
+      <TaskPreviewTooltip task={task} syncStatus={syncStatus} />
+
       <div className="flex items-center justify-between gap-2 flex-shrink-0">
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate">
+          <span
+            className={`font-semibold text-sm truncate ${
+              isCompleted
+                ? "line-through text-gray-600 dark:text-gray-500"
+                : "text-gray-900 dark:text-gray-100"
+            }`}
+          >
             {task.title}
           </span>
-          <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap flex-shrink-0">
+          <span
+            className={`text-xs whitespace-nowrap flex-shrink-0 ${
+              isCompleted
+                ? "text-gray-500 dark:text-gray-600"
+                : "text-gray-600 dark:text-gray-400"
+            }`}
+          >
             {formatTime(task.startTime)} • {task.durationMinutes}min
           </span>
           {syncStatus && (

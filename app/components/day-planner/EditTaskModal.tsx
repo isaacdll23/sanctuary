@@ -15,9 +15,10 @@ type Task = {
 type EditTaskModalProps = {
   task: Task;
   onClose: () => void;
+  existingTasks?: Array<{ id: string; title: string; startTime: string; durationMinutes: number; completedAt: string | null }>;
 };
 
-export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
+export default function EditTaskModal({ task, onClose, existingTasks = [] }: EditTaskModalProps) {
   const fetcher = useFetcher();
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
@@ -28,6 +29,12 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
   const [color, setColor] = useState(task.color || "indigo");
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
+  // Detect conflicts with existing tasks (excluding this task)
+  const [hasConflict, setHasConflict] = useState(false);
+  const [conflictingTasks, setConflictingTasks] = useState<
+    Array<{ title: string; startTime: string; durationMinutes: number }>
+  >([]);
+
   // Reset state when task changes
   useEffect(() => {
     setTitle(task.title);
@@ -37,6 +44,37 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
     setColor(task.color || "indigo");
     setLastSubmitTime(0);
   }, [task]);
+
+  // Check for time conflicts
+  useEffect(() => {
+    function timeToMinutes(timeStr: string): number {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + minutes;
+    }
+
+    const newTaskStart = timeToMinutes(startTime);
+    const newTaskEnd = newTaskStart + durationMinutes;
+
+    const conflicts = existingTasks.filter((existingTask) => {
+      // Skip this task and completed tasks in conflict detection
+      if (existingTask.id === task.id || existingTask.completedAt) return false;
+
+      const taskStart = timeToMinutes(existingTask.startTime);
+      const taskEnd = taskStart + existingTask.durationMinutes;
+
+      // Check for overlap
+      return !(newTaskEnd <= taskStart || newTaskStart >= taskEnd);
+    });
+
+    setHasConflict(conflicts.length > 0);
+    setConflictingTasks(
+      conflicts.map((t) => ({
+        title: t.title,
+        startTime: t.startTime,
+        durationMinutes: t.durationMinutes,
+      }))
+    );
+  }, [startTime, durationMinutes, existingTasks, task.id]);
 
   // Handle successful submission
   useEffect(() => {
@@ -293,6 +331,28 @@ export default function EditTaskModal({ task, onClose }: EditTaskModalProps) {
               <p className="text-sm text-red-700 dark:text-red-200">
                 {fetcher.data.message}
               </p>
+            </div>
+          )}
+
+          {/* Conflict Warning */}
+          {hasConflict && (
+            <div className="p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-900/50 rounded-lg">
+              <p className="text-sm font-semibold text-orange-700 dark:text-orange-200 mb-2">
+                ⚠️ Time Conflict Detected
+              </p>
+              <div className="space-y-1 text-xs text-orange-600 dark:text-orange-300">
+                {conflictingTasks.map((conflictTask, idx) => {
+                  const [hours, minutes] = conflictTask.startTime.split(":").map(Number);
+                  const ampm = hours >= 12 ? "PM" : "AM";
+                  const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                  const timeStr = `${displayHour}:${String(minutes).padStart(2, "0")} ${ampm}`;
+                  return (
+                    <p key={idx}>
+                      • <strong>{conflictTask.title}</strong> at {timeStr} ({conflictTask.durationMinutes}m)
+                    </p>
+                  );
+                })}
+              </div>
             </div>
           )}
         </form>

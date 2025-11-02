@@ -188,6 +188,24 @@ async function updateTask(user: User, formData: FormData) {
   if (durationMinutes !== undefined)
     updateData.durationMinutes = durationMinutes;
 
+  // Get the task and plan to retrieve the planDate
+  const taskQuery = await db
+    .select()
+    .from(dayPlanSectionsTable)
+    .innerJoin(dayPlansTable, eq(dayPlanSectionsTable.planId, dayPlansTable.id))
+    .where(
+      and(
+        eq(dayPlanSectionsTable.id, taskId),
+        eq(dayPlanSectionsTable.userId, user.id)
+      )
+    );
+
+  if (taskQuery.length === 0) {
+    return { success: false, message: "Task not found" };
+  }
+
+  const planDate = taskQuery[0].day_plans.planDate;
+
   await db
     .update(dayPlanSectionsTable)
     .set(updateData)
@@ -198,7 +216,18 @@ async function updateTask(user: User, formData: FormData) {
       )
     );
 
-  return { success: true, message: "Task updated" };
+  // Trigger sync to Google Calendar if enabled (important for time/title/duration changes)
+  const { triggerAutoSync } = await import("./GoogleCalendarService");
+  const syncResult = await triggerAutoSync(user.id, planDate);
+
+  return {
+    success: true,
+    message: "Task updated",
+    syncStatus: {
+      attempted: syncResult.syncAttempted,
+      message: syncResult.message,
+    },
+  };
 }
 
 async function deleteTask(user: User, formData: FormData) {
@@ -295,6 +324,25 @@ async function moveTask(user: User, formData: FormData) {
     return { success: false, message: "Missing required fields" };
   }
 
+  // Get the task and plan to retrieve the planDate
+  const taskQuery = await db
+    .select()
+    .from(dayPlanSectionsTable)
+    .innerJoin(dayPlansTable, eq(dayPlanSectionsTable.planId, dayPlansTable.id))
+    .where(
+      and(
+        eq(dayPlanSectionsTable.id, taskId),
+        eq(dayPlanSectionsTable.userId, user.id)
+      )
+    );
+
+  if (taskQuery.length === 0) {
+    return { success: false, message: "Task not found" };
+  }
+
+  const planDate = taskQuery[0].day_plans.planDate;
+
+  // Update the task locally
   await db
     .update(dayPlanSectionsTable)
     .set({
@@ -308,7 +356,18 @@ async function moveTask(user: User, formData: FormData) {
       )
     );
 
-  return { success: true, message: "Task moved" };
+  // Trigger sync to Google Calendar if enabled
+  const { triggerAutoSync } = await import("./GoogleCalendarService");
+  const syncResult = await triggerAutoSync(user.id, planDate);
+
+  return {
+    success: true,
+    message: "Task moved",
+    syncStatus: {
+      attempted: syncResult.syncAttempted,
+      message: syncResult.message,
+    },
+  };
 }
 
 async function deletePlan(user: User, formData: FormData) {

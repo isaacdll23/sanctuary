@@ -552,7 +552,7 @@ export async function syncLocalTasksToGoogle(userId: number, planDate: string) {
         )
       );
 
-    // For each local task without a mapping, create a Google event
+    // Process each local task
     for (const row of dayPlansQuery) {
       const task = row.day_plan_sections;
       const existingMapping = await db
@@ -561,7 +561,7 @@ export async function syncLocalTasksToGoogle(userId: number, planDate: string) {
         .where(eq(dayPlannerGoogleSyncMappingTable.dayPlanSectionId, task.id));
 
       if (existingMapping.length === 0 && !task.completedAt) {
-        // Create Google event
+        // CREATE: New task without mapping - create Google event
         const eventData = convertLocalTaskToGoogleEvent(task, planDate, timeZone);
         const googleEvent = await googleCalendarApiClient.createEvent(
           account.googleCalendarId,
@@ -579,6 +579,33 @@ export async function syncLocalTasksToGoogle(userId: number, planDate: string) {
           googleLastModified: new Date(),
           syncStatus: "synced",
         });
+      } else if (existingMapping.length > 0 && !task.completedAt) {
+        // UPDATE: Task has mapping and local changes - update Google event
+        const mapping = existingMapping[0];
+        
+        // Check if local task was modified since last sync
+        const localLastSync = mapping.localLastModified || mapping.createdAt;
+        if (task.updatedAt > localLastSync) {
+          // Local task was modified, push changes to Google
+          const eventData = convertLocalTaskToGoogleEvent(task, planDate, timeZone);
+          
+          await googleCalendarApiClient.updateEvent(
+            account.googleCalendarId,
+            mapping.googleEventId,
+            accessToken,
+            eventData
+          );
+
+          // Update mapping with new sync timestamps
+          await db
+            .update(dayPlannerGoogleSyncMappingTable)
+            .set({
+              localLastModified: task.updatedAt,
+              googleLastModified: new Date(),
+              syncStatus: "synced",
+            })
+            .where(eq(dayPlannerGoogleSyncMappingTable.id, mapping.id));
+        }
       }
     }
   } catch (error) {

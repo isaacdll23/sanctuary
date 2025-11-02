@@ -1,16 +1,21 @@
 import { useLoaderData, useNavigate, useFetcher } from "react-router";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import CalendarView from "~/components/day-planner/CalendarView";
+import DayInsightsPanel from "~/components/day-planner/DayInsightsPanel";
+import QuickUpcomingTasksSidebar from "~/components/day-planner/QuickUpcomingTasksSidebar";
+import QuickAddTaskBar from "~/components/day-planner/QuickAddTaskBar";
 import AddTaskModal from "~/components/day-planner/AddTaskModal";
 import EditTaskModal from "~/components/day-planner/EditTaskModal";
 import GoogleCalendarButton from "~/components/day-planner/GoogleCalendarButton";
 import ConflictResolutionModal from "~/components/day-planner/ConflictResolutionModal";
-import { useEffect, useContext, useState } from "react";
+import { useEffect, useContext, useState, useRef } from "react";
 import { ToastContext } from "~/context/ToastContext";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   CalendarIcon,
+  EyeIcon,
+  EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 
 export function meta() {
@@ -149,6 +154,9 @@ export default function DayPlanner() {
   >();
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
+  const [focusMode, setFocusMode] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const quickAddRef = useRef<HTMLDivElement>(null);
   const [conflictData, setConflictData] = useState<{
     mappingId: string;
     taskId: string;
@@ -188,6 +196,41 @@ export default function DayPlanner() {
     }
     // eslint-disable-next-line
   }, [fetcher.data, toastCtx, toastShown]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Cmd/Ctrl + N for new task
+      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
+        e.preventDefault();
+        setShowAddModal(true);
+      }
+
+      // Arrow keys for date navigation
+      if (e.key === "ArrowLeft" && !e.metaKey && !e.ctrlKey) {
+        const prevDate = new Date(planDate);
+        prevDate.setDate(prevDate.getDate() - 1);
+        handleDateChange(prevDate.toISOString().split("T")[0]);
+      }
+
+      if (e.key === "ArrowRight" && !e.metaKey && !e.ctrlKey) {
+        const nextDate = new Date(planDate);
+        nextDate.setDate(nextDate.getDate() + 1);
+        handleDateChange(nextDate.toISOString().split("T")[0]);
+      }
+
+      // Escape to close modals
+      if (e.key === "Escape") {
+        setShowAddModal(false);
+        setShowEditModal(false);
+        setTaskToEdit(null);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line
+  }, [planDate]);
 
   function handleDateChange(newDate: string) {
     navigate(`/day-planner?date=${newDate}`);
@@ -239,9 +282,10 @@ export default function DayPlanner() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        {/* Header Section */}
         <div className="mb-8">
+          {/* Top Row: Title and Controls */}
           <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -256,14 +300,32 @@ export default function DayPlanner() {
                 </p>
               </div>
             </div>
-            <GoogleCalendarButton
-              isConnected={!!googleCalendarAccount && googleCalendarAccount.isSyncEnabled === 1}
-              onManualSync={handleManualSync}
-              isSyncing={isSyncing}
-            />
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setFocusMode(!focusMode)}
+                className={`p-2.5 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
+                  focusMode
+                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                }`}
+                title={focusMode ? "Exit focus mode" : "Enter focus mode"}
+              >
+                {focusMode ? (
+                  <EyeSlashIcon className="w-5 h-5" />
+                ) : (
+                  <EyeIcon className="w-5 h-5" />
+                )}
+              </button>
+              <GoogleCalendarButton
+                isConnected={!!googleCalendarAccount && googleCalendarAccount.isSyncEnabled === 1}
+                onManualSync={handleManualSync}
+                isSyncing={isSyncing}
+              />
+            </div>
           </div>
 
-          {/* Date Navigation */}
+          {/* Date Navigation Row */}
           <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3">
             <button
               type="button"
@@ -273,7 +335,7 @@ export default function DayPlanner() {
                 handleDateChange(prevDate.toISOString().split("T")[0]);
               }}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
-              title="Previous day"
+              title="Previous day (← arrow key)"
             >
               <ChevronLeftIcon className="w-5 h-5" />
             </button>
@@ -285,6 +347,9 @@ export default function DayPlanner() {
                 onChange={(e) => handleDateChange(e.target.value)}
                 className="flex-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150"
               />
+              <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
+                {user.timeZone}
+              </div>
               <button
                 type="button"
                 onClick={() => handleDateChange(today)}
@@ -306,7 +371,7 @@ export default function DayPlanner() {
                 handleDateChange(nextDate.toISOString().split("T")[0]);
               }}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
-              title="Next day"
+              title="Next day (→ arrow key)"
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
@@ -315,40 +380,47 @@ export default function DayPlanner() {
 
         {plan ? (
           <>
-            {/* Completion Stats */}
-            {completionStats && completionStats.total > 0 && (
-              <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-5 mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    Daily Progress
-                  </span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                    {completionStats.completed} / {completionStats.total} completed
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-gray-900 dark:bg-gray-100 h-2.5 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${
-                        (completionStats.completed / completionStats.total) *
-                        100
-                      }%`,
-                    }}
-                  />
-                </div>
-              </div>
+            {/* Day Insights Panel */}
+            {!focusMode && (
+              <DayInsightsPanel
+                tasks={plan.tasks}
+                viewStartTime={plan.viewStartTime}
+                viewEndTime={plan.viewEndTime}
+              />
             )}
 
-            {/* Calendar View */}
-            <CalendarView
-              tasks={plan.tasks}
-              viewStartTime={plan.viewStartTime}
-              viewEndTime={plan.viewEndTime}
-              onAddTask={handleAddTask}
-              onEditTask={handleEditTask}
-              taskSyncStatus={taskSyncStatus}
-            />
+            {/* Quick Add Task Bar */}
+            {/* {!focusMode && (
+              <div ref={quickAddRef}>
+                <QuickAddTaskBar
+                  planId={plan.id}
+                  onTaskAdded={() => setRefreshKey((k) => k + 1)}
+                />
+              </div>
+            )} */}
+
+            {/* Main Content Layout */}
+            <div className="flex gap-6">
+              {/* Calendar View - Main Content */}
+              <div className="flex-1 min-w-0">
+                <CalendarView
+                  tasks={plan.tasks}
+                  viewStartTime={plan.viewStartTime}
+                  viewEndTime={plan.viewEndTime}
+                  onAddTask={handleAddTask}
+                  onEditTask={handleEditTask}
+                  taskSyncStatus={taskSyncStatus}
+                />
+              </div>
+
+              {/* Quick Upcoming Tasks Sidebar */}
+              {!focusMode && (
+                <QuickUpcomingTasksSidebar
+                  allTasks={plan.tasks}
+                  currentDate={planDate}
+                />
+              )}
+            </div>
           </>
         ) : (
           // Empty State - No Plan Created
@@ -382,6 +454,7 @@ export default function DayPlanner() {
         {showAddModal && plan && (
           <AddTaskModal
             planId={plan.id}
+            existingTasks={plan.tasks}
             onClose={() => {
               setShowAddModal(false);
               setDefaultStartTime(undefined);
@@ -393,6 +466,7 @@ export default function DayPlanner() {
         {showEditModal && taskToEdit && (
           <EditTaskModal
             task={taskToEdit}
+            existingTasks={plan?.tasks || []}
             onClose={() => {
               setShowEditModal(false);
               setTaskToEdit(null);

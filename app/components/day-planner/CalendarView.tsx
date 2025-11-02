@@ -166,17 +166,17 @@ export default function CalendarView({
       </div>
 
       {/* Calendar Grid */}
-      <div className="relative max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
+      <div className="relative max-h-[calc(100vh-400px)] md:max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
         {/* Time ruler and grid */}
         <div className="flex">
-          {/* Time labels */}
-          <div className="w-16 flex-shrink-0 border-r border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+          {/* Time labels - Sticky */}
+          <div className="w-16 flex-shrink-0 border-r border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 sticky left-0 z-10">
             {hours.map((hour) => (
               <div
                 key={hour}
                 className="h-[120px] border-b border-gray-200 dark:border-gray-700 flex items-start justify-end pr-2 pt-2"
               >
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
                   {formatHour(hour)}
                 </span>
               </div>
@@ -199,7 +199,7 @@ export default function CalendarView({
                     : ""
                 }`}
               >
-                {/* 15-minute markers */}
+                {/* 15-minute markers - Enhanced visibility */}
                 <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
                 <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
                 <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
@@ -207,7 +207,7 @@ export default function CalendarView({
               </div>
             ))}
 
-            {/* Drag preview indicator */}
+            {/* Drag preview indicator - Enhanced */}
             {dragPreviewPosition && dragOverTime !== null && (
               <div
                 className="absolute left-0 right-0 pointer-events-none transition-all duration-150"
