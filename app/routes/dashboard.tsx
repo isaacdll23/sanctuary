@@ -1,80 +1,72 @@
 import { useLoaderData } from "react-router";
-import { eq } from "drizzle-orm";
-import { startOfDay, subDays } from "date-fns";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { getDashboardData } from "~/modules/services/DashboardService";
+import { getVisibleWidgets } from "~/components/dashboard/WidgetRegistry";
 import DashboardStatCard from "~/components/dashboard/DashboardStatCard";
 import CompletionRateCard from "~/components/dashboard/CompletionRateCard";
 import ProductivityInsightsCard from "~/components/dashboard/ProductivityInsightsCard";
-import {
-  PlusIcon,
-  CheckCircleIcon,
-  SparklesIcon,
-} from "@heroicons/react/24/outline";
+import TodayAtAGlanceWidget from "~/components/dashboard/widgets/TodayAtAGlanceWidget";
+import ProgressSummaryWidget from "~/components/dashboard/widgets/ProgressSummaryWidget";
+import ActionItemsPriorityWidget from "~/components/dashboard/widgets/ActionItemsPriorityWidget";
+import FinancialSnapshotWidget from "~/components/dashboard/widgets/FinancialSnapshotWidget";
+import WeeklyAchievementsWidget from "~/components/dashboard/widgets/WeeklyAchievementsWidget";
+import { SparklesIcon } from "@heroicons/react/24/outline";
+import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
+import type { WidgetType } from "~/components/dashboard/WidgetRegistry";
 
 export function meta() {
   return [{ title: "Dashboard - Sanctuary" }];
 }
 
 export const loader = pageAccessLoader("dashboard", async (user, request) => {
-  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
-  const { db } = await import("~/db");
-  const { tasksTable } = await import("~/db/schema");
+  // Aggregate all dashboard data using the new service
+  const dashboardData = await getDashboardData(user);
 
-  const userTasks = await db
-    .select()
-    .from(tasksTable)
-    .where(eq(tasksTable.userId, user.id))
-    .execute();
-
-  const newTasksLast7Days = userTasks.filter(
-    (task) => task.createdAt >= startOfDay(subDays(new Date(), 7))
-  );
-  const completedTasksLast7Days = userTasks.filter(
-    (task) =>
-      task.completedAt != null &&
-      task.completedAt >= startOfDay(subDays(new Date(), 7))
-  );
-
-  const newTasksLast30Days = userTasks.filter(
-    (task) => task.createdAt >= startOfDay(subDays(new Date(), 30))
-  );
-  const completedTasksLast30Days = userTasks.filter(
-    (task) =>
-      task.completedAt != null &&
-      task.completedAt >= startOfDay(subDays(new Date(), 30))
-  );
-
-  return {
-    newTasksLast7Days: newTasksLast7Days.length,
-    completedTasksLast7Days: completedTasksLast7Days.length,
-    newTasksLast30Days: newTasksLast30Days.length,
-    completedTasksLast30Days: completedTasksLast30Days.length,
-  };
+  return dashboardData;
 });
 
 export default function Dashboard() {
-  const {
-    newTasksLast7Days,
-    completedTasksLast7Days,
-    newTasksLast30Days,
-    completedTasksLast30Days,
-  } = useLoaderData<{
-    newTasksLast7Days: number;
-    completedTasksLast7Days: number;
-    newTasksLast30Days: number;
-    completedTasksLast30Days: number;
-  }>();
+  const dashboardData = useLoaderData<AggregatedDashboardData>();
+  const visibleWidgets = getVisibleWidgets(dashboardData, dashboardData.preferences);
 
-  // Calculate metrics for insights
-  const dailyCompletion30d = completedTasksLast30Days / 30;
-  const weeklyCreation30d = newTasksLast30Days / 4.29;
+  // Map widget IDs to their components
+  const widgetComponents: Record<WidgetType, React.ReactNode> = {
+    "today-at-glance": <TodayAtAGlanceWidget data={dashboardData} />,
+    "progress-summary": <ProgressSummaryWidget data={dashboardData} />,
+    "action-items-priority": <ActionItemsPriorityWidget data={dashboardData} />,
+    "financial-snapshot": <FinancialSnapshotWidget data={dashboardData} />,
+    "weekly-achievements": <WeeklyAchievementsWidget data={dashboardData} />,
+    "completion-rate": <CompletionRateCard last7Days={{ completed: dashboardData.taskMetrics.completionRate7d, total: 100 }} last30Days={{ completed: dashboardData.taskMetrics.completionRate30d, total: 100 }} />,
+    "productivity-insights": (
+      <ProductivityInsightsCard
+        insights={[
+          {
+            label: "Daily Completion",
+            description: "Average over 30 days",
+            value: dashboardData.taskMetrics.averageDailyCompletion30d,
+          },
+          {
+            label: "Task Velocity",
+            description: "Tasks per day",
+            value: dashboardData.taskMetrics.taskVelocity,
+          },
+          {
+            label: "Planning Consistency",
+            description: "Days with plans",
+            value: dashboardData.dayPlannerMetrics.planningConsistency,
+          },
+          {
+            label: "Budget Health",
+            description: "Average utilization",
+            value: dashboardData.budgetMetrics.averageBudgetHealth,
+          },
+        ]}
+        message={generateWelcomeMessage(dashboardData.engagementMetrics, dashboardData.taskMetrics)}
+      />
+    ),
+  };
 
-  const isProductivityTrending =
-    completedTasksLast7Days > completedTasksLast7Days / 4;
-
-  const insightMessage = isProductivityTrending
-    ? "Your productivity is trending upward this week! Keep up the great work."
-    : "Focus on completing more tasks to boost your productivity metrics.";
+  const hasActiveWidgets = visibleWidgets.length > 0;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
@@ -90,79 +82,66 @@ export default function Dashboard() {
             </h1>
           </div>
           <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base ml-14 max-w-2xl">
-            Your personal overview with stats and insights about your task
-            management progress.
+            Your personalized overview with stats and insights across all your productivity areas.
           </p>
         </header>
 
-        {/* Stats Grid Section */}
-        <section className="mb-12">
-          <h2 className="text-lg font-semibold mb-5 text-gray-900 dark:text-gray-100 flex items-center gap-3">
-            <div className="w-1 h-6 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full" />
-            Task Performance Overview
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <DashboardStatCard
-              icon={PlusIcon}
-              label="New Tasks"
-              value={newTasksLast7Days}
-              sublabel="last 7 days"
-              color="indigo"
-            />
-            <DashboardStatCard
-              icon={CheckCircleIcon}
-              label="Completed"
-              value={completedTasksLast7Days}
-              sublabel="last 7 days"
-              color="emerald"
-            />
-            <DashboardStatCard
-              icon={PlusIcon}
-              label="New Tasks"
-              value={newTasksLast30Days}
-              sublabel="last 30 days"
-              color="indigo"
-            />
-            <DashboardStatCard
-              icon={CheckCircleIcon}
-              label="Completed"
-              value={completedTasksLast30Days}
-              sublabel="last 30 days"
-              color="emerald"
-            />
+        {!hasActiveWidgets ? (
+          <div className="py-16 text-center">
+            <div className="mb-4">
+              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                <SparklesIcon className="h-6 w-6 text-gray-400 dark:text-gray-600" />
+              </div>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              Get Started
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Start using Sanctuary features to see your dashboard come to life with personalized insights.
+            </p>
+            <a
+              href="/tasks"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            >
+              Create Your First Task
+            </a>
           </div>
-        </section>
-
-        {/* Metrics & Insights Grid Section */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CompletionRateCard
-            last7Days={{
-              completed: completedTasksLast7Days,
-              total: newTasksLast7Days,
-            }}
-            last30Days={{
-              completed: completedTasksLast30Days,
-              total: newTasksLast30Days,
-            }}
-          />
-
-          <ProductivityInsightsCard
-            insights={[
-              {
-                label: "Daily Task Completion",
-                description: "Average over 30 days",
-                value: dailyCompletion30d,
-              },
-              {
-                label: "Weekly Task Creation",
-                description: "Average over 30 days",
-                value: weeklyCreation30d,
-              },
-            ]}
-            message={insightMessage}
-          />
-        </section>
+        ) : (
+          <div className="space-y-6">
+            {/* Render visible widgets */}
+            {visibleWidgets.map((widget) => (
+              <div
+                key={widget.config.id}
+                className={`${
+                  widget.config.defaultWidth === "full"
+                    ? "grid-cols-1"
+                    : widget.config.defaultWidth === "half"
+                      ? "lg:grid-cols-2"
+                      : "lg:grid-cols-3"
+                }`}
+              >
+                {widgetComponents[widget.config.id]}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
+}
+
+/**
+ * Generate personalized welcome message based on metrics
+ */
+function generateWelcomeMessage(engagementMetrics: any, taskMetrics: any): string {
+  if (taskMetrics.completionTrend === "trending-up") {
+    return "📈 Your productivity is trending upward! Keep up the momentum.";
+  }
+  if (taskMetrics.overdueTasks > 0) {
+    return `⚠️ You have ${taskMetrics.overdueTasks} overdue task${taskMetrics.overdueTasks !== 1 ? "s" : ""}. Focus on clearing these first.`;
+  }
+  if (engagementMetrics.daysSinceLastActivity > 7) {
+    return "👋 Welcome back! What's on your plate today?";
+  }
+  return "✨ Great to see you! Your dashboard is ready with all your productivity metrics.";
 }

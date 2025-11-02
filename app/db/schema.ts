@@ -26,6 +26,7 @@ export const usersTable = pgTable("users", {
   resetPasswordExpires: timestamp(), // When the reset token expires
   googleCalendarConnected: integer().default(0).notNull(), // Quick sync status flag
   googleCalendarPreferences: json(), // User sync preferences: { syncCalendarColors: boolean, includeDescription: boolean, ... }
+  dashboardPreferences: json(), // Dashboard preferences: { layout: string, visibleWidgets: string[], goals: {...}, refreshInterval: number, ... }
   createdAt: timestamp().defaultNow().notNull(),
 });
 
