@@ -5,6 +5,11 @@ import AddTaskModal from "~/components/day-planner/AddTaskModal";
 import EditTaskModal from "~/components/day-planner/EditTaskModal";
 import { useEffect, useContext, useState } from "react";
 import { ToastContext } from "~/context/ToastContext";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 export function meta() {
   return [{ title: "Day Planner - Sanctuary" }];
@@ -136,34 +141,73 @@ export default function DayPlanner() {
       }
     : null;
 
-  return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">
-            Day Planner
-          </h1>
+  const today = new Date().toISOString().split("T")[0];
 
-          {/* Date Picker */}
-          <div className="flex items-center gap-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Plan Date
-            </label>
-            <input
-              type="date"
-              value={planDate}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="flex-1 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-            />
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <div className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
+              <CalendarIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                Day Planner
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Plan and organize your tasks visually
+              </p>
+            </div>
+          </div>
+
+          {/* Date Navigation */}
+          <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                handleDateChange(new Date().toISOString().split("T")[0])
-              }
-              className="px-4 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-medium rounded-lg text-sm transition-colors"
+              onClick={() => {
+                const prevDate = new Date(planDate);
+                prevDate.setDate(prevDate.getDate() - 1);
+                handleDateChange(prevDate.toISOString().split("T")[0]);
+              }}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              title="Previous day"
             >
-              Today
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+
+            <div className="flex-1 flex items-center gap-3">
+              <input
+                type="date"
+                value={planDate}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="flex-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150"
+              />
+              <button
+                type="button"
+                onClick={() => handleDateChange(today)}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
+                  planDate === today
+                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600"
+                }`}
+              >
+                Today
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                const nextDate = new Date(planDate);
+                nextDate.setDate(nextDate.getDate() + 1);
+                handleDateChange(nextDate.toISOString().split("T")[0]);
+              }}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              title="Next day"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -172,19 +216,18 @@ export default function DayPlanner() {
           <>
             {/* Completion Stats */}
             {completionStats && completionStats.total > 0 && (
-              <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Progress
+              <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-5 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    Daily Progress
                   </span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
-                    {completionStats.completed} / {completionStats.total}{" "}
-                    completed
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {completionStats.completed} / {completionStats.total} completed
                   </span>
                 </div>
-                <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2">
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 overflow-hidden">
                   <div
-                    className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                    className="bg-gray-900 dark:bg-gray-100 h-2.5 rounded-full transition-all duration-300"
                     style={{
                       width: `${
                         (completionStats.completed / completionStats.total) *
@@ -207,21 +250,25 @@ export default function DayPlanner() {
           </>
         ) : (
           // Empty State - No Plan Created
-          <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
+              <CalendarIcon className="w-8 h-8 text-gray-600 dark:text-gray-300" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               No Plan for {planDate}
             </h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Create a day plan to start scheduling your tasks visually on a
-              calendar.
+              calendar. You can drag and drop tasks to reorganize them.
             </p>
 
             <button
               type="button"
               onClick={handleCreatePlan}
               disabled={fetcher.state === "submitting"}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-2 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-3 px-6 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 shadow-md hover:shadow-lg"
             >
+              <CalendarIcon className="w-5 h-5" />
               {fetcher.state === "submitting"
                 ? "Creating Plan..."
                 : "Create Day Plan"}

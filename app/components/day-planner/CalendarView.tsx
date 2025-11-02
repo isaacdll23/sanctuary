@@ -141,16 +141,16 @@ export default function CalendarView({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
       {/* Header */}
-      <div className="border-b border-gray-300 dark:border-gray-700 p-4 flex items-center justify-between">
+      <div className="border-b border-gray-300 dark:border-gray-700 p-4 md:p-5 flex items-center justify-between bg-white dark:bg-gray-800">
         <h3 className="font-semibold text-gray-900 dark:text-gray-100">
           Day Schedule
         </h3>
         <button
           type="button"
           onClick={() => onAddTask()}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm py-2 px-4 rounded-lg transition-colors"
+          className="flex items-center gap-2 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm py-2 px-3.5 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
         >
           <PlusIcon className="w-4 h-4" />
           Add Task
@@ -158,15 +158,15 @@ export default function CalendarView({
       </div>
 
       {/* Calendar Grid */}
-      <div className="relative max-h-[600px] overflow-y-auto">
+      <div className="relative max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
         {/* Time ruler and grid */}
         <div className="flex">
           {/* Time labels */}
-          <div className="w-16 flex-shrink-0 border-r border-gray-300 dark:border-gray-700">
+          <div className="w-16 flex-shrink-0 border-r border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
             {hours.map((hour) => (
               <div
                 key={hour}
-                className="h-[120px] border-b border-gray-200 dark:border-gray-800 flex items-start justify-end pr-2 pt-1"
+                className="h-[120px] border-b border-gray-200 dark:border-gray-700 flex items-start justify-end pr-2 pt-2"
               >
                 <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
                   {formatHour(hour)}
@@ -176,7 +176,7 @@ export default function CalendarView({
           </div>
 
           {/* Task area */}
-          <div className="flex-1 relative">
+          <div className="flex-1 relative bg-white dark:bg-gray-800">
             {/* Background grid */}
             {hours.map((hour, idx) => (
               <div
@@ -185,16 +185,16 @@ export default function CalendarView({
                 onDragOver={(e) => handleDragOver(e, hour)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, hour)}
-                className={`h-[120px] border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors ${
+                className={`h-[120px] border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors duration-150 ${
                   dragOverTime === hour
-                    ? "bg-indigo-100 dark:bg-indigo-900/20"
+                    ? "bg-gray-100 dark:bg-gray-700/50"
                     : ""
                 }`}
               >
                 {/* 15-minute markers */}
-                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
-                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
-                <div className="h-[30px] border-b border-gray-300 dark:border-gray-700" />
+                <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
+                <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
+                <div className="h-[30px] border-b border-gray-100 dark:border-gray-700/50" />
                 <div className="h-[30px]" />
               </div>
             ))}
@@ -202,7 +202,7 @@ export default function CalendarView({
             {/* Drag preview indicator */}
             {dragPreviewPosition && dragOverTime !== null && (
               <div
-                className="absolute left-0 right-0 pointer-events-none"
+                className="absolute left-0 right-0 pointer-events-none transition-all duration-150"
                 style={{
                   top: `${
                     (dragOverTime - startHour) * 120 + dragPreviewPosition.top
@@ -212,8 +212,8 @@ export default function CalendarView({
                     : "30px",
                 }}
               >
-                <div className="mx-2 h-full border-2 border-dashed border-indigo-500 dark:border-indigo-400 bg-indigo-100/50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                  <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">
+                <div className="mx-2 h-full border-2 border-dashed border-gray-400 dark:border-gray-500 bg-gray-100/50 dark:bg-gray-700/30 rounded-lg flex items-center justify-center">
+                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
                     {String(dragOverTime).padStart(2, "0")}:
                     {String(dragPreviewPosition.minutes).padStart(2, "0")}
                   </span>
@@ -250,12 +250,17 @@ export default function CalendarView({
 
       {/* Empty state */}
       {tasks.length === 0 && (
-        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-          <p className="mb-4">No tasks scheduled yet.</p>
+        <div className="p-8 md:p-12 text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-lg mb-3">
+            <PlusIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+          </div>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            No tasks scheduled yet.
+          </p>
           <button
             type="button"
             onClick={() => onAddTask()}
-            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
+            className="text-gray-900 dark:text-gray-100 font-semibold text-sm hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 rounded px-2 py-1"
           >
             Click here or on a time slot to add your first task
           </button>

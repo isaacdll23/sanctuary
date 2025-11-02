@@ -1,6 +1,6 @@
 import { useFetcher } from "react-router";
-import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
 
 type AddTaskModalProps = {
   planId: string;
@@ -19,6 +19,25 @@ export default function AddTaskModal({
   const [startTime, setStartTime] = useState(defaultStartTime || "09:00");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [color, setColor] = useState("indigo");
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
+
+  // Reset state when defaultStartTime changes
+  useEffect(() => {
+    setStartTime(defaultStartTime || "09:00");
+  }, [defaultStartTime]);
+
+  // Handle successful submission
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      (fetcher.data as any).success === true &&
+      lastSubmitTime > 0
+    ) {
+      onClose();
+      setLastSubmitTime(0);
+    }
+  }, [fetcher.state, fetcher.data, lastSubmitTime, onClose]);
 
   const colorOptions = [
     {
@@ -99,6 +118,7 @@ export default function AddTaskModal({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setLastSubmitTime(Date.now());
     fetcher.submit(
       {
         intent: "createTask",
@@ -119,39 +139,50 @@ export default function AddTaskModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-2xl shadow-xl p-6 max-w-lg w-full">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-150"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-300 dark:border-gray-700">
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             Add New Task
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
-            aria-label="Close"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+            title="Close modal"
           >
             <XMarkIcon className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Title */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Task Title *
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Task Title <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
+              autoFocus
               placeholder="What do you need to do?"
-              className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
               Description
             </label>
             <textarea
@@ -159,27 +190,28 @@ export default function AddTaskModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Additional details (optional)"
               rows={3}
-              className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm resize-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-400 dark:placeholder-gray-500"
+              className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm resize-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150 placeholder-gray-400 dark:placeholder-gray-500"
             />
           </div>
 
+          {/* Time Fields */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Start Time *
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Start Time <span className="text-red-500">*</span>
               </label>
               <input
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 required
-                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Duration (minutes) *
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Duration <span className="text-red-500">*</span>
               </label>
               <select
                 value={durationMinutes}
@@ -187,11 +219,11 @@ export default function AddTaskModal({
                   setDurationMinutes(parseInt(e.target.value, 10))
                 }
                 required
-                className="w-full bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                className="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150"
               >
-                <option value={15}>15 min</option>
-                <option value={30}>30 min</option>
-                <option value={45}>45 min</option>
+                <option value={15}>15 minutes</option>
+                <option value={30}>30 minutes</option>
+                <option value={45}>45 minutes</option>
                 <option value={60}>1 hour</option>
                 <option value={90}>1.5 hours</option>
                 <option value={120}>2 hours</option>
@@ -200,8 +232,9 @@ export default function AddTaskModal({
             </div>
           </div>
 
+          {/* Color Picker */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
               Task Color
             </label>
             <div className="grid grid-cols-7 gap-2">
@@ -212,9 +245,9 @@ export default function AddTaskModal({
                   onClick={() => setColor(colorOption.value)}
                   className={`w-10 h-10 rounded-lg ${
                     colorOption.bg
-                  } transition-all ${
+                  } transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-400 dark:focus-visible:ring-offset-gray-800 dark:focus-visible:ring-gray-600 ${
                     color === colorOption.value
-                      ? "ring-4 ring-gray-400 dark:ring-gray-500 scale-110"
+                      ? "ring-2 ring-offset-2 ring-gray-400 dark:ring-offset-gray-800 dark:ring-gray-600 scale-110"
                       : "hover:scale-105"
                   }`}
                   title={colorOption.name}
@@ -224,27 +257,35 @@ export default function AddTaskModal({
             </div>
           </div>
 
+          {/* Error Message */}
           {fetcher.data && !fetcher.data.success && (
-            <p className="text-red-400 text-sm">{fetcher.data.message}</p>
+            <div className="p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg">
+              <p className="text-sm text-red-700 dark:text-red-200">
+                {fetcher.data.message}
+              </p>
+            </div>
           )}
-
-          <div className="flex gap-3 pt-2">
-            <button
-              type="submit"
-              disabled={fetcher.state === "submitting"}
-              className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors disabled:opacity-50"
-            >
-              {fetcher.state === "submitting" ? "Creating..." : "Create Task"}
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-gray-300 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 text-gray-900 dark:text-gray-100 font-semibold py-3 rounded-lg transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
         </form>
+
+        {/* Footer */}
+        <div className="border-t border-gray-300 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50 flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 font-semibold text-sm rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={fetcher.state === "submitting"}
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold text-sm rounded-lg flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+          >
+            <CheckIcon className="w-4 h-4" />
+            {fetcher.state === "submitting" ? "Creating..." : "Create Task"}
+          </button>
+        </div>
       </div>
     </div>
   );
