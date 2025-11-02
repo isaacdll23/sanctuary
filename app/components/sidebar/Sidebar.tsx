@@ -74,7 +74,7 @@ const navSectionsAuth: NavSection[] = [
     title: "Financial",
     items: [
       {
-        to: "/finance",
+        to: "/finance/expenses",
         label: "Finance",
         icon: CurrencyDollarIcon,
         pageId: "finance",
@@ -83,19 +83,19 @@ const navSectionsAuth: NavSection[] = [
             to: "/finance/expenses",
             label: "Expenses",
             icon: ArrowUpRightIcon,
-            pageId: "finance/expenses",
+            pageId: "finance",
           },
           {
             to: "/finance/income",
             label: "Income",
             icon: ArrowDownLeftIcon,
-            pageId: "finance/income",
+            pageId: "finance",
           },
           {
             to: "/finance/budgets/shared",
             label: "Shared Budgets",
             icon: ClipboardDocumentListIcon,
-            pageId: "finance/budgets/shared",
+            pageId: "finance",
           },
         ],
       },
@@ -116,16 +116,10 @@ const navSectionsAuth: NavSection[] = [
     title: "Account",
     items: [
       {
-        to: "/profile",
-        label: "Profile",
-        icon: UserCircleIcon,
-        pageId: "profile",
-      },
-      {
-        to: "/profile/calendar-settings",
-        label: "Calendar Settings",
-        icon: CalendarIcon,
-        pageId: "calendar-settings",
+        to: "/settings",
+        label: "Settings",
+        icon: Cog8ToothIcon,
+        pageId: "settings",
       },
       {
         to: "/auth/logout",

@@ -108,7 +108,7 @@ export async function hasPageAccess(
   }
 
   // Everyone has access to dashboard and profile by default
-  if (pageId === "dashboard" || pageId === "profile") {
+  if (pageId === "dashboard" || pageId === "settings") {
     return true;
   }
 
@@ -143,16 +143,12 @@ export async function getUserAccessiblePages(
     return [
       "dashboard",
       "finance",
-      "finance/expenses",
-      "finance/income",
-      "finance/budgets/shared",
       "tasks",
       "day-planner",
       "notes", // Updated from principles to notes
       "utilities/commands",
       "admin",
-      "profile", // Ensure admin always sees profile page
-      "calendar-settings",
+      "settings",
     ];
   }
 
@@ -163,15 +159,12 @@ export async function getUserAccessiblePages(
       : user.allowedPages
     : [];
 
-  // Everyone has access to dashboard and profile by default
+  // Everyone has access to dashboard and settings by default
   if (!allowedPages.includes("dashboard")) {
     allowedPages.push("dashboard");
   }
-  if (!allowedPages.includes("profile")) {
-    allowedPages.push("profile");
-  }
-  if (!allowedPages.includes("calendar-settings")) {
-    allowedPages.push("calendar-settings");
+  if (!allowedPages.includes("settings")) {
+    allowedPages.push("settings");
   }
 
   return allowedPages;

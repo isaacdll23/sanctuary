@@ -16,7 +16,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Expenses" }];
 }
 
-export const loader = pageAccessLoader("finance/expenses", async (user, request) => {
+export const loader = pageAccessLoader("finance", async (user, request) => {
   const { db } = await import("~/db");
   const { financeExpensesTable, financeIncomeTable } = await import("~/db/schema");
 
@@ -40,7 +40,7 @@ export const loader = pageAccessLoader("finance/expenses", async (user, request)
   return { userExpenses: userExpenses, userIncome: userIncomeRecords[0] };
 });
 
-export const action = pageAccessAction("finance/expenses", async (user, request) => {
+export const action = pageAccessAction("finance", async (user, request) => {
   const { db } = await import("~/db");
   const { financeExpensesTable } = await import("~/db/schema");
 

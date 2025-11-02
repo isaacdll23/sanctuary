@@ -9,7 +9,7 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Income Dashboard" }];
 }
 
-export const loader = pageAccessLoader("finance/income", async (user, request) => {
+export const loader = pageAccessLoader("finance", async (user, request) => {
   const { db } = await import("~/db");
   const { financeIncomeTable } = await import("~/db/schema");
 
@@ -29,7 +29,7 @@ export const loader = pageAccessLoader("finance/income", async (user, request) =
   };
 });
 
-export const action = pageAccessAction("finance/income", async (user, request) => {
+export const action = pageAccessAction("finance", async (user, request) => {
   const { db } = await import("~/db");
   const { financeIncomeTable } = await import("~/db/schema");
 
