@@ -33,7 +33,7 @@ export function NoteList({
                   ? "opacity-50 bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-600"
                   : isSelected
                     ? "bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600 ring-1 ring-gray-400 dark:ring-gray-600 shadow-md"
-                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-sm hover:shadow-md"
+                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm hover:shadow-md"
               }`}
               role="option"
               aria-selected={isSelected}

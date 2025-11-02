@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import { useToast } from "~/hooks/useToast";
 import ReactMarkdown from "react-markdown";
+import { AdvancedNoteEditor } from "./AdvancedNoteEditor";
+import { EditorSettings } from "./EditorSettings";
+import {
+  loadEditorPreferences,
+  saveEditorPreferences,
+  type EditorPreferences,
+} from "~/utils/editorPreferences";
 
 export function NoteEditor({
   note,
@@ -23,6 +30,9 @@ export function NoteEditor({
   );
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
   const [lastSubmitTime, setLastSubmitTime] = useState(0);
+  const [editorPreferences, setEditorPreferences] = useState<EditorPreferences>(
+    () => loadEditorPreferences()
+  );
 
 
   // Use fetcher.titleFetcher for title generation
@@ -196,6 +206,24 @@ export function NoteEditor({
 
   const isSubmitting = noteSubmissionFetcher.state === "submitting";
 
+  const handleFontSizeChange = (size: number) => {
+    const updatedPreferences = { ...editorPreferences, fontSize: size };
+    setEditorPreferences(updatedPreferences);
+    saveEditorPreferences(updatedPreferences);
+  };
+
+  const handleLineWrappingToggle = (enabled: boolean) => {
+    const updatedPreferences = { ...editorPreferences, lineWrapping: enabled };
+    setEditorPreferences(updatedPreferences);
+    saveEditorPreferences(updatedPreferences);
+  };
+
+  const handleTabSizeChange = (size: 2 | 4 | 8) => {
+    const updatedPreferences = { ...editorPreferences, tabSize: size };
+    setEditorPreferences(updatedPreferences);
+    saveEditorPreferences(updatedPreferences);
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -267,15 +295,22 @@ export function NoteEditor({
         >
           Content
         </label>
-        <textarea
-          id="note-content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          disabled={isSubmitting}
-          className="flex-grow w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150 resize-none font-mono text-sm"
-          placeholder="Enter note content (supports Markdown)"
-          rows={15}
-        />
+        <div className="flex-grow flex flex-col min-h-0 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-gray-400 dark:focus-within:ring-gray-600">
+          <EditorSettings
+            preferences={editorPreferences}
+            onFontSizeChange={handleFontSizeChange}
+            onLineWrappingToggle={handleLineWrappingToggle}
+            onTabSizeChange={handleTabSizeChange}
+          />
+          <AdvancedNoteEditor
+            value={content}
+            onChange={setContent}
+            disabled={isSubmitting}
+            fontSize={editorPreferences.fontSize}
+            lineWrapping={editorPreferences.lineWrapping}
+            tabSize={editorPreferences.tabSize}
+          />
+        </div>
       </div>
 
       {/* Folder Section */}
