@@ -3,8 +3,6 @@ import type { tasksTable, taskStepsTable } from "~/db/schema";
 export type Task = typeof tasksTable.$inferSelect;
 export type TaskStep = typeof taskStepsTable.$inferSelect;
 
-export type ViewMode = "card" | "table";
-
 export interface TaskWithSteps extends Task {
   steps: TaskStep[];
 }

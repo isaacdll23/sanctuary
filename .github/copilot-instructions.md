@@ -33,7 +33,17 @@ export const loader = adminOnlyLoader(async (adminUser, request) => {
 ### Service Layer Architecture
 
 - **Services directory**: `app/modules/services/` contains business logic
-- **Service pattern**: Each domain has a service (TaskService, NoteService, PageAccessService)
+- **Service pattern**: Each domain has a service (TaskService, NoteService, PageAccessService, SharedBudgetService, DayPlannerService, etc.)
+- **Available services**: 
+  - `TaskService.ts` - Task CRUD and step management
+  - `NoteService.ts` - Note and folder management
+  - `DayPlannerService.ts` - Calendar and day planning
+  - `SharedBudgetService.ts` - Collaborative budget management with member roles
+  - `BudgetInviteService.ts` - Budget invitation tokens and validation
+  - `NotificationService.ts` - Email notifications
+  - `PageAccessService.ts` - Page access control for users
+  - `ProfileService.ts` - User profile management
+  - `UserManagementService.ts` - Admin user management
 - **Action handlers**: Services export `handle[Domain]Action(request)` functions that parse form data and route to specific actions based on `intent` field
 
 ### Database Patterns
@@ -45,8 +55,15 @@ export const loader = adminOnlyLoader(async (adminUser, request) => {
 ### Component Organization
 
 - **Route components**: In `app/routes/` with co-located types via `+types/[route].ts`
-- **Shared components**: Domain-organized in `app/components/[domain]/`
-- **Layout components**: Sidebar navigation with role-based filtering
+- **Shared components**: Domain-organized in `app/components/[domain]/` including:
+  - `tasks/` - Task management components (TaskModal, TaskStep, TaskTableView, etc.)
+  - `day-planner/` - Calendar and time-based planning components
+  - `finance/` - Budget and expense components (SharedBudgetCard, BudgetProgressBar, etc.)
+  - `notes/` - Note editor and folder components
+  - `admin/` - Admin portal components (UserEditModal, StatCard, PageAccessManager, etc.)
+  - `toast/` - Toast notification system components
+  - `sidebar/` - Navigation and sidebar components
+- **Layout components**: Sidebar navigation with role-based filtering in `Sidebar.tsx`
 
 ## Key Development Workflows
 
@@ -82,6 +99,19 @@ if (intent === "createTask") {
 - Use transactions for related operations (e.g., task + steps)
 - Follow pattern: insert/update -> return success/error object
 
+### Modal & Form State Management
+
+- **Form submission tracking**: Use `lastSubmitTime` state to prevent stale response issues
+  - Set `lastSubmitTime = Date.now()` when user clicks submit
+  - Only process responses if `lastSubmitTime > 0`
+  - Reset to 0 after handling response
+- **Modal reopening**: Always reset internal state when new item is selected
+  - Reset editable fields, edit modes, and form visibility
+  - This prevents old data from persisting when reopening
+- **Fetcher data clearing**: `fetcher.data` persists across modal open/close cycles
+  - Add `lastSubmitTime` check to prevent auto-closing on stale data
+- **Example**: See `UserEditModal.tsx` and `TaskModal.tsx` for reference implementations
+
 
 ## Styling & UI Conventions
 
@@ -89,14 +119,18 @@ if (intent === "createTask") {
   - **Backgrounds**: Use `bg-gray-100 dark:bg-gray-700` for surfaces, `bg-white dark:bg-gray-900` for main containers, and `bg-white/80 dark:bg-gray-800/80` for overlays.
   - **Text**: Use `text-gray-900 dark:text-gray-100` for primary text, `text-gray-500 dark:text-gray-400` for secondary text, and similar patterns for headings and labels.
   - **Borders**: Use `border-gray-300 dark:border-gray-700` or `border-gray-300 dark:border-gray-600` as appropriate.
+  - **Primary buttons**: `bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900` for main actions
+  - **Secondary buttons**: `bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100` for cancel/secondary actions
   - **Never use**: `bg-slate-*`, `text-slate-*`, `border-slate-*`, or any slate color classes.
-- **Responsive design**: Mobile-first with `md:` breakpoints
-- **Loading states**: Use `fetcher.state === "submitting"` for button states
-- **Modals**: Fixed overlays with `backdrop-blur` and scale animations, always using theme-aware backgrounds and borders
+- **Responsive design**: Mobile-first with `md:` breakpoints for layout changes
+- **Loading states**: Use `fetcher.state === "submitting"` for button states and input disabling
+- **Button accessibility**: Minimum height of `min-h-[40px]` for touch targets, focus rings with `focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600`
+- **Modals**: Fixed overlays with `backdrop-blur-sm` and scale animations, always using theme-aware backgrounds and borders
 - **Icons**: Always use Hero Icons from `@heroicons/react/24/outline` instead of manually drawn SVGs
   - Import icons: `import { IconName } from "@heroicons/react/24/outline"`
   - Usage: `<IconName className="w-6 h-6" />`
   - Never draw custom SVG icons when Hero Icons equivalents exist
+- **Shadows**: Subtle shadows on cards (`shadow-sm`), increased on hover for depth (`hover:shadow-md`)
 
 ## Common Commands
 

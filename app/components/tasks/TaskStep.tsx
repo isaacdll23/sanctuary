@@ -5,30 +5,17 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 interface TaskStepProps {
   taskStep: TaskStepType;
   fetcher: FetcherWithComponents<any>;
-  isCompactView?: boolean;
 }
 
 export default function TaskStep({
   taskStep,
   fetcher,
-  isCompactView,
 }: TaskStepProps) {
   const isCompleted = taskStep.completedAt !== null;
 
   return (
-    <li
-      className={`
-        flex items-center justify-between rounded-lg 
-        transition-colors duration-200 
-        ${
-          isCompleted
-            ? "bg-gray-100 dark:bg-gray-700/50 opacity-70"
-            : "bg-gray-100 dark:bg-gray-700/80 hover:bg-gray-200 dark:hover:bg-gray-600/80"
-        }
-        ${isCompactView ? "p-2" : "p-3"}
-      `}
-    >
-      <fetcher.Form method="post" className="flex items-center flex-grow mr-2">
+    <li className="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 transition-colors duration-150 group hover:bg-gray-200 dark:hover:bg-gray-600">
+      <fetcher.Form method="post" className="flex items-center flex-grow">
         <input
           type="hidden"
           name="completeStep"
@@ -47,27 +34,14 @@ export default function TaskStep({
                 { method: "post" }
               );
             }}
-            className={`
-              rounded-md border-2 transition-colors
-              ${
-                isCompleted
-                  ? "bg-green-500 border-green-600 focus:ring-green-500/50"
-                  : "bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 hover:border-purple-500 focus:ring-purple-500/50"
-              }
-              text-green-500 focus:ring-offset-0 focus:ring-2 cursor-pointer
-              ${isCompactView ? "h-4 w-4" : "h-5 w-5"}
-            `}
+            className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 checked:bg-gray-900 dark:checked:bg-gray-100 checked:border-gray-900 dark:checked:border-gray-100 cursor-pointer transition-colors duration-150 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
           />
           <span
-            className={`
-              ml-3 
-              ${
-                isCompleted
-                  ? "text-gray-500 dark:text-gray-300 line-through"
-                  : "text-gray-900 dark:text-gray-100"
-              }
-              ${isCompactView ? "text-xs" : "text-sm"}
-            `}
+            className={`ml-3 text-sm transition-all duration-150 ${
+              isCompleted
+                ? "text-gray-500 dark:text-gray-400 line-through"
+                : "text-gray-900 dark:text-gray-100"
+            }`}
           >
             {taskStep.description}
           </span>
@@ -82,14 +56,10 @@ export default function TaskStep({
               e.preventDefault();
             }
           }}
-          className={`text-gray-400 dark:text-gray-300 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors ${
-            isCompactView ? "p-1" : "p-1.5"
-          }`}
-          aria-label="Delete step"
+          className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-500 rounded-lg transition-colors duration-150 opacity-0 group-hover:opacity-100"
+          title="Delete step"
         >
-          <TrashIcon
-            className={`${isCompactView ? "h-3.5 w-3.5" : "h-4 w-4"}`}
-          />
+          <TrashIcon className="h-4 w-4" />
         </button>
       </fetcher.Form>
     </li>

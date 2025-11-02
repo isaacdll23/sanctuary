@@ -2,12 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { eq, desc } from "drizzle-orm";
 import { useFetcher, useSearchParams, useLoaderData } from "react-router";
 import type { Route } from "./+types/tasks";
-import TaskItem from "~/components/tasks/TaskItem";
 import TaskTableView from "~/components/tasks/TaskTableView";
 import TaskModal from "~/components/tasks/TaskModal";
 import AddTaskModal from "~/components/tasks/AddTaskModal";
 import TaskFilterBar from "~/components/tasks/TaskFilterBar";
-import type { Task, TaskStep, ViewMode } from "~/types/task.types";
+import type { Task, TaskStep } from "~/types/task.types";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   pageAccessLoader,
@@ -50,24 +49,16 @@ export default function Tasks() {
   const [searchParams, setSearchParams] = useSearchParams();
   const fetcher = useFetcher();
 
-  // State initialization from URL params
   const [hideCompletedTasks, setHideCompletedTasks] = useState(
     searchParams.get("hideCompletedTasks") === "true"
   );
   const [filterCategory, setFilterCategory] = useState(
     searchParams.get("filterCategory") || ""
   );
-  const [isCompactView, setIsCompactView] = useState(
-    searchParams.get("compactView") === "true"
-  );
-  const [viewMode, setViewMode] = useState<ViewMode>(
-    (searchParams.get("viewMode") as ViewMode) || "card"
-  );
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [lastProcessedDataKey, setLastProcessedDataKey] = useState<string | null>(null);
 
-  // Memoized derived data
   const distinctCategories = useMemo(
     () =>
       Array.from(
@@ -96,17 +87,13 @@ export default function Tasks() {
     [userTasks, filterCategory]
   );
 
-  // Sync state to URL params
   useEffect(() => {
     setSearchParams({
       hideCompletedTasks: hideCompletedTasks.toString(),
       filterCategory: filterCategory,
-      compactView: isCompactView.toString(),
-      viewMode: viewMode,
     });
-  }, [hideCompletedTasks, filterCategory, isCompactView, viewMode, setSearchParams]);
+  }, [hideCompletedTasks, filterCategory, setSearchParams]);
 
-  // Auto-close add modal on successful submission
   useEffect(() => {
     if (
       fetcher.state === "idle" &&
@@ -114,7 +101,6 @@ export default function Tasks() {
       (fetcher.data as any).success === true &&
       showAddModal
     ) {
-      // Create a unique key for this response to ensure we only process it once
       const dataKey = `${JSON.stringify(fetcher.data)}`;
       if (dataKey !== lastProcessedDataKey) {
         setShowAddModal(false);
@@ -123,14 +109,12 @@ export default function Tasks() {
     }
   }, [fetcher.state, fetcher.data, showAddModal, lastProcessedDataKey]);
 
-  // Validate that selected task still exists in the task list
   useEffect(() => {
     if (selectedTask && !userTasks.some((task) => task.id === selectedTask.id)) {
       setSelectedTask(null);
     }
   }, [userTasks, selectedTask]);
 
-  // Handler functions
   const handleTaskSelect = (task: Task) => {
     setSelectedTask(task);
   };
@@ -145,44 +129,28 @@ export default function Tasks() {
   };
 
   return (
-    <div
-      className={`min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${
-        isCompactView ? "p-2 md:p-4" : "p-4 md:p-8"
-      }`}
-    >
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header
-          className={`mb-8 md:mb-12 flex flex-col sm:flex-row justify-between items-center gap-4 ${
-            isCompactView ? "mb-4 md:mb-6" : ""
-          }`}
-        >
+        <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1
-              className={`text-4xl sm:text-5xl font-bold tracking-tight text-center sm:text-left text-gray-900 dark:text-gray-100 ${
-                isCompactView ? "text-3xl sm:text-4xl" : ""
-              }`}
-            >
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
               Tasks
             </h1>
-            {!isCompactView && (
-              <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 text-center sm:text-left">
-                Organize, track, and complete your work.
-              </p>
-            )}
+            <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+              Organize and track your work efficiently.
+            </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className={`flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-              isCompactView ? "py-2 px-4 text-sm" : "py-2.5 px-5"
-            }`}
+            className="flex items-center gap-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
           >
-            <PlusIcon className={`h-5 w-5 ${isCompactView ? "h-4 w-4" : ""}`} />
-            Add New Task
+            <PlusIcon className="h-5 w-5" />
+            Add Task
           </button>
         </header>
 
-        {/* Filters and Controls Bar */}
+        {/* Filters */}
         <TaskFilterBar
           openTasksCount={openTasksCount}
           hideCompletedTasks={hideCompletedTasks}
@@ -190,70 +158,41 @@ export default function Tasks() {
           filterCategory={filterCategory}
           onCategoryChange={setFilterCategory}
           distinctCategories={distinctCategories}
-          isCompactView={isCompactView}
-          onToggleCompactView={() => setIsCompactView(!isCompactView)}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
         />
 
-        {/* Task Views */}
+        {/* Empty State */}
         {filteredTasks.length === 0 ? (
-          <div className={`text-center ${isCompactView ? "py-5" : "py-10"}`}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className={`text-gray-500 dark:text-gray-500 mx-auto mb-4 ${
-                isCompactView ? "w-12 h-12 mb-2" : "w-16 h-16"
-              }`}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 0 1 0 3.75H5.625a1.875 1.875 0 0 1 0-3.75Z"
-              />
-            </svg>
-            <p
-              className={`text-gray-600 dark:text-gray-400 ${
-                isCompactView ? "text-base" : "text-lg"
-              }`}
-            >
-              No tasks match your current filters.
+          <div className="text-center py-16">
+            <div className="text-gray-300 dark:text-gray-600 mb-4">
+              <svg
+                className="w-16 h-16 mx-auto"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                />
+              </svg>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400 mb-1">
+              No tasks match your filters
             </p>
-            {!isCompactView && (
-              <p className="text-gray-500 dark:text-gray-500 text-sm">
-                Try adjusting your filters or adding a new task.
-              </p>
-            )}
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Try adjusting your filters or create a new task to get started.
+            </p>
           </div>
-        ) : viewMode === "table" ? (
+        ) : (
+          /* Tasks Table */
           <TaskTableView
             tasks={filteredTasks}
             taskSteps={userTaskSteps}
             distinctCategories={distinctCategories}
             onTaskSelect={handleTaskSelect}
           />
-        ) : (
-          <ul
-            className={`space-y-4 md:space-y-6 ${
-              isCompactView ? "space-y-2 md:space-y-3" : ""
-            }`}
-          >
-            {filteredTasks.map((task) => (
-              <TaskItem
-                key={task.id}
-                task={task}
-                taskSteps={userTaskSteps.filter(
-                  (step) => step.taskId === task.id
-                )}
-                distinctCategories={distinctCategories}
-                isCompactView={isCompactView}
-                onSelect={handleTaskSelect}
-              />
-            ))}
-          </ul>
         )}
       </div>
 
@@ -267,7 +206,6 @@ export default function Tasks() {
           fetcher={fetcher}
           onClose={handleCloseTaskModal}
           distinctCategories={distinctCategories}
-          isCompactView={isCompactView}
         />
       )}
 
@@ -277,7 +215,6 @@ export default function Tasks() {
           onClose={handleCloseAddModal}
           distinctCategories={distinctCategories}
           filterCategory={filterCategory}
-          isCompactView={isCompactView}
         />
       )}
     </div>
