@@ -3,6 +3,7 @@ import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { handleSharedBudgetAction } from "~/modules/services/SharedBudgetService";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export const loader = pageAccessLoader("finance", async (user, request) => {
   return {};
@@ -29,93 +30,115 @@ export default function NewSharedBudget() {
   }, [fetcher.data, addToast]);
 
   return (
-    <div className="max-w-xl mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-        Create Shared Budget
-      </h1>
+    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+      <div className="max-w-xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+            Create Shared Budget
+          </h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
+            Set up a new collaborative budget to track shared expenses.
+          </p>
+        </div>
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg p-6">
-        <fetcher.Form method="post" className="space-y-4">
-          <input type="hidden" name="intent" value="createBudget" />
+        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 p-6">
+          <fetcher.Form method="post" className="space-y-5">
+            <input type="hidden" name="intent" value="createBudget" />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Name *
-            </label>
-            <input
-              name="name"
-              type="text"
-              required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="Family Budget, Vacation Fund, etc."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="What is this budget for?"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Total Amount *
-            </label>
-            <input
-              name="totalAmount"
-              type="number"
-              step="0.01"
-              min="0"
-              required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              placeholder="0.00"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Period *
-            </label>
-            <select
-              name="period"
-              required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            >
-              <option value="monthly">Monthly</option>
-              <option value="weekly">Weekly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-
-          {fetcher.data && !fetcher.data.success && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-              <p className="text-red-600 dark:text-red-400 text-sm">
-                {fetcher.data.message}
-              </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Budget Name <span className="text-gray-500">*</span>
+              </label>
+              <input
+                name="name"
+                type="text"
+                required
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+                placeholder="Family Budget, Vacation Fund, etc."
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            className="w-full py-2 px-4 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-semibold transition disabled:opacity-50"
-            disabled={fetcher.state === "submitting"}
-          >
-            {fetcher.state === "submitting" ? "Creating..." : "Create Budget"}
-          </button>
-        </fetcher.Form>
-      </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Description
+              </label>
+              <textarea
+                name="description"
+                rows={3}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150 resize-none"
+                placeholder="What is this budget for?"
+              />
+            </div>
 
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          After creating the budget, you can invite others to collaborate in the
-          settings.
-        </p>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Total Amount <span className="text-gray-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-600 dark:text-gray-400">
+                  $
+                </span>
+                <input
+                  name="totalAmount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  required
+                  className="w-full pl-8 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Period <span className="text-gray-500">*</span>
+              </label>
+              <select
+                name="period"
+                required
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="weekly">Weekly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+            </div>
+
+            {fetcher.data && !fetcher.data.success && (
+              <div className="bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <p className="text-gray-700 dark:text-gray-300 text-sm font-medium">
+                  {fetcher.data.message}
+                </p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={fetcher.state === "submitting"}
+              className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 inline-flex justify-center items-center gap-2 min-h-[40px]"
+            >
+              {fetcher.state === "submitting" ? (
+                <>
+                  <ArrowPathIcon className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create Budget"
+              )}
+            </button>
+          </fetcher.Form>
+        </div>
+
+        <div className="mt-8 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
+              Pro tip:
+            </span>{" "}
+            After creating the budget, you can invite others to collaborate in
+            the budget settings.
+          </p>
+        </div>
       </div>
     </div>
   );

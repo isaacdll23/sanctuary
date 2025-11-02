@@ -5,6 +5,13 @@ import type { Route } from "./+types/expenses";
 import { db } from "~/db";
 import { financeExpensesTable, financeIncomeTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
+import {
+  PlusIcon,
+  PencilIcon,
+  TrashIcon,
+  XMarkIcon,
+  ArrowPathIcon,
+} from "@heroicons/react/24/outline";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Expenses" }];
@@ -97,6 +104,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
   const distinctCategories = Array.from(
     new Set(
@@ -105,11 +113,16 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   );
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data === undefined) {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data &&
+      lastSubmitTime > 0
+    ) {
       setIsModalOpen(false);
       setEditingExpense(null);
+      setLastSubmitTime(0);
     }
-  }, [fetcher.state, fetcher.data]);
+  }, [fetcher.state, fetcher.data, lastSubmitTime]);
 
   const filteredExpenses = filterCategories.length
     ? loaderData.userExpenses.filter((expense) =>
@@ -147,36 +160,26 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-center gap-4">
+        <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center md:text-left">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
-                Expenses
-              </span>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
+              Expenses
             </h1>
-            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 text-center md:text-left">
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
               Track and manage your monthly expenses.
             </p>
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white font-semibold py-2.5 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-opacity-75"
+            onClick={() => {
+              setIsModalOpen(true);
+              setEditingExpense(null);
+            }}
+            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <PlusIcon className="w-5 h-5" />
             Add Expense
           </button>
         </header>
@@ -184,30 +187,17 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         {/* Summary Cards */}
         <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Monthly Summary */}
-          <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 text-rose-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
-                />
-              </svg>
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <ArrowPathIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               Monthly Overview
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   Total Monthly Expenses:
                 </span>
-                <span className="text-xl font-medium text-rose-400">
+                <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   $
                   {(totalMonthlyCost / 100).toLocaleString(undefined, {
                     maximumFractionDigits: 2,
@@ -216,10 +206,10 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               </div>
               {annualGrossIncome !== 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     Net Remaining Monthly:
                   </span>
-                  <span className="text-xl font-medium text-emerald-400">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     $
                     {(netRemainingMonthly / 100).toLocaleString(undefined, {
                       maximumFractionDigits: 2,
@@ -231,30 +221,17 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
           </div>
 
           {/* Yearly Summary */}
-          <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl p-6">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200 flex items-center gap-2">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-5 h-5 text-rose-400"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z"
-                />
-              </svg>
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
+            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <ArrowPathIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               Yearly Overview
             </h2>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600 dark:text-gray-400">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   Total Yearly Expenses:
                 </span>
-                <span className="text-xl font-medium text-rose-400">
+                <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   $
                   {(totalYearlyCost / 100).toLocaleString(undefined, {
                     maximumFractionDigits: 2,
@@ -263,10 +240,10 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               </div>
               {annualGrossIncome !== 0 && (
                 <div className="flex justify-between items-center">
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     Net Remaining Yearly:
                   </span>
-                  <span className="text-xl font-medium text-emerald-400">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                     $
                     {(netRemainingYearly / 100).toLocaleString(undefined, {
                       maximumFractionDigits: 2,
@@ -279,22 +256,22 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Category Filter */}
-        <div className="relative z-20 mb-6 bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/60 dark:border-gray-700 rounded-xl shadow-lg p-4">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-[120px]">
+        <div className="relative z-20 mb-6 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm p-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 min-w-fit">
               Filter by Category:
             </label>
-            <div className="relative w-full">
+            <div className="relative w-full md:w-auto">
               <button
                 type="button"
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="w-full px-4 py-2 text-sm bg-gray-100 border border-gray-300 dark:bg-gray-700/50 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors text-left flex justify-between items-center"
+                className="w-full md:w-auto px-4 py-2.5 text-sm bg-gray-100 border border-gray-300 dark:bg-gray-700 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150 flex justify-between items-center"
               >
                 {filterCategories.length > 0
                   ? filterCategories.join(", ")
                   : "All Categories"}
                 <svg
-                  className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                  className="w-5 h-5 text-gray-600 dark:text-gray-400 ml-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -306,22 +283,22 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     d={showDropdown ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"}
                   />
                 </svg>
-              </button>{" "}
+              </button>
               {showDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 dark:bg-gray-700 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
                   {distinctCategories.map((cat) => (
                     <label
                       key={cat}
-                      className="flex items-center px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer"
+                      className="flex items-center px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors duration-150"
                     >
                       <input
                         type="checkbox"
                         value={cat}
                         checked={filterCategories.includes(cat)}
                         onChange={() => toggleCategory(cat)}
-                        className="mr-2 rounded text-rose-500 focus:ring-rose-400"
+                        className="mr-3 rounded text-gray-900 dark:bg-gray-600 dark:border-gray-500 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
                       />
-                      <span className="text-gray-900 dark:text-gray-200">
+                      <span className="text-gray-900 dark:text-gray-100">
                         {cat}
                       </span>
                     </label>
@@ -330,7 +307,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     <div className="border-t border-gray-300 dark:border-gray-600 p-2">
                       <button
                         onClick={() => setFilterCategories([])}
-                        className="w-full px-3 py-1.5 text-xs text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded text-gray-900 dark:text-white transition-colors"
+                        className="w-full px-3 py-1.5 text-xs text-center bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 rounded text-gray-900 dark:text-white transition-colors duration-150"
                       >
                         Clear Filters
                       </button>
@@ -343,53 +320,55 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
         </div>
 
         {/* Expenses Table */}
-        <div className="bg-white/90 backdrop-blur-md border border-gray-200 dark:bg-gray-800/70 dark:border-gray-700 rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-100 dark:bg-gray-700/70">
+              <thead className="bg-gray-100 dark:bg-gray-700/50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Monthly Cost
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Charge Day
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Category
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700/50">
+              <tbody className="divide-y divide-gray-300 dark:divide-gray-700/50">
                 {expenses.length === 0 ? (
                   <tr>
                     <td
                       colSpan={5}
                       className="px-4 py-8 text-center text-gray-600 dark:text-gray-400"
                     >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="mx-auto h-12 w-12 text-gray-500 dark:text-gray-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                        />
-                      </svg>
-                      <p className="mt-2 text-lg">No expenses found.</p>
-                      <p className="text-sm">
-                        Add your first expense to start tracking.
-                      </p>
+                      <div className="flex flex-col items-center">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-2"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                        <p className="text-base font-medium">No expenses found.</p>
+                        <p className="text-sm">
+                          Add your first expense to start tracking.
+                        </p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -397,13 +376,13 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     (expense: typeof financeExpensesTable.$inferSelect) => (
                       <tr
                         key={expense.id}
-                        className="hover:bg-gray-100 dark:hover:bg-gray-700/30 transition-colors"
+                        className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-150"
                       >
-                        <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-200">
+                        <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
                           {expense.name}
                         </td>
                         <td className="px-4 py-4 text-sm">
-                          <div className="font-medium text-rose-400">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
                             ${(expense.monthlyCost / 100).toFixed(2)}
                           </div>
                           <div className="text-xs text-gray-600 dark:text-gray-400">
@@ -415,12 +394,12 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                           </div>
                         </td>
                         <td className="px-4 py-4 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                             Day {expense.chargeDay}
                           </span>
                         </td>
                         <td className="px-4 py-4 text-sm">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                             {expense.category}
                           </span>
                         </td>
@@ -429,8 +408,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                             <button
                               type="button"
                               onClick={() => setEditingExpense(expense)}
-                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-emerald-500 transition-colors"
+                              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150 min-h-[32px]"
                             >
+                              <PencilIcon className="w-4 h-4 mr-1" />
                               Edit
                             </button>
                             <fetcher.Form
@@ -449,8 +429,9 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                               />
                               <button
                                 type="submit"
-                                className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-red-500 transition-colors"
+                                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150 min-h-[32px]"
                               >
+                                <TrashIcon className="w-4 h-4 mr-1" />
                                 Delete
                               </button>
                             </fetcher.Form>
@@ -468,41 +449,31 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
 
       {/* Add Expense Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
-          <div className="bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-rose-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-150">
+            <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 Add New Expense
               </h2>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setLastSubmitTime(0);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors p-1"
                 aria-label="Close modal"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
-            <fetcher.Form method="post" className="space-y-5">
+            <fetcher.Form method="post" className="p-6 space-y-4">
               <input type="hidden" name="_action" value="add" />
 
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Expense Name
                 </label>
@@ -511,7 +482,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   name="name"
                   id="name"
                   placeholder="e.g., Netflix, Rent, Groceries"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                   required
                 />
               </div>
@@ -519,7 +490,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="monthlyCost"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Monthly Cost
                 </label>
@@ -533,7 +504,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     name="monthlyCost"
                     id="monthlyCost"
                     placeholder="0.00"
-                    className="w-full pl-8 pr-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                    className="w-full pl-8 pr-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                     required
                   />
                 </div>
@@ -542,7 +513,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="chargeDay"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Day of Month Charged
                 </label>
@@ -553,7 +524,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   placeholder="1-31"
                   min="1"
                   max="31"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                   required
                 />
                 <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
@@ -564,7 +535,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Category
                 </label>
@@ -574,7 +545,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   id="category"
                   placeholder="e.g., Entertainment, Housing, Food"
                   list="categories"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                   required
                 />
                 <datalist id="categories">
@@ -589,58 +560,32 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={fetcher.state === "submitting"}
-                  className="flex-1 inline-flex justify-center items-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-600 hover:to-rose-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-rose-400 focus:ring-opacity-75"
+                  onClick={() => setLastSubmitTime(Date.now())}
+                  className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
                 >
                   {fetcher.state === "submitting" ? (
                     <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
+                      <ArrowPathIcon className="animate-spin w-4 h-4" />
                       Adding...
                     </>
                   ) : (
                     <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                      <PlusIcon className="w-4 h-4" />
                       Add Expense
                     </>
                   )}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 py-2.5 px-4 border border-gray-400 dark:border-gray-600 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white transition-colors duration-200"
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setLastSubmitTime(0);
+                  }}
+                  className="flex-1 py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 font-medium"
                 >
                   Cancel
                 </button>
@@ -652,42 +597,32 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
 
       {/* Edit Expense Modal */}
       {editingExpense && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
-          <div className="bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-2xl shadow-2xl p-6 w-full max-w-md relative transform transition-all duration-300 ease-out scale-95 opacity-0 animate-modal-pop-in">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-green-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-150">
+            <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                 Edit Expense
               </h2>
               <button
-                onClick={() => setEditingExpense(null)}
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                onClick={() => {
+                  setEditingExpense(null);
+                  setLastSubmitTime(0);
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors p-1"
                 aria-label="Close modal"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <XMarkIcon className="w-6 h-6" />
               </button>
             </div>
 
-            <fetcher.Form method="post" className="space-y-5">
+            <fetcher.Form method="post" className="p-6 space-y-4">
               <input type="hidden" name="_action" value="update" />
               <input type="hidden" name="id" value={editingExpense.id} />
 
               <div>
                 <label
                   htmlFor="edit-name"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Expense Name
                 </label>
@@ -696,7 +631,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   name="name"
                   id="edit-name"
                   defaultValue={editingExpense.name}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                   required
                 />
               </div>
@@ -704,7 +639,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-monthlyCost"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Monthly Cost
                 </label>
@@ -718,7 +653,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                     name="monthlyCost"
                     id="edit-monthlyCost"
                     defaultValue={(editingExpense.monthlyCost / 100).toFixed(2)}
-                    className="w-full pl-8 pr-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    className="w-full pl-8 pr-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                     required
                   />
                 </div>
@@ -727,7 +662,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-chargeDay"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Day of Month Charged
                 </label>
@@ -738,7 +673,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   defaultValue={editingExpense.chargeDay}
                   min="1"
                   max="31"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                   required
                 />
               </div>
@@ -746,7 +681,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               <div>
                 <label
                   htmlFor="edit-category"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
                 >
                   Category
                 </label>
@@ -756,7 +691,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                   id="edit-category"
                   defaultValue={editingExpense.category}
                   list="edit-categories"
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700/50 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="w-full px-3 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
                 />
                 <datalist id="edit-categories">
                   {distinctCategories
@@ -767,54 +702,32 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
                 </datalist>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={fetcher.state === "submitting"}
-                  className="flex-1 inline-flex justify-center items-center gap-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition-all duration-300 shadow-sm hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-opacity-75"
+                  onClick={() => setLastSubmitTime(Date.now())}
+                  className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
                 >
                   {fetcher.state === "submitting" ? (
                     <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
+                      <ArrowPathIcon className="animate-spin w-4 h-4" />
                       Saving...
                     </>
                   ) : (
                     <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
+                      <PencilIcon className="w-4 h-4" />
                       Update Expense
                     </>
                   )}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setEditingExpense(null)}
-                  className="flex-1 py-2.5 px-4 border border-gray-400 dark:border-gray-600 rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white transition-colors duration-200"
+                  onClick={() => {
+                    setEditingExpense(null);
+                    setLastSubmitTime(0);
+                  }}
+                  className="flex-1 py-2.5 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 font-medium"
                 >
                   Cancel
                 </button>
