@@ -29,12 +29,12 @@ export async function loader({ request }: { request: Request }) {
     if (error) {
       const errorDescription = url.searchParams.get("error_description");
       console.error("Google OAuth error:", error, errorDescription);
-      throw redirect("/profile?error=google_auth_failed");
+      throw redirect("/settings?error=google_auth_failed");
     }
 
     if (!code) {
       console.error("No authorization code in callback");
-      throw redirect("/profile?error=no_auth_code");
+      throw redirect("/settings?error=no_auth_code");
     }
 
     // Exchange code for tokens
@@ -95,8 +95,8 @@ export async function loader({ request }: { request: Request }) {
       })
       .where(eq(usersTable.id, user.id));
 
-    // Redirect to profile with success message
-    throw redirect("/profile/calendar-settings?success=connected");
+    // Redirect to settings with success message
+    throw redirect("/settings?success=connected");
   } catch (error) {
     // If it's a redirect, throw it
     if (error instanceof Response) {
@@ -105,7 +105,7 @@ export async function loader({ request }: { request: Request }) {
 
     // Log error and redirect
     console.error("Google OAuth callback error:", error);
-    throw redirect("/profile?error=google_connection_failed");
+    throw redirect("/settings?error=google_connection_failed");
   }
 }
 
