@@ -1,9 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { SparklesIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useToast } from "~/hooks/useToast";
+import { useAutoSave } from "~/hooks/useAutoSave";
 import ReactMarkdown from "react-markdown";
 import { AdvancedNoteEditor } from "./AdvancedNoteEditor";
 import { EditorSettings } from "./EditorSettings";
+import { SplitViewContainer } from "./SplitViewContainer";
+import { MarkdownPreviewPane } from "./MarkdownPreviewPane";
 import {
   loadEditorPreferences,
   saveEditorPreferences,
@@ -34,6 +37,19 @@ export function NoteEditor({
     () => loadEditorPreferences()
   );
 
+  const isNew = !note;
+
+  // Initialize auto-save hook (only for existing notes)
+  const { scheduleAutoSave, autoSaveState } = useAutoSave(
+    note?.id,
+    title,
+    content,
+    selectedFolder,
+    {
+      debounceMs: 3000,
+      enabled: !isNew, // Only auto-save existing notes
+    }
+  );
 
   // Use fetcher.titleFetcher for title generation
   const titleGenerationFetcher = fetcher.titleFetcher || {
@@ -48,7 +64,6 @@ export function NoteEditor({
     submit: fetcher.submit,
   };
 
-  const isNew = !note;
   const { addToast } = useToast();
 
   const prevSubmitFetcherStateRef = useRef<string | undefined>(
@@ -117,6 +132,11 @@ export function NoteEditor({
       setIsGeneratingTitle(true);
     }
   }, [titleGenerationFetcher.state, titleGenerationFetcher.data, addToast]);
+
+  // Trigger auto-save when content changes
+  useEffect(() => {
+    scheduleAutoSave();
+  }, [title, content, selectedFolder, scheduleAutoSave]);
 
   // Handle main note submission with lastSubmitTime to prevent stale data issues
   useEffect(() => {
@@ -234,12 +254,62 @@ export function NoteEditor({
     >
       {/* Title Section */}
       <div className="space-y-2">
-        <label
-          htmlFor="note-title"
-          className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
-        >
-          Title
-        </label>
+        <div className="flex items-center justify-between">
+          <label
+            htmlFor="note-title"
+            className="block text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400"
+          >
+            Title
+          </label>
+          {/* Auto-save Status Indicator */}
+          {!isNew && (
+            <div className="flex items-center gap-1.5 text-xs">
+              {autoSaveState.status === "saving" && (
+                <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+                  <svg
+                    className="h-3 w-3 animate-spin"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 18V4a8 8 0 010 16z"
+                    />
+                  </svg>
+                  <span>Saving...</span>
+                </div>
+              )}
+              {autoSaveState.status === "saved" && !autoSaveState.hasUnsavedChanges && (
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                  <CheckIcon className="h-3 w-3" />
+                  <span>Saved</span>
+                </div>
+              )}
+              {autoSaveState.hasUnsavedChanges && autoSaveState.status !== "saving" && (
+                <div className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                  <div className="h-2 w-2 rounded-full bg-amber-600 dark:bg-amber-400"></div>
+                  <span>Unsaved</span>
+                </div>
+              )}
+              {autoSaveState.status === "error" && (
+                <div className="flex items-center gap-1 text-red-600 dark:text-red-400" title={autoSaveState.error || ""}>
+                  <ExclamationTriangleIcon className="h-3 w-3" />
+                  <span>Save failed</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
         <div className="flex gap-2.5">
           <input
             id="note-title"
@@ -296,19 +366,32 @@ export function NoteEditor({
           Content
         </label>
         <div className="flex-grow flex flex-col min-h-0 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-gray-400 dark:focus-within:ring-gray-600">
-          <EditorSettings
-            preferences={editorPreferences}
-            onFontSizeChange={handleFontSizeChange}
-            onLineWrappingToggle={handleLineWrappingToggle}
-            onTabSizeChange={handleTabSizeChange}
-          />
-          <AdvancedNoteEditor
-            value={content}
-            onChange={setContent}
-            disabled={isSubmitting}
-            fontSize={editorPreferences.fontSize}
-            lineWrapping={editorPreferences.lineWrapping}
-            tabSize={editorPreferences.tabSize}
+          <SplitViewContainer
+            leftPane={
+              <div className="flex flex-col h-full w-full">
+                <EditorSettings
+                  preferences={editorPreferences}
+                  onFontSizeChange={handleFontSizeChange}
+                  onLineWrappingToggle={handleLineWrappingToggle}
+                  onTabSizeChange={handleTabSizeChange}
+                />
+                <AdvancedNoteEditor
+                  value={content}
+                  onChange={setContent}
+                  disabled={isSubmitting}
+                  fontSize={editorPreferences.fontSize}
+                  lineWrapping={editorPreferences.lineWrapping}
+                  tabSize={editorPreferences.tabSize}
+                />
+              </div>
+            }
+            rightPane={
+              <MarkdownPreviewPane
+                content={content}
+                fontSize={editorPreferences.fontSize}
+              />
+            }
+            storageKey="noteEditorSplitViewPosition"
           />
         </div>
       </div>

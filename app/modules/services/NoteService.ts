@@ -55,7 +55,7 @@ export async function handleNoteAction(request: Request) {
     };
   }
 
-  // Update note
+  // Update note (manual save)
   if (intent === "updateNote") {
     const noteId = Number(formData.get("noteId"));
     const title = formData.get("title") as string;
@@ -100,6 +100,62 @@ export async function handleNoteAction(request: Request) {
       message: "Note updated.",
       note: decryptedNote,
     };
+  }
+
+  // Auto-save note (does not close editor)
+  if (intent === "autoSaveNote") {
+    const noteId = Number(formData.get("noteId"));
+    const title = formData.get("title") as string;
+    const content = formData.get("content") as string;
+    const folderId = formData.get("folderId")
+      ? Number(formData.get("folderId"))
+      : null;
+
+    if (!noteId || !title || !content) {
+      return {
+        success: false,
+        error: "Note ID, Title, and Content are required for auto-save.",
+      };
+    }
+
+    try {
+      const encryptedContent = encryptNoteContent(content.trim());
+
+      const updatedNotes = await db
+        .update(notesTable)
+        .set({
+          title: title.trim(),
+          content: encryptedContent,
+          isEncrypted: 1,
+          encryptionMetadata: {
+            version: 1,
+            algorithm: "aes-256-gcm",
+            encryptedAt: new Date().toISOString(),
+          },
+          folderId,
+          updatedAt: new Date(),
+        })
+        .where(eq(notesTable.id, noteId))
+        .returning();
+
+      if (updatedNotes.length === 0) {
+        return {
+          success: false,
+          error: "Note not found or permission denied.",
+        };
+      }
+
+      return {
+        success: true,
+        message: "Note auto-saved.",
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: `Auto-save failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      };
+    }
   }
 
   // Delete note
