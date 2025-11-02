@@ -107,13 +107,6 @@ export default function QuickAccessShortcuts({
             {/* Description */}
             <p className="text-xs opacity-75 mt-1">{shortcut.description}</p>
 
-            {/* Keyboard shortcut */}
-            {showKeyboardHints && shortcut.keyboardShortcut && (
-              <span className="text-xs opacity-50 mt-2 font-mono">
-                {shortcut.keyboardShortcut}
-              </span>
-            )}
-
             {/* Hover indicator */}
             <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <ArrowRightIcon className="w-4 h-4" />
