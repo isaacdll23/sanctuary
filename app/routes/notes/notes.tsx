@@ -234,138 +234,169 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="flex h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 relative">
+    <div className="flex h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 relative">
       {/* Toggle Button */}
       <button
         onClick={handleToggleLeftColumn}
-        className={`absolute top-1/2 -translate-y-1/2 z-20 p-1 bg-gray-700 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-full text-white transition-all duration-300 ease-in-out
-          ${isLeftColumnCollapsed ? "left-1" : "left-[calc(33.333333%-22px)]"}
-        `}
+        className={`absolute top-1/2 -translate-y-1/2 z-20 p-2 rounded-full bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 transition-all duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
+          isLeftColumnCollapsed ? "left-2" : "left-[calc(33.333333%-24px)]"
+        }`}
         aria-label={
           isLeftColumnCollapsed ? "Expand sidebar" : "Collapse sidebar"
         }
+        title={isLeftColumnCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {isLeftColumnCollapsed ? (
-          <ChevronRightIcon className="h-2 w-2" />
+          <ChevronRightIcon className="h-5 w-5" />
         ) : (
-          <ChevronLeftIcon className="h-2 w-2" />
+          <ChevronLeftIcon className="h-5 w-5" />
         )}
       </button>
 
-      {/* Left Column */}
+      {/* Left Column - Sidebar */}
       <div
-        className={`
-          ${
-            isLeftColumnCollapsed ? "w-0 p-0" : "w-1/3 p-4"
-          } border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out overflow-hidden
-        `}
+        className={`${
+          isLeftColumnCollapsed ? "w-0 p-0" : "w-1/3 p-4"
+        } border-r border-gray-200 dark:border-gray-700 flex flex-col transition-all duration-300 ease-in-out overflow-hidden bg-gray-50 dark:bg-gray-800`}
       >
         {!isLeftColumnCollapsed && (
           <>
-            <SearchBar
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-            />
+            {/* Search Bar */}
+            <div className="mb-4">
+              <SearchBar
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+              />
+            </div>
+
+            {/* New Note Button */}
             <button
               onClick={handleCreateNew}
-              className="mb-2 w-full flex items-center justify-center px-4 py-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-600 text-white font-medium hover:from-purple-600 hover:to-pink-700 transition-colors"
+              className="mb-4 w-full flex items-center justify-center px-3 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium hover:bg-gray-800 dark:hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px] shadow-sm"
             >
               <PlusIcon className="h-5 w-5 mr-2" />
               New Note
             </button>
-            <FolderList
-              folders={folders}
-              selectedFolderId={selectedFolderId}
-              setSelectedFolderId={setSelectedFolderId}
-              fetcher={pageActionFetcher} // Pass the pageActionFetcher for folder operations
-              addToast={addToast}
-              draggedNoteId={draggedNoteId}
-              setDraggedNoteId={setDraggedNoteId}
-              dragOverTargetId={dragOverTargetId}
-              setDragOverTargetId={setDragOverTargetId}
-              handleDeleteFolder={handleDeleteFolder}
-              handleRenameFolder={handleRenameFolder}
-              editingFolderId={editingFolderId}
-              setEditingFolderId={setEditingFolderId}
-              editingFolderName={editingFolderName}
-              setEditingFolderName={setEditingFolderName}
-              showFolderInput={showFolderInput}
-              setShowFolderInput={setShowFolderInput}
-              newFolderName={newFolderName}
-              setNewFolderName={setNewFolderName}
-              handleCreateFolder={handleCreateFolder}
-              handleFolderSelect={handleFolderSelect}
-            />
-            <NoteList
-              notes={notes}
-              folders={folders}
-              filteredNotes={filteredNotes}
-              selectedNoteId={selectedNoteId}
-              setSelectedNoteId={setSelectedNoteId}
-              setIsEditing={setIsEditing}
-              setDraggedNoteId={setDraggedNoteId}
-              draggedNoteId={draggedNoteId}
-            />
+
+            {/* Folders Section */}
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 px-1 mb-2.5">
+                Folders
+              </h2>
+              <FolderList
+                folders={folders}
+                selectedFolderId={selectedFolderId}
+                setSelectedFolderId={setSelectedFolderId}
+                fetcher={pageActionFetcher}
+                addToast={addToast}
+                draggedNoteId={draggedNoteId}
+                setDraggedNoteId={setDraggedNoteId}
+                dragOverTargetId={dragOverTargetId}
+                setDragOverTargetId={setDragOverTargetId}
+                handleDeleteFolder={handleDeleteFolder}
+                handleRenameFolder={handleRenameFolder}
+                editingFolderId={editingFolderId}
+                setEditingFolderId={setEditingFolderId}
+                editingFolderName={editingFolderName}
+                setEditingFolderName={setEditingFolderName}
+                showFolderInput={showFolderInput}
+                setShowFolderInput={setShowFolderInput}
+                newFolderName={newFolderName}
+                setNewFolderName={setNewFolderName}
+                handleCreateFolder={handleCreateFolder}
+                handleFolderSelect={handleFolderSelect}
+              />
+            </div>
+
+            {/* Notes Section */}
+            <div className="min-h-0 flex flex-col">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 px-1 mb-2.5">
+                Notes
+              </h2>
+              <NoteList
+                notes={notes}
+                folders={folders}
+                filteredNotes={filteredNotes}
+                selectedNoteId={selectedNoteId}
+                setSelectedNoteId={setSelectedNoteId}
+                setIsEditing={setIsEditing}
+                setDraggedNoteId={setDraggedNoteId}
+                draggedNoteId={draggedNoteId}
+              />
+            </div>
           </>
         )}
       </div>
-      {/* Right Column */}
+
+      {/* Right Column - Editor/Viewer */}
       <div
-        className={`
-        ${
+        className={`${
           isLeftColumnCollapsed ? "w-full" : "w-2/3"
-        } p-6 overflow-y-auto transition-all duration-300 ease-in-out
-        `}
+        } p-6 overflow-y-auto transition-all duration-300 ease-in-out bg-white dark:bg-gray-900`}
       >
         {isEditing ? (
           <NoteEditor
             key={selectedNote?.id || "new"}
             note={selectedNote}
             fetcher={{
-              submit: pageActionFetcher.submit, // For note creation/update
+              submit: pageActionFetcher.submit,
               state: pageActionFetcher.state,
               data: pageActionFetcher.data,
-              titleFetcher: titleGenerationFetcher, // Dedicated fetcher for title generation
+              titleFetcher: titleGenerationFetcher,
             }}
             onCancel={() => setIsEditing(false)}
             folderId={selectedFolderId}
             folders={folders}
           />
         ) : selectedNote ? (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-                {selectedNote.title}
-              </h1>
-              <div className="flex space-x-2">
+          <div className="space-y-4 max-w-4xl">
+            {/* Note Header */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+                  {selectedNote.title}
+                </h1>
+                {selectedNote.folderId && folders.find((f: any) => f.id === selectedNote.folderId) && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <span className="flex items-center gap-1">
+                      {folders.find((f: any) => f.id === selectedNote.folderId)?.name}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-purple-600 dark:text-purple-400 transition-colors"
+                  className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
                   aria-label="Edit note"
+                  title="Edit note"
                 >
                   <PencilSquareIcon className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(selectedNote.id)}
-                  className="p-2 rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-red-500 transition-colors"
+                  className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-red-400 dark:focus:ring-red-600"
                   aria-label="Delete note"
+                  title="Delete note"
                 >
                   <TrashIcon className="h-5 w-5" />
                 </button>
               </div>
             </div>
-            <div className="prose prose-gray dark:prose-invert prose-sm md:prose-base max-w-none bg-gray-100 dark:bg-gray-800 p-4 rounded-lg">
+
+            {/* Note Content */}
+            <div className="prose prose-gray dark:prose-invert prose-sm md:prose-base max-w-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-lg shadow-sm">
               <ReactMarkdown>{selectedNote.content}</ReactMarkdown>
             </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
-            <div className="text-center">
-              <PencilSquareIcon className="h-16 w-16 text-gray-500 dark:text-gray-600 mx-auto mb-4" />
+            <div className="text-center space-y-3">
+              <PencilSquareIcon className="h-16 w-16 text-gray-300 dark:text-gray-700 mx-auto" />
               <h2 className="text-xl font-semibold text-gray-600 dark:text-gray-400">
                 Select a note to view or edit
               </h2>
-              <p className="text-gray-500 dark:text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-500">
                 Or, create a new one using the button on the left.
               </p>
             </div>

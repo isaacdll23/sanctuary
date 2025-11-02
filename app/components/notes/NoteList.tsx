@@ -11,10 +11,13 @@ export function NoteList({
   draggedNoteId,
 }: any) {
   return (
-    <div className="flex-grow overflow-y-auto space-y-1 p-1">
+    <div className="flex-grow overflow-y-auto space-y-1.5">
       {filteredNotes.length > 0 ? (
         filteredNotes.map((n: any) => {
           const currentFolder = folders.find((f: any) => f.id === n.folderId);
+          const isSelected = selectedNoteId === n.id;
+          const isDragged = draggedNoteId === n.id;
+
           return (
             <div
               key={n.id}
@@ -25,34 +28,37 @@ export function NoteList({
                 setSelectedNoteId(n.id);
                 setIsEditing(false);
               }}
-              className={`p-3 rounded-lg cursor-grab mb-2 transition-colors
-                ${draggedNoteId === n.id ? "opacity-50 bg-purple-700" : ""}
-                ${
-                  selectedNoteId === n.id
-                    ? "bg-purple-600 ring-2 ring-purple-400 shadow-lg"
-                    : "bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 shadow-md"
-                }
-              `}
+              className={`p-3 rounded-lg cursor-grab active:cursor-grabbing transition-all duration-150 border ${
+                isDragged
+                  ? "opacity-50 bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-600"
+                  : isSelected
+                    ? "bg-white dark:bg-gray-800 border-gray-400 dark:border-gray-600 ring-1 ring-gray-400 dark:ring-gray-600 shadow-md"
+                    : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 shadow-sm hover:shadow-md"
+              }`}
+              role="option"
+              aria-selected={isSelected}
             >
               <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {n.title || "Untitled Note"}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 truncate mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
                 {n.content?.substring(0, 80) || "No content..."}
               </p>
               {currentFolder && (
-                <div className="text-xs text-purple-300 mt-2 flex items-center">
-                  <FolderIcon className="h-4 w-4 mr-1 flex-shrink-0" />
-                  <span>{currentFolder.name}</span>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mt-2 flex items-center gap-1">
+                  <FolderIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{currentFolder.name}</span>
                 </div>
               )}
             </div>
           );
         })
       ) : (
-        <p className="text-gray-600 dark:text-gray-400 text-center py-4">
-          No notes found.
-        </p>
+        <div className="flex items-center justify-center py-8 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No notes found.
+          </p>
+        </div>
       )}
     </div>
   );
