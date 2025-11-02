@@ -1,7 +1,9 @@
 import { useLoaderData } from "react-router";
+import { useMemo } from "react";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { getDashboardData } from "~/modules/services/DashboardService";
 import { getVisibleWidgets } from "~/components/dashboard/WidgetRegistry";
+import { useDashboardFilters } from "~/hooks/useDashboardFilters";
 import DashboardStatCard from "~/components/dashboard/DashboardStatCard";
 import CompletionRateCard from "~/components/dashboard/CompletionRateCard";
 import ProductivityInsightsCard from "~/components/dashboard/ProductivityInsightsCard";
@@ -10,7 +12,11 @@ import ProgressSummaryWidget from "~/components/dashboard/widgets/ProgressSummar
 import ActionItemsPriorityWidget from "~/components/dashboard/widgets/ActionItemsPriorityWidget";
 import FinancialSnapshotWidget from "~/components/dashboard/widgets/FinancialSnapshotWidget";
 import WeeklyAchievementsWidget from "~/components/dashboard/widgets/WeeklyAchievementsWidget";
+import DashboardFilterControls from "~/components/dashboard/DashboardFilterControls";
+import QuickAccessShortcuts from "~/components/dashboard/QuickAccessShortcuts";
+import DashboardNotificationCenter from "~/components/dashboard/DashboardNotificationCenter";
 import { SparklesIcon } from "@heroicons/react/24/outline";
+import { insightsToAlerts } from "~/types/dashboardAlerts";
 import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
 import type { WidgetType } from "~/components/dashboard/WidgetRegistry";
 
@@ -27,7 +33,20 @@ export const loader = pageAccessLoader("dashboard", async (user, request) => {
 
 export default function Dashboard() {
   const dashboardData = useLoaderData<AggregatedDashboardData>();
+  const {
+    filters,
+    updateDateRange,
+    toggleFeature,
+    setTaskCategory,
+    setSearchQuery,
+    resetFilters,
+    hasActiveFilters,
+  } = useDashboardFilters();
+
   const visibleWidgets = getVisibleWidgets(dashboardData, dashboardData.preferences);
+
+  // Convert insights to alerts for Phase 3.5 notification integration
+  const dashboardAlerts = insightsToAlerts(dashboardData.insights);
 
   // Map widget IDs to their components
   const widgetComponents: Record<WidgetType, React.ReactNode> = {
@@ -86,6 +105,11 @@ export default function Dashboard() {
           </p>
         </header>
 
+        {/* Phase 3.4: Quick Access Shortcuts */}
+        <div className="mb-6">
+          <QuickAccessShortcuts />
+        </div>
+
         {!hasActiveWidgets ? (
           <div className="py-16 text-center">
             <div className="mb-4">
@@ -108,6 +132,28 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* Phase 3.4: Filter Controls */}
+            <div>
+              <DashboardFilterControls
+                filters={filters}
+                onDateRangeChange={updateDateRange}
+                onFeatureToggle={toggleFeature}
+                onCategoryChange={setTaskCategory}
+                onSearchChange={setSearchQuery}
+                onReset={resetFilters}
+                hasActiveFilters={hasActiveFilters}
+              />
+            </div>
+
+            {/* Phase 3.5: Notification Center */}
+            <div>
+              <DashboardNotificationCenter
+                alerts={dashboardAlerts}
+                maxDisplayed={4}
+                showUnreadBadge={true}
+              />
+            </div>
+
             {/* Render visible widgets */}
             {visibleWidgets.map((widget) => (
               <div
