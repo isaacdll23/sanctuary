@@ -1,7 +1,12 @@
-import { useLoaderData, useFetcher } from "react-router";
+import { useLoaderData } from "react-router";
 import { useState } from "react";
 import PageAccessManager from "~/components/admin/PageAccessManager";
 import UserEditModal from "~/components/admin/UserEditModal";
+import StatCard from "~/components/admin/StatCard";
+import EmailForm from "~/components/admin/EmailForm";
+import UserTableHeader from "~/components/admin/UserTableHeader";
+import UserTableDesktop from "~/components/admin/UserTableDesktop";
+import UserTableMobile from "~/components/admin/UserTableMobile";
 import {
   adminOnlyLoader,
   adminOnlyAction,
@@ -75,8 +80,9 @@ export default function Admin() {
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const fetcher = useFetcher();
-  const [testEmail, setTestEmail] = useState("");
+
+  const adminCount = users.filter((user) => user.role === "admin").length;
+  const regularUserCount = users.filter((user) => user.role === "user").length;
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
@@ -89,232 +95,63 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight mb-4 md:mb-0">
-              Admin Portal
-            </h1>
-          </div>
-          <p className="text-gray-600 dark:text-gray-400 text-lg max-w-3xl">
-            Manage users, monitor system status, and configure application
-            settings.
+    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {/* Header Section */}
+        <header className="mb-8 md:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white">
+            Admin Portal
+          </h1>
+          <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl leading-relaxed">
+            Manage users, configure access permissions, and administer the
+            Sanctuary platform.
           </p>
         </header>
 
-        <main className="grid gap-8">
-          {/* Test Email Section */}
-          <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold mb-4">Send Test Email</h2>
-            <fetcher.Form
-              method="post"
-              className="flex flex-col md:flex-row gap-3 items-start md:items-end"
-            >
-              <input type="hidden" name="intent" value="sendTestEmail" />
-              <div>
-                <label
-                  htmlFor="testEmail"
-                  className="block text-gray-700 dark:text-gray-300 font-medium mb-1"
-                >
-                  Email Address
-                </label>
-                <input
-                  id="testEmail"
-                  name="email"
-                  type="email"
-                  required
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  className="bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors w-72"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg px-6 py-2 transition-colors mt-2 md:mt-0"
-                disabled={fetcher.state === "submitting"}
-              >
-                {fetcher.state === "submitting"
-                  ? "Sending..."
-                  : "Send Test Email"}
-              </button>
-            </fetcher.Form>
-            {fetcher.data && (
-              <div
-                className={`mt-3 text-sm ${
-                  fetcher.data.success ? "text-green-400" : "text-red-400"
-                }`}
-              >
-                {fetcher.data.success
-                  ? "Test email sent!"
-                  : `Error: ${
-                      fetcher.data.error?.message || fetcher.data.message
-                    }`}
-              </div>
-            )}
+        <main className="space-y-8">
+          {/* Quick Actions & Email Utilities */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8 hover:shadow-md transition-all duration-150">
+            <EmailForm />
           </section>
-          {/* Admin Stats */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
-                  <UsersIcon className="w-8 h-8" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Total Users
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {users.length}
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-purple-500/20 text-purple-400">
-                  <ShieldCheckIcon className="w-8 h-8" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Admins
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {users.filter((user) => user.role === "admin").length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-green-500/20 text-green-400">
-                  <UserIcon className="w-8 h-8" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Regular Users
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {users.filter((user) => user.role === "user").length}
-                  </p>
-                </div>
-              </div>
+          {/* Stats Section */}
+          <section>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">
+              System Overview
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              <StatCard
+                icon={UsersIcon}
+                label="Total Users"
+                value={users.length}
+                description={`${adminCount} admin${adminCount !== 1 ? "s" : ""}`}
+              />
+              <StatCard
+                icon={ShieldCheckIcon}
+                label="Administrators"
+                value={adminCount}
+                description="Full system access"
+              />
+              <StatCard
+                icon={UserIcon}
+                label="Regular Users"
+                value={regularUserCount}
+                description="Limited access"
+              />
             </div>
           </section>
 
-          {/* Users section */}
-          <section className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-6">User Management</h2>
-            {/* Responsive user list: table on md+, cards on mobile */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full border-collapse" aria-label="User list">
-                <caption className="sr-only">List of users</caption>
-                <thead className="bg-gray-100 dark:bg-gray-900/50">
-                  <tr>
-                    <th scope="col" className="text-left p-4 rounded-tl-lg">
-                      Username
-                    </th>
-                    <th scope="col" className="text-left p-4">
-                      Email
-                    </th>
-                    <th scope="col" className="text-left p-4">
-                      Role
-                    </th>
-                    <th scope="col" className="text-left p-4">
-                      Created
-                    </th>
-                    <th scope="col" className="text-left p-4 rounded-tr-lg">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-300 dark:divide-gray-700">
-                  {users.map((user: any) => (
-                    <tr
-                      key={user.id}
-                      className="hover:bg-gray-100 dark:hover:bg-gray-700/50"
-                    >
-                      <td className="p-4">{user.username}</td>
-                      <td className="p-4">{user.email}</td>
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
-                            user.role === "admin"
-                              ? "bg-purple-200 text-purple-900"
-                              : "bg-blue-200 text-blue-900"
-                          }`}
-                          tabIndex={0}
-                          aria-label={`Role: ${user.role}`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="p-4">
-                        {new Date(user.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className="px-4 py-2 min-w-[44px] min-h-[44px] bg-blue-600 hover:bg-blue-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                            aria-label={`Edit ${user.username}`}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {/* Mobile user cards */}
-            <div className="md:hidden space-y-4">
-              {users.map((user: any) => (
-                <div
-                  key={user.id}
-                  className="bg-gray-100 dark:bg-gray-900/60 rounded-xl p-4 flex flex-col gap-2 shadow border border-gray-300 dark:border-gray-700"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-lg">
-                      {user.username}
-                    </span>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
-                        user.role === "admin"
-                          ? "bg-purple-200 text-purple-900"
-                          : "bg-blue-200 text-blue-900"
-                      }`}
-                      tabIndex={0}
-                      aria-label={`Role: ${user.role}`}
-                    >
-                      {user.role}
-                    </span>
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400 text-sm">
-                    {user.email}
-                  </div>
-                  <div className="text-gray-500 dark:text-gray-400 text-xs">
-                    Created: {new Date(user.createdAt).toLocaleDateString()}
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    <button
-                      onClick={() => handleEditUser(user)}
-                      className="px-4 py-2 min-w-[44px] min-h-[44px] bg-blue-600 hover:bg-blue-700 rounded-md text-sm text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full transition-colors"
-                      aria-label={`Edit ${user.username}`}
-                    >
-                      Edit
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* User Management Section */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8 hover:shadow-md transition-all duration-150">
+            <UserTableHeader
+              title="User Management"
+              description={`${users.length} registered user${users.length !== 1 ? "s" : ""}`}
+            />
+            <UserTableDesktop users={users} onEditUser={handleEditUser} />
+            <UserTableMobile users={users} onEditUser={handleEditUser} />
           </section>
 
-          {/* Page Access Management section */}
+          {/* Page Access Management Section */}
           <PageAccessManager users={users} />
         </main>
 

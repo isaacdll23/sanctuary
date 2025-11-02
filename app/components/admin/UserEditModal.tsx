@@ -32,6 +32,7 @@ export default function UserEditModal({
     role: "",
     newPassword: "",
   });
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
 
   // Update form data when user changes
   useEffect(() => {
@@ -46,16 +47,18 @@ export default function UserEditModal({
   }, [user]);
 
   // Close modal on successful submission and show toast
+  // Only if the submission happened while modal was open (track by time)
   useEffect(() => {
-    if (fetcher.data && fetcher.state === "idle") {
+    if (fetcher.data && fetcher.state === "idle" && lastSubmitTime > 0) {
       if (fetcher.data.success) {
         addToast(fetcher.data.message, "success");
         onClose();
       } else {
         addToast(fetcher.data.message, "error");
       }
+      setLastSubmitTime(0); // Reset to prevent duplicate closes
     }
-  }, [fetcher.data, fetcher.state, onClose, addToast]);
+  }, [fetcher.data, fetcher.state, onClose, addToast, lastSubmitTime]);
 
   if (!isOpen || !user) return null;
 
@@ -84,6 +87,7 @@ export default function UserEditModal({
       submitData.newPassword = formData.newPassword;
     }
 
+    setLastSubmitTime(Date.now());
     fetcher.submit(submitData, { method: "post" });
   };
 
@@ -93,6 +97,7 @@ export default function UserEditModal({
         `Are you sure you want to delete user "${user.username}"? This action cannot be undone.`
       )
     ) {
+      setLastSubmitTime(Date.now());
       fetcher.submit(
         {
           intent: "deleteUser",
