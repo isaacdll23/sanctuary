@@ -173,6 +173,8 @@ export const notesTable = pgTable("notes", {
   folderId: integer().references(() => foldersTable.id), // nullable for notes not in a folder
   title: varchar({ length: 255 }).notNull(),
   content: text().notNull(),
+  isEncrypted: integer().default(0).notNull(), // 0 = not encrypted, 1 = encrypted (for backward compatibility)
+  encryptionMetadata: json(), // Stores encryption metadata: { version: number, algorithm: string, ... } for future key rotation
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().notNull().defaultNow(),
 });

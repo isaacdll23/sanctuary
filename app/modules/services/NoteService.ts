@@ -4,6 +4,7 @@ import { notesTable, foldersTable } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
 import { generateNoteTitle } from "~/modules/ai.server";
+import { encryptNoteContent, decryptNoteContent } from "~/modules/services/NoteEncryptionService";
 
 export async function handleNoteAction(request: Request) {
   const user = await getUserFromSession(request);
@@ -22,21 +23,35 @@ export async function handleNoteAction(request: Request) {
       throw new Error("Title and Content are required for creating a note.");
     }
 
+    const encryptedContent = encryptNoteContent(content.trim());
+
     const newNote = await db
       .insert(notesTable)
       .values({
         userId: user.id,
         title: title.trim(),
-        content: content.trim(),
+        content: encryptedContent,
+        isEncrypted: 1,
+        encryptionMetadata: {
+          version: 1,
+          algorithm: "aes-256-gcm",
+          encryptedAt: new Date().toISOString(),
+        },
         folderId,
         updatedAt: new Date(),
       })
       .returning();
 
+    // Return decrypted note to client
+    const decryptedNote = {
+      ...newNote[0],
+      content: content.trim(),
+    };
+
     return {
       success: true,
       message: "Note created.",
-      note: newNote[0],
+      note: decryptedNote,
     };
   }
 
@@ -53,21 +68,37 @@ export async function handleNoteAction(request: Request) {
       throw new Error("Note ID, Title, and Content are required for updating.");
     }
 
+    const encryptedContent = encryptNoteContent(content.trim());
+
     const updatedNotes = await db
       .update(notesTable)
       .set({
         title: title.trim(),
-        content: content.trim(),
+        content: encryptedContent,
+        isEncrypted: 1,
+        encryptionMetadata: {
+          version: 1,
+          algorithm: "aes-256-gcm",
+          encryptedAt: new Date().toISOString(),
+        },
         folderId,
         updatedAt: new Date(),
       })
       .where(eq(notesTable.id, noteId))
       .returning();
 
+    // Return decrypted note to client
+    const decryptedNote = updatedNotes[0]
+      ? {
+          ...updatedNotes[0],
+          content: content.trim(),
+        }
+      : null;
+
     return {
       success: true,
       message: "Note updated.",
-      note: updatedNotes[0] || null,
+      note: decryptedNote,
     };
   }
 
@@ -202,12 +233,64 @@ export async function handleNoteAction(request: Request) {
   };
 }
 
+/**
+ * Helper function to decrypt a note's content
+ * Handles both encrypted and unencrypted notes for backward compatibility
+ * Returns decrypted content or throws error if decryption fails
+ */
+function decryptNoteIfNeeded(
+  note: typeof notesTable.$inferSelect
+): typeof notesTable.$inferSelect {
+  if (!note.isEncrypted) {
+    return note;
+  }
+
+  try {
+    const decryptedContent = decryptNoteContent(note.content);
+    return {
+      ...note,
+      content: decryptedContent,
+    };
+  } catch (error) {
+    throw new Error(
+      `Failed to decrypt note ${note.id}: ${error instanceof Error ? error.message : "Unknown error"}`
+    );
+  }
+}
+
+/**
+ * Helper function to decrypt multiple notes
+ * Skips and logs notes that fail to decrypt
+ */
+function decryptNotesIfNeeded(
+  notes: Array<typeof notesTable.$inferSelect>
+): Array<typeof notesTable.$inferSelect> {
+  return notes.map((note) => {
+    try {
+      return decryptNoteIfNeeded(note);
+    } catch (error) {
+      console.error(
+        `Error decrypting note ${note.id}:`,
+        error instanceof Error ? error.message : "Unknown error"
+      );
+      // Return note with placeholder content to prevent complete failure
+      return {
+        ...note,
+        content: "[ERROR: Unable to decrypt this note]",
+      };
+    }
+  });
+}
+
 export async function getNotes(userId: number) {
-  return db
+  const { desc } = await import("drizzle-orm");
+  const notes = await db
     .select()
     .from(notesTable)
     .where(eq(notesTable.userId, userId))
-    .orderBy(notesTable.updatedAt);
+    .orderBy(desc(notesTable.updatedAt));
+
+  return decryptNotesIfNeeded(notes);
 }
 
 export async function getNote(noteId: number, userId: number) {
@@ -215,7 +298,22 @@ export async function getNote(noteId: number, userId: number) {
     .select()
     .from(notesTable)
     .where(and(eq(notesTable.id, noteId), eq(notesTable.userId, userId)));
-  return results[0] || null;
+
+  if (results.length === 0) return null;
+
+  try {
+    return decryptNoteIfNeeded(results[0]);
+  } catch (error) {
+    console.error(
+      `Error decrypting note ${noteId}:`,
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    // Return note with error placeholder
+    return {
+      ...results[0],
+      content: "[ERROR: Unable to decrypt this note]",
+    };
+  }
 }
 
 export async function getFolders(userId: number) {
@@ -224,4 +322,82 @@ export async function getFolders(userId: number) {
     .from(foldersTable)
     .where(eq(foldersTable.userId, userId))
     .orderBy(foldersTable.name);
+}
+
+/**
+ * Bulk encrypt all unencrypted notes across the system
+ * Admin-only operation to retroactively encrypt legacy notes
+ * Returns { success, message, encrypted, failed, total }
+ */
+export async function bulkEncryptAllNotes() {
+  try {
+    // Fetch all unencrypted notes
+    const unencryptedNotes = await db
+      .select()
+      .from(notesTable)
+      .where(eq(notesTable.isEncrypted, 0));
+
+    if (unencryptedNotes.length === 0) {
+      return {
+        success: true,
+        message: "No unencrypted notes found.",
+        encrypted: 0,
+        failed: 0,
+        total: 0,
+      };
+    }
+
+    let encrypted = 0;
+    let failed = 0;
+    const failedNotes: Array<{ id: number; error: string }> = [];
+
+    // Encrypt each note
+    for (const note of unencryptedNotes) {
+      try {
+        const encryptedContent = encryptNoteContent(note.content);
+        
+        await db
+          .update(notesTable)
+          .set({
+            content: encryptedContent,
+            isEncrypted: 1,
+            encryptionMetadata: {
+              version: 1,
+              algorithm: "aes-256-gcm",
+              encryptedAt: new Date().toISOString(),
+            },
+          })
+          .where(eq(notesTable.id, note.id));
+
+        encrypted++;
+      } catch (error) {
+        failed++;
+        failedNotes.push({
+          id: note.id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    return {
+      success: failed === 0,
+      message:
+        failed === 0
+          ? `Successfully encrypted ${encrypted} notes.`
+          : `Encrypted ${encrypted} notes with ${failed} failures.`,
+      encrypted,
+      failed,
+      total: unencryptedNotes.length,
+      failedNotes: failed > 0 ? failedNotes : undefined,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `Bulk encryption failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+      encrypted: 0,
+      failed: 0,
+      total: 0,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }

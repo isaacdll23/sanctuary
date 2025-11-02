@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { desc, sql } from "drizzle-orm";
 import { useFetcher, useLoaderData, useRevalidator } from "react-router";
 import {
   PlusIcon,
@@ -27,28 +26,23 @@ export function meta() {
 }
 
 export const loader = pageAccessLoader("notes", async (user, request) => {
-  const { db } = await import("~/db");
-  const { notesTable, foldersTable } = await import("~/db/schema");
+  const { getNotes, getFolders } = await import(
+    "~/modules/services/NoteService"
+  );
   const url = new URL(request.url);
   const searchTerm = url.searchParams.get("q") || "";
 
-  const notes = await db
-    .select()
-    .from(notesTable)
-    .where(
-      sql`${notesTable.userId} = ${user.id} AND (${
-        notesTable.title
-      } ILIKE ${`%${searchTerm}%`} OR ${
-        notesTable.content
-      } ILIKE ${`%${searchTerm}%`})`
-    )
-    .orderBy(desc(notesTable.updatedAt));
+  // Get all notes (which will be decrypted by NoteService)
+  const allNotes = await getNotes(user.id);
 
-  const folders = await db
-    .select()
-    .from(foldersTable)
-    .where(sql`${foldersTable.userId} = ${user.id}`)
-    .orderBy(foldersTable.name);
+  // Filter by search term on decrypted content
+  const notes = allNotes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      note.content.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const folders = await getFolders(user.id);
 
   return { notes, folders, searchTerm };
 });
@@ -356,13 +350,21 @@ export default function NotesPage() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                   {selectedNote.title}
                 </h1>
-                {selectedNote.folderId && folders.find((f: any) => f.id === selectedNote.folderId) && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                    <span className="flex items-center gap-1">
-                      {folders.find((f: any) => f.id === selectedNote.folderId)?.name}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {selectedNote.folderId && folders.find((f: any) => f.id === selectedNote.folderId) && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                      <span className="flex items-center gap-1">
+                        {folders.find((f: any) => f.id === selectedNote.folderId)?.name}
+                      </span>
+                    </div>
+                  )}
+                  {selectedNote.isEncrypted === 1 && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-xs font-medium text-green-700 dark:text-green-300">
+                      <span className="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full"></span>
+                      Encrypted
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button

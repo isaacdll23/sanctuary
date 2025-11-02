@@ -15,7 +15,9 @@ import {
   UsersIcon,
   ShieldCheckIcon,
   UserIcon,
+  LockClosedIcon,
 } from "@heroicons/react/24/outline";
+import { useFetcher } from "react-router";
 
 // Use React Router v7's auto-generated types (no need for manual import)
 
@@ -45,6 +47,9 @@ export const action = adminOnlyAction(async (adminUser, request) => {
     "~/modules/services/UserManagementService"
   );
   const { sendEmail } = await import("~/modules/services/NotificationService");
+  const { bulkEncryptAllNotes } = await import(
+    "~/modules/services/NoteService"
+  );
 
   const formData = await request.formData();
   const intent = formData.get("intent");
@@ -67,6 +72,8 @@ export const action = adminOnlyAction(async (adminUser, request) => {
       html: `<p>This is a test email from Sanctuary Admin Portal.</p>`,
     });
     return result;
+  } else if (intent === "bulkEncryptNotes") {
+    return bulkEncryptAllNotes();
   }
 
   return { success: false, message: "Unknown action" };
@@ -77,6 +84,7 @@ export default function Admin() {
     users: any[];
     currentUser: any;
   }>();
+  const encryptionFetcher = useFetcher<any>();
 
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -92,6 +100,19 @@ export default function Admin() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedUser(null);
+  };
+
+  const handleBulkEncryptNotes = () => {
+    if (
+      window.confirm(
+        "This will encrypt all unencrypted notes in the system. This process may take a few moments. Continue?"
+      )
+    ) {
+      encryptionFetcher.submit(
+        { intent: "bulkEncryptNotes" },
+        { method: "post", action: "/admin" }
+      );
+    }
   };
 
   return (
@@ -112,6 +133,75 @@ export default function Admin() {
           {/* Quick Actions & Email Utilities */}
           <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8 hover:shadow-md transition-all duration-150">
             <EmailForm />
+          </section>
+
+          {/* Bulk Encryption Section */}
+          <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8 hover:shadow-md transition-all duration-150">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Note Encryption
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Encrypt all unencrypted notes in the system for enhanced security. This process is one-way and permanent.
+                </p>
+              </div>
+              <button
+                onClick={handleBulkEncryptNotes}
+                disabled={encryptionFetcher.state === "submitting"}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+              >
+                <LockClosedIcon className="w-5 h-5" />
+                {encryptionFetcher.state === "submitting"
+                  ? "Encrypting..."
+                  : "Encrypt Now"}
+              </button>
+            </div>
+
+            {/* Encryption Status Message */}
+            {encryptionFetcher.data && (
+              <div
+                className={`mt-4 p-4 rounded-lg ${
+                  encryptionFetcher.data.success
+                    ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                    : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                }`}
+              >
+                <p
+                  className={`text-sm font-medium ${
+                    encryptionFetcher.data.success
+                      ? "text-green-800 dark:text-green-200"
+                      : "text-red-800 dark:text-red-200"
+                  }`}
+                >
+                  {encryptionFetcher.data.message}
+                </p>
+                {encryptionFetcher.data.encrypted !== undefined && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Encrypted: {encryptionFetcher.data.encrypted} | Failed:{" "}
+                    {encryptionFetcher.data.failed} | Total:{" "}
+                    {encryptionFetcher.data.total}
+                  </p>
+                )}
+                {encryptionFetcher.data.failedNotes &&
+                  encryptionFetcher.data.failedNotes.length > 0 && (
+                    <details className="mt-3 text-xs">
+                      <summary className="cursor-pointer font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100">
+                        View failed notes ({encryptionFetcher.data.failedNotes.length})
+                      </summary>
+                      <ul className="mt-2 space-y-1 pl-4 list-disc text-gray-600 dark:text-gray-400">
+                        {encryptionFetcher.data.failedNotes.map(
+                          (failedNote: any) => (
+                            <li key={failedNote.id}>
+                              Note {failedNote.id}: {failedNote.error}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </details>
+                  )}
+              </div>
+            )}
           </section>
 
           {/* Stats Section */}
