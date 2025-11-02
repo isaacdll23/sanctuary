@@ -1,10 +1,4 @@
 import { redirect } from "react-router";
-import { getUserFromSession, exchangeGoogleAuthCode, refreshGoogleAccessToken } from "~/modules/auth.server";
-import { db } from "~/db";
-import { googleCalendarAccountsTable, usersTable } from "~/db/schema";
-import { encryptToken } from "~/modules/services/TokenEncryptionService";
-import { googleCalendarApiClient } from "~/modules/services/GoogleCalendarApiClient";
-import { eq } from "drizzle-orm";
 
 export const meta = () => [{ title: "Connecting Google Calendar..." }];
 
@@ -14,6 +8,14 @@ export const meta = () => [{ title: "Connecting Google Calendar..." }];
  */
 export async function loader({ request }: { request: Request }) {
   try {
+    // Dynamic imports to keep server code away from client bundle
+    const { getUserFromSession, exchangeGoogleAuthCode } = await import("~/modules/auth.server");
+    const { db } = await import("~/db");
+    const { googleCalendarAccountsTable, usersTable } = await import("~/db/schema");
+    const { encryptToken } = await import("~/modules/services/TokenEncryptionService");
+    const { googleCalendarApiClient } = await import("~/modules/services/GoogleCalendarApiClient");
+    const { eq } = await import("drizzle-orm");
+
     // Get user from session
     const user = await getUserFromSession(request);
 
@@ -107,6 +109,7 @@ export async function loader({ request }: { request: Request }) {
   }
 }
 
-export default function GoogleCallbackLoader() {
+// This component is never rendered, it only exists to satisfy React Router's route requirements
+export default function GoogleCallbackRoute() {
   return null;
 }
