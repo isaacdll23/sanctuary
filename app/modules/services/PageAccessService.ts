@@ -143,6 +143,9 @@ export async function getUserAccessiblePages(
     return [
       "dashboard",
       "finance",
+      "finance/expenses",
+      "finance/income",
+      "finance/budgets/shared",
       "tasks",
       "day-planner",
       "notes", // Updated from principles to notes

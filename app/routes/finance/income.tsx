@@ -1,25 +1,22 @@
 import { useState } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import type { Route } from "./+types/income";
-import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import { financeIncomeTable } from "~/db/schema";
+import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
 import { eq } from "drizzle-orm";
-import { db } from "~/db";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Income Dashboard" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-
-  const currentUser = await getUserFromSession(request);
+export const loader = pageAccessLoader("finance/income", async (user, request) => {
+  const { db } = await import("~/db");
+  const { financeIncomeTable } = await import("~/db/schema");
 
   const [userIncome]: Array<typeof financeIncomeTable.$inferSelect> = await db
     .select()
     .from(financeIncomeTable)
-    .where(eq(financeIncomeTable.userId, currentUser.id))
+    .where(eq(financeIncomeTable.userId, user.id))
     .limit(1);
 
   if (!userIncome) {
@@ -30,19 +27,20 @@ export async function loader({ request }: Route.LoaderArgs) {
     annualGrossIncome: userIncome.annualGrossIncome,
     taxDeductionPercentage: userIncome.taxDeductionPercentage,
   };
-}
+});
 
-export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
+export const action = pageAccessAction("finance/income", async (user, request) => {
+  const { db } = await import("~/db");
+  const { financeIncomeTable } = await import("~/db/schema");
+
   const formData = await request.formData();
   const annualGrossIncome = formData.get("annualGrossIncome");
   const taxDeductionPercentage = formData.get("taxDeductionPercentage");
-  const currentUser = await getUserFromSession(request);
 
   const [userIncome]: Array<typeof financeIncomeTable.$inferSelect> = await db
     .select()
     .from(financeIncomeTable)
-    .where(eq(financeIncomeTable.userId, currentUser.id))
+    .where(eq(financeIncomeTable.userId, user.id))
     .limit(1);
   if (userIncome) {
     await db
@@ -51,19 +49,19 @@ export async function action({ request }: Route.ActionArgs) {
         annualGrossIncome: Number(annualGrossIncome),
         taxDeductionPercentage: Number(taxDeductionPercentage),
       })
-      .where(eq(financeIncomeTable.userId, currentUser.id));
+      .where(eq(financeIncomeTable.userId, user.id));
     return {};
   }
 
   // If user income doesn't exist, create a new record
   await db.insert(financeIncomeTable).values({
-    userId: currentUser.id,
+    userId: user.id,
     annualGrossIncome: Number(annualGrossIncome),
     taxDeductionPercentage: Number(taxDeductionPercentage),
   });
 
   return {};
-}
+});
 
 export default function Income({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();

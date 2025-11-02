@@ -1,6 +1,7 @@
 import { useState } from "react";
 import SidebarLink from "./SidebarLink";
 import SidebarSection from "./SidebarSection";
+import CollapsibleNavItem from "./CollapsibleNavItem";
 import {
   HomeIcon,
   UserCircleIcon,
@@ -15,6 +16,8 @@ import {
   Cog8ToothIcon,
   CheckCircleIcon,
   CalendarIcon,
+  ArrowUpRightIcon,
+  ArrowDownLeftIcon,
 } from "@heroicons/react/24/outline";
 
 interface SidebarProps {
@@ -28,6 +31,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   pageId: string;
+  children?: NavItem[]; // Support for nested child items
 }
 
 interface NavSection {
@@ -74,12 +78,26 @@ const navSectionsAuth: NavSection[] = [
         label: "Finance",
         icon: CurrencyDollarIcon,
         pageId: "finance",
-      },
-      {
-        to: "/finance/budgets/shared",
-        label: "Shared Budgets",
-        icon: ClipboardDocumentListIcon,
-        pageId: "finance/budgets/shared",
+        children: [
+          {
+            to: "/finance/expenses",
+            label: "Expenses",
+            icon: ArrowUpRightIcon,
+            pageId: "finance/expenses",
+          },
+          {
+            to: "/finance/income",
+            label: "Income",
+            icon: ArrowDownLeftIcon,
+            pageId: "finance/income",
+          },
+          {
+            to: "/finance/budgets/shared",
+            label: "Shared Budgets",
+            icon: ClipboardDocumentListIcon,
+            pageId: "finance/budgets/shared",
+          },
+        ],
       },
     ],
   },
@@ -146,6 +164,36 @@ export default function Sidebar({
     setIsDesktopCollapsed(!isDesktopCollapsed);
   }
 
+  // Helper function to render nav items recursively
+  function renderNavItem(
+    item: NavItem,
+    isSidebarCollapsed: boolean,
+    onItemClick?: () => void
+  ) {
+    if (item.children && item.children.length > 0) {
+      return (
+        <CollapsibleNavItem
+          key={item.to}
+          parentLabel={item.label}
+          parentIcon={item.icon}
+          children={item.children}
+          isCollapsed={isSidebarCollapsed}
+          onClick={onItemClick}
+        />
+      );
+    }
+    return (
+      <SidebarLink
+        key={item.to}
+        to={item.to}
+        label={item.label}
+        icon={item.icon}
+        isCollapsed={isSidebarCollapsed}
+        onClick={onItemClick}
+      />
+    );
+  }
+
   // Determine which nav sections to show based on auth status, admin role, and page access
   let navSections: NavSection[];
   if (!isAuthenticated) {
@@ -156,12 +204,29 @@ export default function Sidebar({
     // Filter sections and items based on accessible pages
     navSections = navSectionsAuth.map((section) => ({
       ...section,
-      items: section.items.filter((item) => {
-        // Special pages like logout are always accessible
-        if (item.pageId === "logout") return true;
-        // Check if the page is in the accessible pages list
-        return accessiblePages.includes(item.pageId);
-      }),
+      items: section.items
+        .filter((item) => {
+          // Special pages like logout are always accessible
+          if (item.pageId === "logout") return true;
+          // For items with children, show if parent is accessible
+          if (item.children) {
+            return accessiblePages.includes(item.pageId);
+          }
+          // Check if the page is in the accessible pages list
+          return accessiblePages.includes(item.pageId);
+        })
+        .map((item) => {
+          // If item has children, filter them based on accessible pages
+          if (item.children) {
+            return {
+              ...item,
+              children: item.children.filter((child) =>
+                accessiblePages.includes(child.pageId)
+              ),
+            };
+          }
+          return item;
+        }),
     })).filter((section) => section.items.length > 0); // Remove empty sections
   }
 
@@ -282,16 +347,13 @@ export default function Sidebar({
                 isFirst={sectionIdx === 0}
                 isAccountSection={section.title === "Account"}
               >
-                {section.items.map((item) => (
-                  <SidebarLink
-                    key={item.to}
-                    to={item.to}
-                    label={item.label}
-                    icon={item.icon}
-                    isCollapsed={isDesktopCollapsed && !isMobileMenuOpen}
-                    onClick={isMobileMenuOpen ? toggleMobileMenu : undefined}
-                  />
-                ))}
+                {section.items.map((item) =>
+                  renderNavItem(
+                    item,
+                    isDesktopCollapsed && !isMobileMenuOpen,
+                    isMobileMenuOpen ? toggleMobileMenu : undefined
+                  )
+                )}
               </SidebarSection>
             ))
           )}

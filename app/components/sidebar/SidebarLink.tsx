@@ -8,6 +8,7 @@ interface SidebarLinkProps extends NavLinkProps {
   icon?: React.ElementType;
   isCollapsed?: boolean;
   to: NavLinkProps["to"]; // Ensure 'to' is part of the props
+  className?: string;
 }
 
 export default function SidebarLink({
@@ -16,6 +17,7 @@ export default function SidebarLink({
   onClick,
   icon: Icon,
   isCollapsed,
+  className,
   ...rest
 }: SidebarLinkProps) {
   const navLink = (
@@ -31,7 +33,7 @@ export default function SidebarLink({
           isActive
             ? "bg-indigo-600 text-white shadow-md border-l-indigo-400 dark:bg-indigo-600 dark:text-white"
             : "text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:scale-[1.02] border-l-transparent dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-        }`
+        } ${className || ""}`
       }
       {...rest}
       title={isCollapsed ? label : undefined}

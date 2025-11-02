@@ -1,9 +1,8 @@
 import { useFetcher } from "react-router";
 import { useState, useEffect } from "react";
-import { requireAuth, getUserFromSession } from "~/modules/auth.server";
+import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
 import type { Route } from "./+types/expenses";
-import { db } from "~/db";
-import { financeExpensesTable, financeIncomeTable } from "~/db/schema";
+import type { financeExpensesTable } from "~/db/schema";
 import { eq, desc } from "drizzle-orm";
 import {
   PlusIcon,
@@ -17,9 +16,9 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "Expenses" }];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  await requireAuth(request);
-  const user = await getUserFromSession(request);
+export const loader = pageAccessLoader("finance/expenses", async (user, request) => {
+  const { db } = await import("~/db");
+  const { financeExpensesTable, financeIncomeTable } = await import("~/db/schema");
 
   const userExpenses = await db
     .select()
@@ -39,10 +38,12 @@ export async function loader({ request }: Route.LoaderArgs) {
   }
 
   return { userExpenses: userExpenses, userIncome: userIncomeRecords[0] };
-}
+});
 
-export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
+export const action = pageAccessAction("finance/expenses", async (user, request) => {
+  const { db } = await import("~/db");
+  const { financeExpensesTable } = await import("~/db/schema");
+
   const formData = await request.formData();
   const _action = formData.get("_action");
 
@@ -86,8 +87,6 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Invalid input" };
     }
 
-    const user = await getUserFromSession(request);
-
     await db.insert(financeExpensesTable).values({
       userId: user.id,
       name,
@@ -96,7 +95,7 @@ export async function action({ request }: Route.ActionArgs) {
       category,
     });
   }
-}
+});
 
 export default function Expenses({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
