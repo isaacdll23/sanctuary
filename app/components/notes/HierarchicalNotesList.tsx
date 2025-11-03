@@ -378,11 +378,9 @@ function FolderItem({
       className={`group w-full flex items-center justify-between px-3 py-2 rounded-lg transition-all duration-200 cursor-pointer border text-sm ${
         dragOverTargetId === folder.id
           ? "bg-blue-50 dark:bg-blue-900 border-blue-400 dark:border-blue-600 ring-2 ring-blue-300 dark:ring-blue-600 shadow-md"
-          : isSelected
-            ? "bg-gray-100 dark:bg-gray-700 border-gray-400 dark:border-gray-600 ring-1 ring-gray-400 dark:ring-gray-600 shadow-sm"
-            : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm hover:shadow-md"
+          : "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 shadow-sm hover:shadow-md"
       }`}
-      onClick={() => !isEditing && onSelect()}
+      onClick={() => !isEditing && onToggleExpand()}
       onDragOver={(e) => {
         e.preventDefault();
         if (draggedNoteId) setDragOverTargetId(folder.id);
@@ -467,9 +465,8 @@ function FolderItem({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleExpand();
               }}
-              className="p-0.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all duration-200 flex-shrink-0"
+              className="p-0.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all duration-200 flex-shrink-0 pointer-events-none"
               title={isExpanded ? "Collapse folder" : "Expand folder"}
             >
               <ChevronDownIcon 
