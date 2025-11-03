@@ -31,7 +31,14 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
   const dateParam = url.searchParams.get("date");
 
   // Get current date in user's timezone (or default to today)
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: user.timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const today = formatter.format(now);
   const planDate = dateParam || today;
 
   // Get user's calendar preferences
@@ -327,7 +334,15 @@ export default function DayPlanner() {
       }
     : null;
 
-  const today = new Date().toISOString().split("T")[0];
+  // Calculate today's date in user's timezone
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: user.timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const today = formatter.format(now);
   const isSyncing = fetcher.state === "submitting";
 
   return (
