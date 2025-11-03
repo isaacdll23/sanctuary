@@ -17,8 +17,7 @@ import type { notesTable, foldersTable } from "~/db/schema";
 import { fuzzyMatch } from "~/utils/fuzzyMatch";
 import { useToast } from "~/hooks/useToast";
 import { NoteEditor } from "~/components/notes/NoteEditor";
-import { FolderList } from "~/components/notes/FolderList";
-import { NoteList } from "~/components/notes/NoteList";
+import { HierarchicalNotesList } from "~/components/notes/HierarchicalNotesList";
 import { SearchBar } from "~/components/notes/SearchBar";
 
 export function meta() {
@@ -272,15 +271,22 @@ export default function NotesPage() {
               New Note
             </button>
 
-            {/* Folders Section */}
-            <div className="mb-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 px-1 mb-2.5">
-                Folders
-              </h2>
-              <FolderList
+            {/* Hierarchical Folders & Notes List */}
+            <div className="min-h-0 flex flex-col flex-grow">
+              <div className="flex items-center gap-2 px-1 mb-3 pb-2 border-b border-gray-300 dark:border-gray-700">
+                <div className="h-0.5 w-1 bg-gray-900 dark:bg-gray-100 rounded-full"></div>
+                <h2 className="text-xs font-bold uppercase tracking-widest text-gray-700 dark:text-gray-300">
+                  Folders & Notes
+                </h2>
+              </div>
+              <HierarchicalNotesList
                 folders={folders}
+                notes={notes}
                 selectedFolderId={selectedFolderId}
+                selectedNoteId={selectedNoteId}
                 setSelectedFolderId={setSelectedFolderId}
+                setSelectedNoteId={setSelectedNoteId}
+                setIsEditing={setIsEditing}
                 fetcher={pageActionFetcher}
                 addToast={addToast}
                 draggedNoteId={draggedNoteId}
@@ -298,24 +304,7 @@ export default function NotesPage() {
                 newFolderName={newFolderName}
                 setNewFolderName={setNewFolderName}
                 handleCreateFolder={handleCreateFolder}
-                handleFolderSelect={handleFolderSelect}
-              />
-            </div>
-
-            {/* Notes Section */}
-            <div className="min-h-0 flex flex-col">
-              <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-400 px-1 mb-2.5">
-                Notes
-              </h2>
-              <NoteList
-                notes={notes}
-                folders={folders}
-                filteredNotes={filteredNotes}
-                selectedNoteId={selectedNoteId}
-                setSelectedNoteId={setSelectedNoteId}
-                setIsEditing={setIsEditing}
-                setDraggedNoteId={setDraggedNoteId}
-                draggedNoteId={draggedNoteId}
+                searchQuery={searchQuery}
               />
             </div>
           </>
