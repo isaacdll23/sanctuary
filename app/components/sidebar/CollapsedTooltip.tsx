@@ -18,10 +18,10 @@ export default function CollapsedTooltip({
   }
 
   return (
-    <div className="relative group">
+    <div className="relative group z-0">
       {children}
       <div
-        className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50"
+        className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-40"
         role="tooltip"
       >
         {label}
