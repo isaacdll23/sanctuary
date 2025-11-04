@@ -1,15 +1,13 @@
 import { useLoaderData, useNavigate, useFetcher } from "react-router";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
-import CalendarView from "~/components/day-planner/CalendarView";
 import DayInsightsPanel from "~/components/day-planner/DayInsightsPanel";
-import QuickUpcomingTasksSidebar from "~/components/day-planner/QuickUpcomingTasksSidebar";
-import QuickAddTaskBar from "~/components/day-planner/QuickAddTaskBar";
-import AddTaskModal from "~/components/day-planner/AddTaskModal";
-import EditTaskModal from "~/components/day-planner/EditTaskModal";
 import GoogleCalendarButton from "~/components/day-planner/GoogleCalendarButton";
-import ConflictResolutionModal from "~/components/day-planner/ConflictResolutionModal";
-import { useEffect, useContext, useState, useRef } from "react";
+import TaskModalsContainer from "~/components/day-planner/TaskModalsContainer";
+import DayPlannerContent from "~/components/day-planner/DayPlannerContent";
+import EmptyPlanState from "~/components/day-planner/EmptyPlanState";
+import { useEffect, useContext, useState } from "react";
 import { ToastContext } from "~/context/ToastContext";
+import { initializeDayPlannerState, createDayPlannerActions } from "~/utils/dayPlannerStateManagement";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -174,17 +172,16 @@ export default function DayPlanner() {
   const fetcher = useFetcher();
   const toastCtx = useContext(ToastContext);
   const [toastShown, setToastShown] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [defaultStartTime, setDefaultStartTime] = useState<
-    string | undefined
-  >();
-  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
-  const [showConflictModal, setShowConflictModal] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const quickAddRef = useRef<HTMLDivElement>(null);
-  const calendarViewRef = useRef<HTMLDivElement>(null);
+
+  // Initialize state using utility function
+  const initialState = initializeDayPlannerState();
+  const [showAddModal, setShowAddModal] = useState(initialState.showAddModal);
+  const [showEditModal, setShowEditModal] = useState(initialState.showEditModal);
+  const [showConflictModal, setShowConflictModal] = useState(initialState.showConflictModal);
+  const [defaultStartTime, setDefaultStartTime] = useState(initialState.defaultStartTime);
+  const [taskToEdit, setTaskToEdit] = useState(initialState.taskToEdit);
+  const [focusMode, setFocusMode] = useState(initialState.focusMode);
+  const [refreshKey, setRefreshKey] = useState(initialState.refreshKey);
   const [conflictData, setConflictData] = useState<{
     mappingId: string;
     taskId: string;
@@ -201,6 +198,17 @@ export default function DayPlanner() {
       durationMinutes: number;
     };
   } | null>(null);
+
+  // Create action handlers using utility function
+  const actions = createDayPlannerActions({
+    setShowAddModal,
+    setShowEditModal,
+    setShowConflictModal,
+    setDefaultStartTime,
+    setTaskToEdit,
+    setFocusMode,
+    setRefreshKey,
+  });
 
   // Show toast on successful actions
   useEffect(() => {
@@ -262,16 +270,13 @@ export default function DayPlanner() {
 
   // Auto-scroll to focused task on page load
   useEffect(() => {
-    if (focusedTaskData && calendarViewRef.current) {
+    if (focusedTaskData) {
       // Delay slightly to allow DOM to render
       const timer = setTimeout(() => {
         const focusedElement = document.getElementById(`task-${focusedTaskData.taskId}`);
-        if (focusedElement && calendarViewRef.current) {
-          // Scroll the calendar view container smoothly
-          calendarViewRef.current.scrollTo({
-            top: focusedTaskData.scrollOffset,
-            behavior: "smooth",
-          });
+        if (focusedElement) {
+          // Scroll the task into view smoothly
+          focusedElement.scrollIntoView({ behavior: "smooth", block: "center" });
 
           // Add visual highlight to the focused task
           focusedElement.classList.add("ring-2", "ring-yellow-400", "ring-opacity-75");
@@ -307,13 +312,11 @@ export default function DayPlanner() {
   }
 
   function handleAddTask(startTime?: string) {
-    setDefaultStartTime(startTime);
-    setShowAddModal(true);
+    actions.handleAddTask(startTime);
   }
 
   function handleEditTask(task: Task) {
-    setTaskToEdit(task);
-    setShowEditModal(true);
+    actions.handleEditTask(task);
   }
 
   function handleManualSync() {
@@ -454,104 +457,48 @@ export default function DayPlanner() {
               />
             )}
 
-            {/* Quick Add Task Bar */}
-            {/* {!focusMode && (
-              <div ref={quickAddRef}>
-                <QuickAddTaskBar
-                  planId={plan.id}
-                  onTaskAdded={() => setRefreshKey((k) => k + 1)}
-                />
-              </div>
-            )} */}
-
             {/* Main Content Layout */}
-            <div className="flex gap-6">
-              {/* Calendar View - Main Content */}
-              <div className="flex-1 min-w-0">
-                <CalendarView
-                  ref={calendarViewRef}
-                  tasks={plan.tasks}
-                  viewStartTime={viewStartTime}
-                  viewEndTime={viewEndTime}
-                  onAddTask={handleAddTask}
-                  onEditTask={handleEditTask}
-                  taskSyncStatus={taskSyncStatus}
-                />
-              </div>
-
-              {/* Quick Upcoming Tasks Sidebar */}
-              {!focusMode && (
-                <QuickUpcomingTasksSidebar
-                  allTasks={plan.tasks}
-                  currentDate={planDate}
-                />
-              )}
-            </div>
+            <DayPlannerContent
+              tasks={plan.tasks}
+              planDate={planDate}
+              viewStartTime={viewStartTime}
+              viewEndTime={viewEndTime}
+              focusMode={focusMode}
+              taskSyncStatus={taskSyncStatus}
+              onAddTask={handleAddTask}
+              onEditTask={handleEditTask}
+            />
           </>
         ) : (
-          // Empty State - No Plan Created
-          <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-12 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg mb-4">
-              <CalendarIcon className="w-8 h-8 text-gray-600 dark:text-gray-300" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-              No Plan for {planDate}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
-              Create a day plan to start scheduling your tasks visually on a
-              calendar. You can drag and drop tasks to reorganize them.
-            </p>
-
-            <button
-              type="button"
-              onClick={handleCreatePlan}
-              disabled={fetcher.state === "submitting"}
-              className="inline-flex items-center gap-2 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-3 px-6 rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 shadow-md hover:shadow-lg"
-            >
-              <CalendarIcon className="w-5 h-5" />
-              {fetcher.state === "submitting"
-                ? "Creating Plan..."
-                : "Create Day Plan"}
-            </button>
-          </div>
+          <EmptyPlanState
+            planDate={planDate}
+            onCreatePlan={handleCreatePlan}
+            isLoading={fetcher.state === "submitting"}
+          />
         )}
 
         {/* Modals */}
-        {showAddModal && plan && (
-          <AddTaskModal
-            planId={plan.id}
-            existingTasks={plan.tasks}
-            onClose={() => {
-              setShowAddModal(false);
-              setDefaultStartTime(undefined);
-            }}
-            defaultStartTime={defaultStartTime}
-          />
-        )}
-
-        {showEditModal && taskToEdit && (
-          <EditTaskModal
-            task={taskToEdit}
-            existingTasks={plan?.tasks || []}
-            onClose={() => {
-              setShowEditModal(false);
-              setTaskToEdit(null);
-            }}
-          />
-        )}
-
-        {conflictData && (
-          <ConflictResolutionModal
-            isOpen={showConflictModal}
-            mappingId={conflictData.mappingId}
-            localVersion={conflictData.localVersion}
-            googleVersion={conflictData.googleVersion}
-            onClose={() => {
-              setShowConflictModal(false);
-              setConflictData(null);
-            }}
-          />
-        )}
+        <TaskModalsContainer
+          showAddModal={showAddModal}
+          showEditModal={showEditModal}
+          showConflictModal={showConflictModal}
+          plan={plan}
+          defaultStartTime={defaultStartTime}
+          taskToEdit={taskToEdit}
+          conflictData={conflictData}
+          onAddModalClose={() => {
+            setShowAddModal(false);
+            setDefaultStartTime(undefined);
+          }}
+          onEditModalClose={() => {
+            setShowEditModal(false);
+            setTaskToEdit(null);
+          }}
+          onConflictModalClose={() => {
+            setShowConflictModal(false);
+            setConflictData(null);
+          }}
+        />
       </div>
     </div>
   );
