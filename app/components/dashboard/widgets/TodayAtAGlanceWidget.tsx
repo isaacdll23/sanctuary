@@ -119,7 +119,7 @@ export default function TodayAtAGlanceWidget({ data }: TodayAtAGlanceProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <a
-                    href="/finance"
+                    href="/finance/expenses"
                     className="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 transition-colors"
                   >
                     <ChevronRightIcon className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />

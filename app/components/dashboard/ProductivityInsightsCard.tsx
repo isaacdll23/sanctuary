@@ -5,6 +5,7 @@ interface ProductivityInsight {
   label: string;
   description: string;
   value: string | number;
+  unit?: string;
 }
 
 interface ProductivityInsightsCardProps {
@@ -43,6 +44,9 @@ export default function ProductivityInsightsCard({
               {typeof insight.value === "number"
                 ? insight.value.toFixed(1)
                 : insight.value}
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-normal ml-1">
+                {insight.unit}
+              </span>
             </div>
           </div>
         ))}

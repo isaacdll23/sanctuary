@@ -54,7 +54,7 @@ export default function FinancialSnapshotWidget({ data }: FinancialSnapshotProps
             No active budgets yet. Create one to track spending.
           </p>
           <a
-            href="/finance"
+            href="/finance/expenses"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             Create Budget
@@ -152,7 +152,7 @@ export default function FinancialSnapshotWidget({ data }: FinancialSnapshotProps
 
           {/* View All Budgets */}
           <a
-            href="/finance"
+            href="/finance/expenses"
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-900 dark:text-gray-100 text-sm font-medium transition-colors"
           >
             View All Budgets

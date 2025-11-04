@@ -1,91 +1,32 @@
 import { useLoaderData } from "react-router";
-import { useMemo } from "react";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
-import { getDashboardData } from "~/modules/services/DashboardService";
-import { getVisibleWidgets } from "~/components/dashboard/WidgetRegistry";
-import { useDashboardFilters } from "~/hooks/useDashboardFilters";
-import DashboardStatCard from "~/components/dashboard/DashboardStatCard";
-import CompletionRateCard from "~/components/dashboard/CompletionRateCard";
-import ProductivityInsightsCard from "~/components/dashboard/ProductivityInsightsCard";
-import TodayAtAGlanceWidget from "~/components/dashboard/widgets/TodayAtAGlanceWidget";
-import ProgressSummaryWidget from "~/components/dashboard/widgets/ProgressSummaryWidget";
-import ActionItemsPriorityWidget from "~/components/dashboard/widgets/ActionItemsPriorityWidget";
-import FinancialSnapshotWidget from "~/components/dashboard/widgets/FinancialSnapshotWidget";
-import WeeklyAchievementsWidget from "~/components/dashboard/widgets/WeeklyAchievementsWidget";
-import DashboardFilterControls from "~/components/dashboard/DashboardFilterControls";
-import QuickAccessShortcuts from "~/components/dashboard/QuickAccessShortcuts";
-import DashboardNotificationCenter from "~/components/dashboard/DashboardNotificationCenter";
+import { getAccessibleFeatures } from "~/modules/services/DashboardFeatureAccessService";
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { insightsToAlerts } from "~/types/dashboardAlerts";
-import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
-import type { WidgetType } from "~/components/dashboard/WidgetRegistry";
+import FeatureGrid from "~/components/dashboard/FeatureGrid";
+import type { DashboardLoaderData } from "~/types/dashboard.types";
 
 export function meta() {
   return [{ title: "Dashboard - Sanctuary" }];
 }
 
 export const loader = pageAccessLoader("dashboard", async (user, request) => {
-  // Aggregate all dashboard data using the new service
-  const dashboardData = await getDashboardData(user);
+  // Get accessible features for the user
+  const features = await getAccessibleFeatures(user.id, user.role === "admin");
 
-  return dashboardData;
+  return {
+    features,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
 });
 
 export default function Dashboard() {
-  const dashboardData = useLoaderData<AggregatedDashboardData>();
-  const {
-    filters,
-    updateDateRange,
-    toggleFeature,
-    setTaskCategory,
-    setSearchQuery,
-    resetFilters,
-    hasActiveFilters,
-  } = useDashboardFilters();
-
-  const visibleWidgets = getVisibleWidgets(dashboardData, dashboardData.preferences);
-
-  // Convert insights to alerts for Phase 3.5 notification integration
-  const dashboardAlerts = insightsToAlerts(dashboardData.insights);
-
-  // Map widget IDs to their components
-  const widgetComponents: Record<WidgetType, React.ReactNode> = {
-    "today-at-glance": <TodayAtAGlanceWidget data={dashboardData} />,
-    "progress-summary": <ProgressSummaryWidget data={dashboardData} />,
-    "action-items-priority": <ActionItemsPriorityWidget data={dashboardData} />,
-    "financial-snapshot": <FinancialSnapshotWidget data={dashboardData} />,
-    "weekly-achievements": <WeeklyAchievementsWidget data={dashboardData} />,
-    "completion-rate": <CompletionRateCard last7Days={{ completed: dashboardData.taskMetrics.completionRate7d, total: 100 }} last30Days={{ completed: dashboardData.taskMetrics.completionRate30d, total: 100 }} />,
-    "productivity-insights": (
-      <ProductivityInsightsCard
-        insights={[
-          {
-            label: "Daily Completion",
-            description: "Average over 30 days",
-            value: dashboardData.taskMetrics.averageDailyCompletion30d,
-          },
-          {
-            label: "Task Velocity",
-            description: "Tasks per day",
-            value: dashboardData.taskMetrics.taskVelocity,
-          },
-          {
-            label: "Planning Consistency",
-            description: "Days with plans",
-            value: dashboardData.dayPlannerMetrics.planningConsistency,
-          },
-          {
-            label: "Budget Health",
-            description: "Average utilization",
-            value: dashboardData.budgetMetrics.averageBudgetHealth,
-          },
-        ]}
-        message={generateWelcomeMessage(dashboardData.engagementMetrics, dashboardData.taskMetrics)}
-      />
-    ),
-  };
-
-  const hasActiveWidgets = visibleWidgets.length > 0;
+  const loaderData = useLoaderData<DashboardLoaderData>();
+  const { features } = loaderData;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
@@ -101,93 +42,18 @@ export default function Dashboard() {
             </h1>
           </div>
           <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base ml-14 max-w-2xl">
-            Your personalized overview with stats and insights across all your productivity areas.
+            Access all your productivity tools in one place.
           </p>
         </header>
 
-        {/* Phase 3.4: Quick Access Shortcuts */}
-        <div className="mb-6">
-          <QuickAccessShortcuts />
-        </div>
-
-        {!hasActiveWidgets ? (
-          <div className="py-16 text-center">
-            <div className="mb-4">
-              <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                <SparklesIcon className="h-6 w-6 text-gray-400 dark:text-gray-600" />
-              </div>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Get Started
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Start using Sanctuary features to see your dashboard come to life with personalized insights.
-            </p>
-            <a
-              href="/tasks"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-            >
-              Create Your First Task
-            </a>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {/* Phase 3.4: Filter Controls */}
-            <div>
-              <DashboardFilterControls
-                filters={filters}
-                onDateRangeChange={updateDateRange}
-                onFeatureToggle={toggleFeature}
-                onCategoryChange={setTaskCategory}
-                onSearchChange={setSearchQuery}
-                onReset={resetFilters}
-                hasActiveFilters={hasActiveFilters}
-              />
-            </div>
-
-            {/* Phase 3.5: Notification Center */}
-            <div>
-              <DashboardNotificationCenter
-                alerts={dashboardAlerts}
-                maxDisplayed={4}
-                showUnreadBadge={true}
-              />
-            </div>
-
-            {/* Render visible widgets */}
-            {visibleWidgets.map((widget) => (
-              <div
-                key={widget.config.id}
-                className={`${
-                  widget.config.defaultWidth === "full"
-                    ? "grid-cols-1"
-                    : widget.config.defaultWidth === "half"
-                      ? "lg:grid-cols-2"
-                      : "lg:grid-cols-3"
-                }`}
-              >
-                {widgetComponents[widget.config.id]}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Features Grid */}
+        <FeatureGrid
+          features={features}
+          title="Your Features"
+          subtitle="Click on any feature to get started"
+          showEmptyState={true}
+        />
       </div>
     </div>
   );
-}
-
-/**
- * Generate personalized welcome message based on metrics
- */
-function generateWelcomeMessage(engagementMetrics: any, taskMetrics: any): string {
-  if (taskMetrics.completionTrend === "trending-up") {
-    return "📈 Your productivity is trending upward! Keep up the momentum.";
-  }
-  if (taskMetrics.overdueTasks > 0) {
-    return `⚠️ You have ${taskMetrics.overdueTasks} overdue task${taskMetrics.overdueTasks !== 1 ? "s" : ""}. Focus on clearing these first.`;
-  }
-  if (engagementMetrics.daysSinceLastActivity > 7) {
-    return "👋 Welcome back! What's on your plate today?";
-  }
-  return "✨ Great to see you! Your dashboard is ready with all your productivity metrics.";
 }

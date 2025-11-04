@@ -41,7 +41,7 @@ export default function ProgressSummaryWidget({ data }: ProgressSummaryProps) {
       target: 100,
       icon: <CheckCircleIcon className="w-5 h-5" />,
       color: "emerald",
-      href: "/finance",
+      href: "/finance/expenses",
     },
     {
       label: "Notes",

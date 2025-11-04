@@ -50,7 +50,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     label: "Budgets",
     description: "Manage budgets",
     icon: <CurrencyDollarIcon className="w-5 h-5" />,
-    href: "/finance",
+    href: "/finance/budgets/shared",
     color: "amber",
   },
   {

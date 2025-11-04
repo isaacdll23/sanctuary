@@ -56,10 +56,6 @@ export function calculateTaskMetrics(tasks: any[]): TaskMetrics {
   const averageDailyCompletion30d =
     completedLast30d.length > 0 ? completedLast30d.length / 30 : 0;
 
-  // Weekly average creation over 30 days
-  const averageWeeklyCreation30d =
-    tasksLast30d.length > 0 ? tasksLast30d.length / 4.29 : 0;
-
   // Task velocity: completed per day over 30 days
   const taskVelocity = averageDailyCompletion30d;
 
@@ -71,24 +67,6 @@ export function calculateTaskMetrics(tasks: any[]): TaskMetrics {
         ? "trending-down"
         : "stable";
 
-  // Find top category
-  const categoryMap = new Map<string, number>();
-  allTasks.forEach((t) => {
-    if (t.category) {
-      categoryMap.set(t.category, (categoryMap.get(t.category) || 0) + 1);
-    }
-  });
-  let topCategory: string | undefined;
-  let topCategoryCount: number | undefined;
-  if (categoryMap.size > 0) {
-    const entries = Array.from(categoryMap.entries());
-    const [category, count] = entries.reduce((a, b) =>
-      a[1] > b[1] ? a : b
-    );
-    topCategory = category;
-    topCategoryCount = count;
-  }
-
   return {
     totalTasks: allTasks.length,
     completedTasks: allTasks.filter((t) => t.completedAt != null).length,
@@ -97,11 +75,8 @@ export function calculateTaskMetrics(tasks: any[]): TaskMetrics {
     completionRate7d,
     completionRate30d,
     averageDailyCompletion30d: parseFloat(averageDailyCompletion30d.toFixed(2)),
-    averageWeeklyCreation30d: parseFloat(averageWeeklyCreation30d.toFixed(2)),
     taskVelocity: parseFloat(taskVelocity.toFixed(2)),
     completionTrend,
-    topCategory,
-    topCategoryCount,
   };
 }
 
@@ -206,36 +181,11 @@ export function calculateNoteMetrics(
     (n) => n.createdAt >= startOfDay(thirtyDaysAgo)
   );
 
-  const notesCreationTrend =
-    notesLast30d.length > 0 ? notesLast30d.length / 30 : 0;
-
-  // Find most used folder
-  const folderUsage = new Map<number, number>();
-  notes.forEach((n) => {
-    if (n.folderId) {
-      folderUsage.set(n.folderId, (folderUsage.get(n.folderId) || 0) + 1);
-    }
-  });
-
-  let mostUsedFolder: string | undefined;
-  if (folderUsage.size > 0) {
-    const entries = Array.from(folderUsage.entries());
-    const [folderId] = entries.reduce((a, b) => (a[1] > b[1] ? a : b));
-    const folder = folders.find((f) => f.id === folderId);
-    mostUsedFolder = folder?.name;
-  }
-
-  const averageNotesPerFolder =
-    folders.length > 0 ? notes.length / folders.length : 0;
-
   return {
     totalNotes: notes.length,
     totalFolders: folders.length,
     notesCreatedLast7d: notesLast7d.length,
     notesCreatedLast30d: notesLast30d.length,
-    averageNotesPerFolder: parseFloat(averageNotesPerFolder.toFixed(2)),
-    mostUsedFolder,
-    notesCreationTrend: parseFloat(notesCreationTrend.toFixed(2)),
   };
 }
 
@@ -261,16 +211,6 @@ export function calculateDayPlannerMetrics(
   // Count planned days (days with at least one planned task)
   const plannedDaysLast7d = new Set(plansLast7d.map((p) => p.planDate)).size;
   const plannedDaysLast30d = new Set(plansLast30d.map((p) => p.planDate)).size;
-
-  // Completed tasks in last 7 and 30 days
-  const completedTasksLast7d = dayPlanSections.filter(
-    (s) =>
-      s.completedAt != null && s.completedAt >= startOfDay(sevenDaysAgo)
-  ).length;
-  const completedTasksLast30d = dayPlanSections.filter(
-    (s) =>
-      s.completedAt != null && s.completedAt >= startOfDay(thirtyDaysAgo)
-  ).length;
 
   // Average tasks per day over 30 days
   const averageTasksPerDay30d =
@@ -303,8 +243,6 @@ export function calculateDayPlannerMetrics(
     plannedDaysLast7d,
     plannedDaysLast30d,
     averageTasksPerDay30d: parseFloat(averageTasksPerDay30d.toFixed(2)),
-    completedTasksLast7d,
-    completedTasksLast30d,
     plannedTasksToday,
     completedTasksToday,
     planningConsistency: parseFloat(planningConsistency.toFixed(2)),

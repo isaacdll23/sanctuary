@@ -8,11 +8,8 @@ export interface TaskMetrics {
   completionRate7d: number;
   completionRate30d: number;
   averageDailyCompletion30d: number;
-  averageWeeklyCreation30d: number;
   taskVelocity: number; // Tasks completed per day over 30 days
   completionTrend: "trending-up" | "stable" | "trending-down"; // Based on 7d vs 30d comparison
-  topCategory?: string;
-  topCategoryCount?: number;
 }
 
 export interface BudgetMetrics {
@@ -37,17 +34,12 @@ export interface NoteMetrics {
   totalFolders: number;
   notesCreatedLast7d: number;
   notesCreatedLast30d: number;
-  averageNotesPerFolder: number;
-  mostUsedFolder?: string;
-  notesCreationTrend: number; // Average notes per day over 30 days
 }
 
 export interface DayPlannerMetrics {
   plannedDaysLast7d: number;
   plannedDaysLast30d: number;
   averageTasksPerDay30d: number;
-  completedTasksLast7d: number;
-  completedTasksLast30d: number;
   plannedTasksToday?: number;
   completedTasksToday?: number;
   planningConsistency: number; // Percentage of days with at least one planned task over 30 days
