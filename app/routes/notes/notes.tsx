@@ -7,6 +7,7 @@ import {
   SparklesIcon,
   ChevronLeftIcon, // Added
   ChevronRightIcon, // Added
+  DocumentDuplicateIcon,
 } from "@heroicons/react/24/outline";
 import ReactMarkdown from "react-markdown";
 import {
@@ -161,6 +162,16 @@ export default function NotesPage() {
         { method: "post", action: "/notes" }
       );
       addToast("Note deleted.", "success", 3000);
+    }
+  };
+
+  const handleCopyContent = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      addToast("Copied to clipboard!", "success", 3000);
+    } catch (error) {
+      console.error("Failed to copy content:", error);
+      addToast("Failed to copy content. Please try again.", "error", 3000);
     }
   };
 
@@ -356,6 +367,14 @@ export default function NotesPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCopyContent(selectedNote.content)}
+                  className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                  aria-label="Copy note content"
+                  title="Copy note content"
+                >
+                  <DocumentDuplicateIcon className="h-5 w-5" />
+                </button>
                 <button
                   onClick={() => setIsEditing(true)}
                   className="p-2.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
