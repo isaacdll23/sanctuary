@@ -1,84 +1,35 @@
 # Sanctuary
 
-Sanctuary is a modern, full-stack productivity and personal management app built with React Router, TypeScript, Drizzle ORM, and Tailwind CSS. It provides a robust platform for managing tasks, finances, utilities, and more—all with a beautiful, responsive UI and a focus on user experience.
+A full-stack productivity platform demonstrating modern web development practices.
+
+**Built with**: React Router 7 • TypeScript • Drizzle ORM • PostgreSQL • Tailwind CSS
 
 ![image](https://github.com/user-attachments/assets/4ddd8b10-83bd-446c-885a-7e24ec2763bc)
 
+## What's Inside
 
-## Features
+- **Task Management** — Organize work with categories, steps, and intelligent filtering
+- **Finance Tracking** — User-isolated income/expense dashboards with analytics
+- **Command Utilities** — Versioned, searchable utility command management
+- **Admin Portal** — Role-based access control with comprehensive user management
+- **Google Calendar** — Two-way calendar integration for day planning
+- **Real-time Notifications** — Toast system with email integration
 
-- 📝 **Task Management**: Organize, track, and complete your work with categories, steps, and filtering.
-- 💸 **Finance Tracking**: Manage your income and expenses with secure, user-specific dashboards.
-- ⚡ **Utilities & Commands**: Save, version, and manage custom utility commands with full version history.
-- 🔒 **Authentication**: Secure user authentication and session management.
-- 🛠️ **TypeScript & Drizzle ORM**: Type-safe backend and database access.
-- 🎨 **Tailwind CSS**: Modern, responsive, and customizable UI.
-- 🚀 **Production-Ready**: Docker support, SSR, asset optimization, and more.
+## Architecture Highlights
 
-## Getting Started
+- Service-layer pattern with clean separation of concerns
+- Session-based authentication with role-based access control
+- Type-safe database layer with migrations
+- Responsive design with dark mode support
+- Production-ready with Docker deployment
 
-### Installation
-
-Install dependencies:
-
-```bash
-npm install
-```
-
-### Development
-
-Start the development server with HMR:
+## Quick Start
 
 ```bash
-npm run dev
+npm install && npm run dev
 ```
 
-App will be available at [http://localhost:5173](http://localhost:5173).
-
-### Building for Production
-
-Create a production build:
-
-```bash
-npm run build
-```
-
-## Deployment
-
-### Docker
-
-Sanctuary includes a Dockerfile for easy containerization:
-
-```bash
-docker build -t sanctuary .
-docker run -p 3000:3000 sanctuary
-```
-
-You can deploy the container to any platform that supports Docker (AWS, GCP, Azure, Railway, etc).
-
-### Manual Deployment
-
-Deploy the output of `npm run build`:
-
-```
-├── package.json
-├── package-lock.json
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
-```
-
-## Project Structure
-
-- `app/` — Main application code
-  - `components/` — Reusable UI components
-  - `db/` — Database schema and access
-  - `modules/` — Auth, session, and service logic
-  - `routes/` — Route modules for tasks, finance, utilities, etc.
-- `public/` — Static assets
-- `Dockerfile` — Containerization
-- `drizzle.config.ts` — Drizzle ORM config
-- `vite.config.ts` — Vite build config
+Visit http://localhost:5173
 
 ## Tech Stack
 
@@ -86,12 +37,8 @@ Deploy the output of `npm run build`:
 - **Backend**: Node.js, Drizzle ORM, PostgreSQL
 - **Auth**: Custom authentication with Argon2
 - **Build**: Vite, TypeScript
-- **Containerization**: Docker
-
-## Styling
-
-Sanctuary uses [Tailwind CSS](https://tailwindcss.com/) for rapid, utility-first styling. You can customize the look and feel easily.
+- **Deployment**: Docker
 
 ---
 
-Built with ❤️ by Isaac.
+Built by Isaac
