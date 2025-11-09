@@ -4,7 +4,7 @@ A full-stack productivity platform demonstrating modern web development practice
 
 **Built with**: React Router 7 • TypeScript • Drizzle ORM • PostgreSQL • Tailwind CSS
 
-![image](https://github.com/user-attachments/assets/4ddd8b10-83bd-446c-885a-7e24ec2763bc)
+<img width="2506" height="1187" alt="image" src="https://github.com/user-attachments/assets/5861217d-a17e-4bd3-87ab-bd905411645a" />
 
 ## What's Inside
 
