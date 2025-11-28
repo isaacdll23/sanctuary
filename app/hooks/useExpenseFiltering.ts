@@ -41,13 +41,14 @@ export function useExpenseFiltering(
     [expenses, filterCategories]
   );
 
-  const sortedExpenses = useMemo(
-    () =>
-      filteredExpenses.sort((e1, e2) =>
-        e1.monthlyCost > e2.monthlyCost ? -1 : 1
-      ),
-    [filteredExpenses]
-  );
+  const sortedExpenses = useMemo(() => {
+    return [...filteredExpenses].sort((a, b) => {
+      if (a.chargeDay === b.chargeDay) {
+        return a.name.localeCompare(b.name);
+      }
+      return a.chargeDay - b.chargeDay;
+    });
+  }, [filteredExpenses]);
 
   const totalMonthlyCost = useMemo(
     () =>

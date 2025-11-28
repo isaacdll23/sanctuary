@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useFetcher } from "react-router";
 import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
 import type { Route } from "./+types/expenses";
 import { eq, desc } from "drizzle-orm";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import { AddExpenseModal, EditExpenseModal } from "~/components/finance/ExpenseFormModal";
 import ExpenseSummaryCards from "~/components/finance/ExpenseSummaryCards";
 import ExpensesCategoryFilter from "~/components/finance/ExpensesCategoryFilter";
@@ -106,6 +106,27 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const { distinctCategories, filteredExpenses, totalMonthlyCost, toggleCategory } =
     useExpenseFiltering(loaderData.userExpenses, filterCategories, setFilterCategories);
 
+  const { firstHalfTotal, secondHalfTotal } = useMemo(() => {
+    return filteredExpenses.reduce(
+      (acc, expense) => {
+        if (expense.chargeDay <= 14) {
+          acc.firstHalfTotal += expense.monthlyCost;
+        } else {
+          acc.secondHalfTotal += expense.monthlyCost;
+        }
+        return acc;
+      },
+      { firstHalfTotal: 0, secondHalfTotal: 0 }
+    );
+  }, [filteredExpenses]);
+
+  const firstHalfPercentage = totalMonthlyCost
+    ? (firstHalfTotal / totalMonthlyCost) * 100
+    : 0;
+  const secondHalfPercentage = totalMonthlyCost
+    ? (secondHalfTotal / totalMonthlyCost) * 100
+    : 0;
+
   const { netRemainingYearly, netRemainingMonthly } = useIncomeCalculations(
     (loaderData.userIncome?.annualGrossIncome ?? 0) || undefined,
     loaderData.userIncome?.taxDeductionPercentage || undefined,
@@ -156,6 +177,52 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
           netRemainingMonthly={netRemainingMonthly}
           netRemainingYearly={netRemainingYearly}
         />
+
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <CalendarDaysIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Days 1-14</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  First Half of Month
+                </h3>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              $
+              {(firstHalfTotal / 100).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {firstHalfPercentage.toFixed(1)}% of filtered monthly spend
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <CalendarDaysIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Days 15-End</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Second Half of Month
+                </h3>
+              </div>
+            </div>
+            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              $
+              {(secondHalfTotal / 100).toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              {secondHalfPercentage.toFixed(1)}% of filtered monthly spend
+            </p>
+          </div>
+        </div>
 
         <ExpensesCategoryFilter
           distinctCategories={distinctCategories}
