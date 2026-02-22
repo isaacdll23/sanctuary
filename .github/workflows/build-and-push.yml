@@ -1,0 +1,54 @@
+name: Build and Push Sanctuary Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: k3s-runners
+
+    # ARC kube-mode container jobs require compatible shell tooling.
+    container:
+      image: gcr.io/kaniko-project/executor:v1.24.0-debug
+
+    env:
+      REGISTRY_HOST: registry.isaacdelalama.dev
+
+    steps:
+      - name: Build and push image
+        env:
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        run: |
+          set -eu
+
+          WORKDIR=/workspace/src
+          ARCHIVE=/workspace/src.tar.gz
+          APP_NAME="${GITHUB_REPOSITORY##*/}"
+          IMAGE="${REGISTRY_HOST}/${APP_NAME}:${GITHUB_SHA}"
+
+          mkdir -p "${WORKDIR}"
+
+          # Avoid JS actions in kaniko container by fetching source archive directly.
+          wget -q -O "${ARCHIVE}" "https://codeload.github.com/${GITHUB_REPOSITORY}/tar.gz/${GITHUB_SHA}"
+          tar -xzf "${ARCHIVE}" -C "${WORKDIR}" --strip-components=1
+
+          # Kaniko expects docker auth at /kaniko/.docker/config.json
+          : "${REGISTRY_USERNAME:?REGISTRY_USERNAME secret is required}"
+          : "${REGISTRY_PASSWORD:?REGISTRY_PASSWORD secret is required}"
+          mkdir -p /kaniko/.docker
+          cat > /kaniko/.docker/config.json <<EOFJSON
+          {"auths":{"${REGISTRY_HOST}":{"username":"${REGISTRY_USERNAME}","password":"${REGISTRY_PASSWORD}"}}}
+          EOFJSON
+
+          echo "Pushing image: ${IMAGE}"
+          /kaniko/executor \
+            --context "${WORKDIR}" \
+            --dockerfile "${WORKDIR}/Dockerfile" \
+            --destination "${IMAGE}"
