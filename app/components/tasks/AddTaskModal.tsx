@@ -15,9 +15,15 @@ export default function AddTaskModal({
   filterCategory = "",
 }: AddTaskModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-md md:max-w-2xl transform transition-all duration-150 scale-100 opacity-100">
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
+    >
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-md md:max-w-2xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto transform transition-all duration-150 scale-100 opacity-100">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Add New Task
           </h2>
@@ -30,7 +36,7 @@ export default function AddTaskModal({
           </button>
         </div>
 
-        <fetcher.Form method="post" className="p-6 space-y-4 md:space-y-6 md:grid md:grid-cols-2 md:gap-6">
+        <fetcher.Form method="post" className="p-4 sm:p-6 space-y-4 md:space-y-6 md:grid md:grid-cols-2 md:gap-6">
           <input type="hidden" name="intent" value="createTask" />
 
           {/* Title - Full Width on Desktop */}

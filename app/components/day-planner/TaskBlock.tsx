@@ -1,6 +1,6 @@
 import { useFetcher } from "react-router";
 import { CheckIcon, TrashIcon, PencilIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SyncStatusBadge from "./SyncStatusBadge";
 import TaskPreviewTooltip from "./TaskPreviewTooltip";
 
@@ -27,6 +27,7 @@ type TaskBlockProps = {
   onDragStart?: (task: Task) => void;
   onDragEnd?: () => void;
   syncStatus?: SyncStatus;
+  allowDrag?: boolean;
 };
 
 export default function TaskBlock({
@@ -36,13 +37,26 @@ export default function TaskBlock({
   onDragStart: onDragStartCallback,
   onDragEnd: onDragEndCallback,
   syncStatus,
+  allowDrag = true,
 }: TaskBlockProps) {
   const completeFetcher = useFetcher();
   const deleteFetcher = useFetcher();
-  const moveFetcher = useFetcher();
   const [isDragging, setIsDragging] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const isCompleted = !!task.completedAt;
+  const canDrag = allowDrag && !isTouchDevice;
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsTouchDevice(event.matches);
+
+    setIsTouchDevice(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // Map color names to Tailwind classes
   function getColorClasses(colorName: string = "indigo") {
@@ -188,6 +202,7 @@ export default function TaskBlock({
   const heightPx = (task.durationMinutes / 60) * 120;
 
   function handleDragStart(e: React.DragEvent) {
+    if (!canDrag) return;
     setIsDragging(true);
     e.dataTransfer.setData("text/plain", task.id); // Use text/plain for better compatibility
     e.dataTransfer.effectAllowed = "move";
@@ -197,6 +212,7 @@ export default function TaskBlock({
   }
 
   function handleDragEnd() {
+    if (!canDrag) return;
     setIsDragging(false);
     if (onDragEndCallback) {
       onDragEndCallback();
@@ -206,7 +222,9 @@ export default function TaskBlock({
   return (
     <div
       id={`task-${task.id}`}
-      className={`absolute left-0 right-0 rounded-lg border-2 px-2 py-1.5 cursor-move transition-all flex flex-col group ${
+      className={`absolute left-0 right-0 rounded-lg border-2 px-2 py-1.5 transition-all flex flex-col group ${
+        canDrag ? "cursor-move" : "cursor-pointer"
+      } ${
         isDragging ? "opacity-50 scale-95" : ""
       } ${
         isCompleted
@@ -214,9 +232,14 @@ export default function TaskBlock({
           : `${colors.bg} ${colors.border}`
       }`}
       style={{ height: `${heightPx}px` }}
-      draggable
+      draggable={canDrag}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onClick={() => {
+        if (!canDrag) {
+          onEdit(task);
+        }
+      }}
     >
       {/* Preview Tooltip */}
       <TaskPreviewTooltip task={task} syncStatus={syncStatus} />
@@ -255,40 +278,56 @@ export default function TaskBlock({
             />
           )}
         </div>
-        <div className="flex gap-1 items-center flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleEdit}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="w-4 h-4 rounded border border-gray-400 dark:border-gray-500 hover:border-indigo-500 dark:hover:border-indigo-400 flex items-center justify-center transition-colors"
-            aria-label="Edit task"
-          >
-            <PencilIcon className="w-2.5 h-2.5 text-gray-700 dark:text-gray-300" />
-          </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            onMouseDown={(e) => e.stopPropagation()}
-            disabled={deleteFetcher.state === "submitting"}
-            className="w-4 h-4 rounded border border-gray-400 dark:border-gray-500 hover:border-red-500 dark:hover:border-red-400 flex items-center justify-center transition-colors disabled:opacity-50"
-            aria-label="Delete task"
-          >
-            <TrashIcon className="w-2.5 h-2.5 text-gray-700 dark:text-gray-300" />
-          </button>
+        {canDrag ? (
+          <div className="flex gap-1 items-center flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleEdit}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="w-4 h-4 rounded border border-gray-400 dark:border-gray-500 hover:border-indigo-500 dark:hover:border-indigo-400 flex items-center justify-center transition-colors"
+              aria-label="Edit task"
+            >
+              <PencilIcon className="w-2.5 h-2.5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              onMouseDown={(e) => e.stopPropagation()}
+              disabled={deleteFetcher.state === "submitting"}
+              className="w-4 h-4 rounded border border-gray-400 dark:border-gray-500 hover:border-red-500 dark:hover:border-red-400 flex items-center justify-center transition-colors disabled:opacity-50"
+              aria-label="Delete task"
+            >
+              <TrashIcon className="w-2.5 h-2.5 text-gray-700 dark:text-gray-300" />
+            </button>
+            <button
+              type="button"
+              onClick={handleToggleComplete}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                isCompleted
+                  ? "bg-green-500 border-green-500"
+                  : "border-gray-400 dark:border-gray-500 hover:border-green-500"
+              }`}
+              aria-label={isCompleted ? "Mark incomplete" : "Mark complete"}
+            >
+              {isCompleted && <CheckIcon className="w-2.5 h-2.5 text-white" />}
+            </button>
+          </div>
+        ) : (
           <button
             type="button"
             onClick={handleToggleComplete}
             onMouseDown={(e) => e.stopPropagation()}
-            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+            className={`h-6 w-6 rounded border flex items-center justify-center transition-colors ${
               isCompleted
                 ? "bg-green-500 border-green-500"
-                : "border-gray-400 dark:border-gray-500 hover:border-green-500"
+                : "border-gray-500 dark:border-gray-400 hover:border-green-500"
             }`}
             aria-label={isCompleted ? "Mark incomplete" : "Mark complete"}
           >
-            {isCompleted && <CheckIcon className="w-2.5 h-2.5 text-white" />}
+            {isCompleted && <CheckIcon className="h-3.5 w-3.5 text-white" />}
           </button>
-        </div>
+        )}
       </div>
     </div>
   );

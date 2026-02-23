@@ -124,12 +124,185 @@ export default function TaskTableView({
           placeholder="Search tasks by title, description, or category..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-600 transition-colors duration-150"
+          className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-base md:text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-gray-400 dark:focus:border-gray-600 transition-colors duration-150"
         />
       </div>
 
-      {/* Table Container */}
-      <div className="rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden shadow-sm">
+      {/* Mobile Card List */}
+      <div className="space-y-3 md:hidden">
+        {sortedTasks.map((task) => {
+          const progress = getProgressPercentage(task.id);
+          const taskStepsList = taskSteps.filter((step) => step.taskId === task.id);
+          const isExpanded = expandedTaskId === task.id;
+
+          return (
+            <article
+              key={task.id}
+              className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-3.5 shadow-sm"
+            >
+              <button
+                type="button"
+                onClick={() => onTaskSelect?.(task)}
+                className="w-full text-left"
+              >
+                <p
+                  className={`font-semibold text-sm transition-colors duration-150 ${
+                    task.completedAt
+                      ? "line-through text-gray-400 dark:text-gray-500"
+                      : "text-gray-900 dark:text-gray-100"
+                  }`}
+                >
+                  {task.title}
+                </p>
+                {task.description && (
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                    {task.description}
+                  </p>
+                )}
+              </button>
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {task.category ? (
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    {task.category}
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-400 dark:text-gray-500">No category</span>
+                )}
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {format(new Date(task.createdAt), "MMM d, yyyy")}
+                </span>
+              </div>
+
+              <div className="mt-3">
+                <div className="mb-1.5 flex items-center justify-between text-xs">
+                  <span className="text-gray-600 dark:text-gray-400">Progress</span>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">
+                    {taskStepsList.length > 0 ? `${progress}%` : "No steps"}
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="bg-gray-600 dark:bg-gray-400 h-2 rounded-full transition-all duration-150"
+                    style={{ width: `${taskStepsList.length > 0 ? progress : 0}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <fetcher.Form method="post">
+                  <input
+                    type="hidden"
+                    name={task.completedAt ? "incompleteTask" : "completeTask"}
+                    value={task.id}
+                  />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    title={task.completedAt ? "Mark as Incomplete" : "Mark as Complete"}
+                    aria-label={task.completedAt ? "Mark as Incomplete" : "Mark as Complete"}
+                  >
+                    {task.completedAt ? (
+                      <XCircleIcon className="w-5 h-5" />
+                    ) : (
+                      <CheckIcon className="w-5 h-5" />
+                    )}
+                  </button>
+                </fetcher.Form>
+
+                <button
+                  type="button"
+                  onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
+                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                >
+                  Details
+                  <ChevronDownIcon
+                    className={`w-4 h-4 transition-transform duration-150 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                <fetcher.Form method="post">
+                  <input type="hidden" name="deleteTask" value={task.id} />
+                  <button
+                    type="submit"
+                    onClick={(e) => {
+                      if (!confirm("Are you sure you want to delete this task?")) {
+                        e.preventDefault();
+                      }
+                    }}
+                    className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    title="Delete Task"
+                    aria-label="Delete Task"
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                </fetcher.Form>
+              </div>
+
+              {isExpanded && (
+                <div className="mt-3 space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50">
+                  {task.description && (
+                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+                      {task.description}
+                    </p>
+                  )}
+                  {taskStepsList.length > 0 && (
+                    <ul className="space-y-1.5">
+                      {taskStepsList.map((step) => (
+                        <li
+                          key={step.id}
+                          className="text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2.5"
+                        >
+                          <span className="mt-0.5 flex-shrink-0">
+                            {step.completedAt ? (
+                              <CheckIcon className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                            ) : (
+                              <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 rounded" />
+                            )}
+                          </span>
+                          <span
+                            className={
+                              step.completedAt
+                                ? "line-through text-gray-500 dark:text-gray-400"
+                                : ""
+                            }
+                          >
+                            {step.description}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {task.dueDate && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-semibold">Due:</span>{" "}
+                      {format(new Date(task.dueDate), "MMM d, yyyy")}
+                    </p>
+                  )}
+                  {task.reminderDate && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      <span className="font-semibold">Reminder:</span>{" "}
+                      {format(new Date(task.reminderDate), "MMM d, yyyy p")}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onTaskSelect?.(task)}
+                    className="pt-1 text-xs font-semibold text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition-colors duration-150"
+                  >
+                    Open Full Details
+                  </button>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -258,7 +431,7 @@ export default function TaskTableView({
                             />
                             <button
                               type="submit"
-                              className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150"
+                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center"
                               title={
                                 task.completedAt
                                   ? "Mark as Incomplete"
@@ -289,18 +462,19 @@ export default function TaskTableView({
                                   e.preventDefault();
                                 }
                               }}
-                              className="p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150"
+                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center"
                               title="Delete Task"
                             >
                               <TrashIcon className="w-4 h-4" />
                             </button>
                           </fetcher.Form>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedTaskId(isExpanded ? null : task.id);
                             }}
-                            className={`p-1.5 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 ${
+                            className={`p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center ${
                               isExpanded ? "rotate-180" : ""
                             }`}
                             title="View details"

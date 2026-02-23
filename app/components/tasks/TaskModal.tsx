@@ -77,15 +77,19 @@ export default function TaskModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-150"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 transition-all duration-150"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-2xl md:max-w-5xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-2xl md:max-w-5xl max-h-[calc(100dvh-1.5rem)] md:max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 truncate pr-4">
             {task.title}
           </h2>
@@ -99,7 +103,7 @@ export default function TaskModal({
         </div>
 
         {/* Body - Two Column on Desktop */}
-        <div className="overflow-y-auto flex-grow p-6 md:flex md:gap-6 space-y-6 md:space-y-0">
+        <div className="overflow-y-auto flex-grow p-4 sm:p-6 md:flex md:gap-6 space-y-6 md:space-y-0">
           {/* Left Panel - Task Details */}
           <div className="md:flex-1 md:border-r border-gray-300 dark:border-gray-700 md:pr-6 space-y-0">
             {/* Metadata Section */}
@@ -424,7 +428,7 @@ export default function TaskModal({
         </div>
 
         {/* Footer - Actions */}
-        <div className="border-t border-gray-300 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row gap-3 flex-shrink-0">
+        <div className="border-t border-gray-300 dark:border-gray-700 p-4 sm:p-6 bg-gray-50 dark:bg-gray-800/50 flex flex-col sm:flex-row gap-3 flex-shrink-0">
           <fetcher.Form method="post" className="w-full sm:w-auto">
             <input type="hidden" name="deleteTask" value={task.id} />
             <button

@@ -354,7 +354,7 @@ export default function DayPlanner() {
         {/* Header Section */}
         <div className="mb-6">
           {/* Top Row: Title and Controls */}
-          <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-gray-800 border border-gray-700 rounded-md">
                 <CalendarIcon className="w-5 h-5 text-gray-200" />
@@ -368,7 +368,7 @@ export default function DayPlanner() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 self-end sm:self-auto">
               <button
                 type="button"
                 onClick={() => setFocusMode(!focusMode)}
@@ -394,7 +394,7 @@ export default function DayPlanner() {
           </div>
 
           {/* Date Navigation Row */}
-          <div className="bg-gray-900 border border-gray-800 rounded-md p-3 flex items-center gap-3">
+          <div className="bg-gray-900 border border-gray-800 rounded-md p-3 flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={() => {
@@ -408,12 +408,12 @@ export default function DayPlanner() {
               <ChevronLeftIcon className="w-5 h-5" />
             </button>
 
-            <div className="flex-1 flex items-center gap-3">
+            <div className="flex-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
               <input
                 type="date"
                 value={planDate}
                 onChange={(e) => handleDateChange(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-150"
+                className="w-full sm:flex-1 bg-gray-800 border border-gray-700 text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-150"
               />
               <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {user.timeZone}

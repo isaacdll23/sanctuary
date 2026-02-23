@@ -562,10 +562,14 @@ export function calculateFocusedTask(
   const pixelsPerMinute = 120 / 60;
   const taskPixelPosition = relativeMinutesFromViewStart * pixelsPerMinute;
   
-  // Position task at top 1/3 of viewport by subtracting 1/3 of viewport height
-  // Assuming viewport height is around 600px for calendar view
-  const viewportHeight = 600;
-  const scrollOffset = Math.max(0, taskPixelPosition - viewportHeight / 3);
+  // Estimate a viewport height from configured visible schedule hours instead of
+  // assuming a fixed desktop-sized viewport.
+  const scheduleHeightPx = totalVisibleMinutes * pixelsPerMinute;
+  const estimatedViewportHeight = Math.min(
+    720,
+    Math.max(360, scheduleHeightPx * 0.6)
+  );
+  const scrollOffset = Math.max(0, taskPixelPosition - estimatedViewportHeight / 3);
 
   return {
     taskId: focusedTask.id,

@@ -73,10 +73,16 @@ export function CommandModal({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 z-50">
-      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl shadow-2xl w-full max-w-4xl relative transform transition-all duration-300 ease-out max-h-[90vh] overflow-hidden flex flex-col">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-4"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
+    >
+      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-2xl shadow-2xl w-full max-w-4xl relative transform transition-all duration-300 ease-out max-h-[calc(100dvh-1.5rem)] md:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Modal Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             {editingCommand ? "Edit Command" : "New Command"}
           </h2>
@@ -90,7 +96,7 @@ export function CommandModal({
         </div>
 
         {/* Modal Content */}
-        <div className="p-6 overflow-y-auto flex-grow">
+        <div className="p-4 sm:p-6 overflow-y-auto flex-grow">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Column - Command Form */}
             <div className="lg:col-span-2">

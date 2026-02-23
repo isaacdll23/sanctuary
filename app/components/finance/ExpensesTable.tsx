@@ -21,10 +21,88 @@ export default function ExpensesTable({
   onEditExpense,
 }: ExpensesTableProps) {
   const fetcher = useFetcher();
+  const getShareOfTotal = (expense: Expense) => {
+    if (!totalMonthlyCost) return "0.0";
+    return ((expense.monthlyCost / totalMonthlyCost) * 100).toFixed(1);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-gray-300 dark:divide-gray-700/50 md:hidden">
+        {filteredExpenses.length === 0 ? (
+          <div className="px-4 py-8 text-center text-gray-600 dark:text-gray-400">
+            <div className="flex flex-col items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-600 mb-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                />
+              </svg>
+              <p className="text-base font-medium">No expenses found.</p>
+              <p className="text-sm">Add your first expense to start tracking.</p>
+            </div>
+          </div>
+        ) : (
+          filteredExpenses.map((expense: Expense) => (
+            <article key={expense.id} className="p-4">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {expense.name}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                    ${(expense.monthlyCost / 100).toFixed(2)} monthly
+                  </p>
+                </div>
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                  Day {expense.chargeDay}
+                </span>
+              </div>
+
+              <div className="mt-2.5 flex items-center justify-between">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                  {expense.category}
+                </span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">
+                  {getShareOfTotal(expense)}% of total
+                </span>
+              </div>
+
+              <div className="mt-3 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => onEditExpense(expense)}
+                  className="inline-flex min-h-[40px] items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+                >
+                  <PencilIcon className="w-4 h-4 mr-1.5" />
+                  Edit
+                </button>
+                <fetcher.Form method="post" className="inline-block">
+                  <input type="hidden" name="_action" value="delete" />
+                  <input type="hidden" name="id" value={expense.id} />
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-[40px] items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-xs font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+                  >
+                    <TrashIcon className="w-4 h-4 mr-1.5" />
+                    Delete
+                  </button>
+                </fetcher.Form>
+              </div>
+            </article>
+          ))
+        )}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-100 dark:bg-gray-700/50">
             <tr>
@@ -88,11 +166,7 @@ export default function ExpensesTable({
                       ${(expense.monthlyCost / 100).toFixed(2)}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      {(
-                        (expense.monthlyCost / totalMonthlyCost) *
-                        100
-                      ).toFixed(1)}
-                      % of total
+                      {getShareOfTotal(expense)}% of total
                     </div>
                   </td>
                   <td className="px-4 py-4 text-sm">

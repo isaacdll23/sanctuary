@@ -236,6 +236,10 @@ export default function Sidebar({
       <button
         onClick={toggleMobileMenu}
         className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
+        style={{
+          top: "calc(var(--safe-area-inset-top) + 0.75rem)",
+          left: "calc(var(--safe-area-inset-left) + 0.75rem)",
+        }}
         aria-controls="sidebar"
         aria-expanded={isMobileMenuOpen}
         aria-label="Open sidebar"
@@ -258,11 +262,15 @@ export default function Sidebar({
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed top-0 left-0 z-40 h-screen bg-gray-950 text-gray-100 border-r border-gray-800 transition-all duration-300 ease-in-out shadow-lg ${
+        className={`fixed top-0 left-0 z-40 h-dvh bg-gray-950 text-gray-100 border-r border-gray-800 transition-all duration-300 ease-in-out shadow-lg ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 ${
           isDesktopCollapsed ? "md:w-20" : "md:w-56" // Dynamic width for desktop
         } w-56 md:sticky md:flex md:flex-col`}
+        style={{
+          paddingTop: "var(--safe-area-inset-top)",
+          paddingBottom: "var(--safe-area-inset-bottom)",
+        }}
       >
         {/* Sidebar Header (for mobile close and desktop collapse) */}
         <div

@@ -30,6 +30,7 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  { rel: "apple-touch-icon", href: "/sanctuary-logo-192.png" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -84,18 +85,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
         <Meta />
         <Links />
         <link rel="icon" href="/sanctuary-logo-192.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0a0c10" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="Sanctuary" />
         <meta
           name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />{" "}
+          content="black"
+        />
       </head>
-      <body className="m-0 p-0 h-screen flex bg-gray-950 text-gray-100">
+      <body
+        className="m-0 p-0 min-h-dvh flex bg-gray-950 text-gray-100"
+        style={{
+          paddingTop: "var(--safe-area-inset-top)",
+          paddingBottom: "var(--safe-area-inset-bottom)",
+        }}
+      >
         <ToastProvider>
           <Sidebar
             isAuthenticated={isAuthenticated}
@@ -113,7 +125,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <main className="flex-1 overflow-y-auto p-0 bg-gray-950 text-gray-100">
+    <main className="flex-1 overflow-y-auto p-0 bg-gray-950 text-gray-100 safe-bottom-pad">
       <Outlet />
     </main>
   );

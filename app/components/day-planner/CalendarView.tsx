@@ -1,4 +1,4 @@
-import { useState, forwardRef } from "react";
+import { useEffect, useState, forwardRef } from "react";
 import { useFetcher } from "react-router";
 import TaskBlock from "./TaskBlock";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -45,6 +45,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
     minutes: number;
   } | null>(null);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   // Generate hour markers
   const startHour = parseInt(viewStartTime.split(":")[0], 10);
   const endHour = parseInt(viewEndTime.split(":")[0], 10);
@@ -64,6 +65,17 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
     return topPx;
   }
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+    const handleChange = (event: MediaQueryListEvent) =>
+      setIsTouchDevice(event.matches);
+
+    setIsTouchDevice(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
   function formatHour(hour: number) {
     const ampm = hour >= 12 ? "PM" : "AM";
     const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
@@ -76,6 +88,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
   }
 
   function handleDragOver(e: React.DragEvent, hour: number) {
+    if (isTouchDevice) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = "move";
@@ -101,6 +114,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
   }
 
   function handleDragLeave(e: React.DragEvent) {
+    if (isTouchDevice) return;
     e.preventDefault();
     // Only clear if we're leaving the drop zone entirely
     const rect = e.currentTarget.getBoundingClientRect();
@@ -113,6 +127,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
   }
 
   function handleDrop(e: React.DragEvent, hour: number) {
+    if (isTouchDevice) return;
     e.preventDefault();
     e.stopPropagation();
     setDragOverTime(null);
@@ -153,9 +168,16 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
     <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm">
       {/* Header */}
       <div className="border-b border-gray-300 dark:border-gray-700 p-4 md:p-5 flex items-center justify-between bg-white dark:bg-gray-800">
-        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
-          Day Schedule
-        </h3>
+        <div>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+            Day Schedule
+          </h3>
+          {isTouchDevice && (
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              Tap tasks to edit. Drag and drop is desktop-only.
+            </p>
+          )}
+        </div>
         <button
           type="button"
           onClick={() => onAddTask()}
@@ -167,7 +189,10 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
       </div>
 
       {/* Calendar Grid */}
-      <div ref={ref} className="relative max-h-[calc(100vh-400px)] md:max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800">
+      <div
+        ref={ref}
+        className="relative max-h-[calc(100dvh-18rem)] md:max-h-[600px] overflow-y-auto bg-white dark:bg-gray-800"
+      >
         {/* Time ruler and grid */}
         <div className="flex">
           {/* Time labels - Sticky */}
@@ -191,9 +216,9 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
               <div
                 key={hour}
                 onClick={() => handleTimeSlotClick(hour)}
-                onDragOver={(e) => handleDragOver(e, hour)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, hour)}
+                onDragOver={isTouchDevice ? undefined : (e) => handleDragOver(e, hour)}
+                onDragLeave={isTouchDevice ? undefined : handleDragLeave}
+                onDrop={isTouchDevice ? undefined : (e) => handleDrop(e, hour)}
                 className={`h-[120px] border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors duration-150 ${
                   dragOverTime === hour
                     ? "bg-gray-100 dark:bg-gray-700/50"
@@ -209,7 +234,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
             ))}
 
             {/* Drag preview indicator - Enhanced */}
-            {dragPreviewPosition && dragOverTime !== null && (
+            {!isTouchDevice && dragPreviewPosition && dragOverTime !== null && (
               <div
                 className="absolute left-0 right-0 pointer-events-none transition-all duration-150"
                 style={{
@@ -250,6 +275,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
                     onDragStart={(task) => setDraggedTask(task)}
                     onDragEnd={() => setDraggedTask(null)}
                     syncStatus={taskSyncStatus?.[task.id]}
+                    allowDrag={!isTouchDevice}
                   />
                 </div>
               ))}

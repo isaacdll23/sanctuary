@@ -38,9 +38,15 @@ export function AddExpenseModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-150">
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
+    >
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto transform transition-all duration-150">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Add New Expense
           </h2>
@@ -56,7 +62,7 @@ export function AddExpenseModal({
           </button>
         </div>
 
-        <fetcher.Form method="post" className="p-6 space-y-4">
+        <fetcher.Form method="post" className="p-4 sm:p-6 space-y-4">
           <input type="hidden" name="_action" value="add" />
 
           <div>
@@ -203,9 +209,15 @@ export function EditExpenseModal({
   if (!expense) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md transform transition-all duration-150">
-        <div className="flex justify-between items-center p-6 border-b border-gray-300 dark:border-gray-700">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
+    >
+      <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-2xl w-full max-w-md max-h-[calc(100dvh-1.5rem)] overflow-y-auto transform transition-all duration-150">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Edit Expense
           </h2>
@@ -221,7 +233,7 @@ export function EditExpenseModal({
           </button>
         </div>
 
-        <fetcher.Form method="post" className="p-6 space-y-4">
+        <fetcher.Form method="post" className="p-4 sm:p-6 space-y-4">
           <input type="hidden" name="_action" value="update" />
           <input type="hidden" name="id" value={expense.id} />
 
