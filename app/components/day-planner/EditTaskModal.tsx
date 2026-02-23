@@ -209,15 +209,19 @@ export default function EditTaskModal({ task, onClose, existingTasks = [] }: Edi
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 transition-all duration-150"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-3 sm:p-4 transition-all duration-150"
+      style={{
+        paddingTop: "max(0.75rem, var(--safe-area-inset-top))",
+        paddingBottom: "max(0.75rem, var(--safe-area-inset-bottom))",
+      }}
       onClick={onClose}
     >
       <div
-        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-lg"
+        className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg w-full max-w-lg max-h-[calc(100dvh-1.5rem)] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-300 dark:border-gray-700">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-300 dark:border-gray-700">
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
             Edit Task
           </h2>
@@ -232,7 +236,7 @@ export default function EditTaskModal({ task, onClose, existingTasks = [] }: Edi
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
           {/* Title */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -358,7 +362,7 @@ export default function EditTaskModal({ task, onClose, existingTasks = [] }: Edi
         </form>
 
         {/* Footer */}
-        <div className="border-t border-gray-300 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50 flex gap-3">
+        <div className="border-t border-gray-300 dark:border-gray-700 p-4 sm:p-6 bg-gray-50 dark:bg-gray-800/50 flex gap-3">
           <button
             type="button"
             onClick={handleDelete}
