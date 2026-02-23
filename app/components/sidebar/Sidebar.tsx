@@ -177,18 +177,13 @@ export default function Sidebar({
   isAdmin = false,
   accessiblePages = [],
 }: SidebarProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
   const accessiblePagesSet = useMemo(
     () => new Set(accessiblePages),
     [accessiblePages]
   );
-  const isSidebarCollapsed = isDesktopCollapsed && !isMobileMenuOpen;
-  const onNavItemClick = isMobileMenuOpen ? toggleMobileMenu : undefined;
-
-  function toggleMobileMenu() {
-    setIsMobileMenuOpen((value) => !value);
-  }
+  const isSidebarCollapsed = isDesktopCollapsed;
+  const onNavItemClick = undefined;
 
   function toggleDesktopCollapse() {
     setIsDesktopCollapsed((value) => !value);
@@ -232,41 +227,11 @@ export default function Sidebar({
 
   return (
     <>
-      {/* Hamburger Menu - Mobile */}
-      <button
-        onClick={toggleMobileMenu}
-        className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
-        style={{
-          top: "calc(var(--safe-area-inset-top) + 0.75rem)",
-          left: "calc(var(--safe-area-inset-left) + 0.75rem)",
-        }}
-        aria-controls="sidebar"
-        aria-expanded={isMobileMenuOpen}
-        aria-label="Open sidebar"
-      >
-        <svg
-          className="h-6 w-6"
-          stroke="currentColor"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
-
-      {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed top-0 left-0 z-40 h-dvh bg-gray-950 text-gray-100 border-r border-gray-800 transition-all duration-300 ease-in-out shadow-lg ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 ${
+        className={`hidden md:flex md:sticky md:top-0 md:h-dvh bg-gray-950 text-gray-100 border-r border-gray-800 transition-all duration-300 ease-in-out shadow-lg ${
           isDesktopCollapsed ? "md:w-20" : "md:w-56" // Dynamic width for desktop
-        } w-56 md:sticky md:flex md:flex-col`}
+        } md:flex-col`}
         style={{
           paddingTop: "var(--safe-area-inset-top)",
           paddingBottom: "var(--safe-area-inset-bottom)",
@@ -275,50 +240,25 @@ export default function Sidebar({
         {/* Sidebar Header (for mobile close and desktop collapse) */}
         <div
           className={`flex items-center px-4 py-3 h-14 border-b border-gray-800 ${
-            isDesktopCollapsed && !isMobileMenuOpen
-              ? "md:justify-center"
-              : "justify-between"
+            isDesktopCollapsed ? "justify-center" : "justify-between"
           }`}
         >
-          {/* Logo or Title - visible when expanded on desktop, or on mobile */}
+          {/* Logo or Title */}
           <div
             className={`flex items-center gap-2 text-sm font-semibold tracking-wide text-gray-100 ${
-              isDesktopCollapsed && !isMobileMenuOpen ? "md:hidden" : ""
+              isDesktopCollapsed ? "hidden" : ""
             }`}
           >
             <div className="w-7 h-7 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-200 font-semibold text-xs">
               S
             </div>
-            <span className={isDesktopCollapsed && !isMobileMenuOpen ? "md:hidden" : ""}>
-              {!isMobileMenuOpen ? "Sanctuary" : "Menu"}
-            </span>
+            <span className={isDesktopCollapsed ? "hidden" : ""}>Sanctuary</span>
           </div>
-
-          {/* Mobile Close Button */}
-          <button
-            onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
-            aria-label="Close sidebar"
-          >
-            <svg
-              className="h-6 w-6"
-              stroke="currentColor"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
 
           {/* Desktop Collapse/Expand Button */}
           <button
             onClick={toggleDesktopCollapse}
-            className="hidden md:block p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
+            className="p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
             aria-label={
               isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }
@@ -367,14 +307,6 @@ export default function Sidebar({
           )}
         </nav>
       </aside>
-      {/* Overlay for mobile when sidebar is open */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
-          onClick={toggleMobileMenu}
-          aria-hidden="true"
-        ></div>
-      )}
     </>
   );
 }

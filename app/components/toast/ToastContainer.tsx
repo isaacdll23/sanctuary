@@ -13,11 +13,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({
 }) => {
   return (
     <div
-      className="fixed top-4 right-4 z-[100] w-full max-w-xs sm:max-w-sm"
-      style={{
-        top: "calc(var(--safe-area-inset-top) + 1rem)",
-        right: "calc(var(--safe-area-inset-right) + 1rem)",
-      }}
+      className="toast-offset fixed inset-x-3 z-[100] w-auto max-w-none md:inset-x-auto md:w-full md:max-w-sm"
       aria-live="assertive"
     >
       {toasts.map((toast) => (

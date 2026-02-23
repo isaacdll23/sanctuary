@@ -201,6 +201,17 @@ textarea {
   padding-bottom: max(0.5rem, var(--safe-area-inset-bottom));
 }
 
+.toast-offset {
+  bottom: calc(var(--safe-area-inset-bottom) + 5rem);
+  right: calc(var(--safe-area-inset-right) + 0.75rem);
+}
+
+@media (min-width: 768px) {
+  .toast-offset {
+    bottom: calc(var(--safe-area-inset-bottom) + 1rem);
+  }
+}
+
 hr {
   border-color: rgb(45 49 61);
 }

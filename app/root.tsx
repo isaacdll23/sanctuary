@@ -18,6 +18,7 @@ import { getUserAccessiblePages } from "./modules/services/PageAccessService";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
 import { ToastProvider } from "~/context/ToastContext";
+import MobileTabBar from "./components/navigation/MobileTabBar";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -114,7 +115,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
             isAdmin={isAdmin}
             accessiblePages={accessiblePages}
           />
-          <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
+          <div
+            className={`flex-1 flex flex-col overflow-hidden ${
+              isAuthenticated ? "pb-20 md:pb-0" : ""
+            }`}
+          >
+            {children}
+          </div>
+          <MobileTabBar
+            isAuthenticated={isAuthenticated}
+            isAdmin={isAdmin}
+            accessiblePages={accessiblePages}
+          />
           <ScrollRestoration />
           <Scripts />
         </ToastProvider>

@@ -35,10 +35,17 @@ export function NoteEditor({
   const [editorPreferences, setEditorPreferences] = useState<EditorPreferences>(
     () => loadEditorPreferences()
   );
+  const [isMobileEditor, setIsMobileEditor] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 767px)").matches;
+  });
   const [showPreview, setShowPreview] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("noteEditorShowPreview");
-      return saved ? JSON.parse(saved) : true;
+      if (saved) {
+        return JSON.parse(saved);
+      }
+      return !window.matchMedia("(max-width: 767px)").matches;
     }
     return true;
   });
@@ -91,6 +98,18 @@ export function NoteEditor({
       localStorage.setItem("noteEditorShowPreview", JSON.stringify(showPreview));
     }
   }, [showPreview]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setIsMobileEditor(event.matches);
+    };
+
+    setIsMobileEditor(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   useEffect(() => {
     const currentKey = note ? note.id : isNew ? "new" : null;
@@ -382,19 +401,21 @@ export function NoteEditor({
           >
             Content
           </label>
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            title={showPreview ? "Hide preview" : "Show preview"}
-            aria-label={showPreview ? "Hide preview" : "Show preview"}
-            className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
-          >
-            {showPreview ? (
-              <EyeSlashIcon className="h-4 w-4" />
-            ) : (
-              <EyeIcon className="h-4 w-4" />
-            )}
-          </button>
+          {!isMobileEditor && (
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              title={showPreview ? "Hide preview" : "Show preview"}
+              aria-label={showPreview ? "Hide preview" : "Show preview"}
+              className="p-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
+            >
+              {showPreview ? (
+                <EyeSlashIcon className="h-4 w-4" />
+              ) : (
+                <EyeIcon className="h-4 w-4" />
+              )}
+            </button>
+          )}
         </div>
         <div className="flex-grow flex flex-col min-h-0 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm overflow-hidden focus-within:ring-2 focus-within:ring-gray-400 dark:focus-within:ring-gray-600">
           <SplitViewContainer
@@ -423,7 +444,7 @@ export function NoteEditor({
               />
             }
             dividerPosition={50}
-            showRightPane={showPreview}
+            showRightPane={!isMobileEditor && showPreview}
           />
         </div>
       </div>
