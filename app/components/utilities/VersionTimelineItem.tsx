@@ -26,7 +26,7 @@ export function VersionTimelineItem({
       <div
         className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-150 ${
           isActive
-            ? "bg-gray-800 dark:bg-gray-100 scale-125"
+            ? "bg-gray-800 dark:bg-gray-800 scale-125"
             : "bg-gray-400 dark:bg-gray-500"
         }`}
       ></div>

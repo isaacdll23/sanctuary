@@ -116,7 +116,7 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <div className="min-h-screen bg-transparent text-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {/* Header Section */}
         <header className="mb-8 md:mb-12">
@@ -149,7 +149,7 @@ export default function Admin() {
               <button
                 onClick={handleBulkEncryptNotes}
                 disabled={encryptionFetcher.state === "submitting"}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
               >
                 <LockClosedIcon className="w-5 h-5" />
                 {encryptionFetcher.state === "submitting"

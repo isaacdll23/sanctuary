@@ -14,7 +14,7 @@ export default function SharedBudgetsIndex() {
 
   if (!loaderData.success) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+      <div className="min-h-screen bg-transparent p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
           <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-6 text-center">
             <p className="text-gray-600 dark:text-gray-400">
@@ -29,7 +29,7 @@ export default function SharedBudgetsIndex() {
   const budgets = loaderData.data;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -42,7 +42,7 @@ export default function SharedBudgetsIndex() {
           </div>
           <Link
             to="/finance/budgets/shared/new"
-            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
           >
             <PlusIcon className="w-5 h-5" />
             Create New

@@ -167,7 +167,7 @@ export default function CalendarSettingsSection({
               <button
                 onClick={handleManualSync}
                 disabled={isCalendarLoading}
-                className="flex-1 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                className="flex-1 bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
               >
                 {isCalendarLoading ? "Syncing..." : "Sync Now"}
               </button>
@@ -258,7 +258,7 @@ export default function CalendarSettingsSection({
             <button
               type="submit"
               disabled={isCalendarLoading}
-              className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 mt-6"
+              className="w-full bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 mt-6"
             >
               {isCalendarLoading ? "Saving..." : "Save Preferences"}
             </button>
@@ -308,7 +308,7 @@ export default function CalendarSettingsSection({
           <button
             type="submit"
             disabled={isCalendarLoading}
-            className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 mt-6"
+            className="w-full bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 px-4 py-2 rounded-lg font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 min-h-[40px] focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 mt-6"
           >
             {isCalendarLoading ? "Saving..." : "Save Calendar View"}
           </button>

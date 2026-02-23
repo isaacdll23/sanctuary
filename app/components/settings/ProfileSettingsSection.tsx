@@ -172,7 +172,7 @@ export default function ProfileSettingsSection({ user }: ProfileSettingsSectionP
             </div>
             <div className="space-y-3 mt-6">
               <button
-                className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-2 rounded-lg transition-colors"
+                className="w-full bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2 rounded-lg transition-colors"
                 onClick={() => setEditMode(true)}
               >
                 Edit Profile
@@ -266,7 +266,7 @@ export default function ProfileSettingsSection({ user }: ProfileSettingsSectionP
             <div className="flex gap-2 mt-6">
               <button
                 type="submit"
-                className="flex-1 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-2 rounded-lg transition-colors"
+                className="flex-1 bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2 rounded-lg transition-colors"
                 disabled={profileFetcher.state === "submitting"}
               >
                 {profileFetcher.state === "submitting" ? "Saving..." : "Save Changes"}

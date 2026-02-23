@@ -129,21 +129,21 @@ export default function Tasks() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent text-gray-100 p-3 md:p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <header className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-100">
               Tasks
             </h1>
-            <p className="mt-2 text-base text-gray-600 dark:text-gray-400">
+            <p className="mt-1.5 text-sm text-gray-400">
               Organize and track your work efficiently.
             </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold px-5 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-900 whitespace-nowrap"
+            className="flex items-center gap-2 bg-gray-800 text-gray-100 font-semibold px-4 py-2 rounded-md hover:bg-gray-700 shadow-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-900 whitespace-nowrap"
           >
             <PlusIcon className="h-5 w-5" />
             Add Task

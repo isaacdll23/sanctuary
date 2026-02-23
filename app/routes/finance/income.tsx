@@ -67,7 +67,7 @@ export default function Income({ loaderData }: Route.ComponentProps) {
   const fetcher = useFetcher();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent text-gray-100 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <header className="mb-12">
@@ -252,7 +252,7 @@ export default function Income({ loaderData }: Route.ComponentProps) {
             <button
               type="submit"
               disabled={fetcher.state === "submitting"}
-              className="w-full inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 font-semibold py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+              className="w-full inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
             >
               {fetcher.state === "submitting" ? (
                 <>

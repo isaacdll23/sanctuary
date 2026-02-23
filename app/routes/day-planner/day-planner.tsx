@@ -349,18 +349,18 @@ export default function DayPlanner() {
   const isSyncing = fetcher.state === "submitting";
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-8">
+    <div className="min-h-screen bg-transparent text-gray-100">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-5">
         {/* Header Section */}
-        <div className="mb-8">
+        <div className="mb-6">
           {/* Top Row: Title and Controls */}
-          <div className="flex items-center justify-between gap-3 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                <CalendarIcon className="w-6 h-6 text-gray-900 dark:text-gray-100" />
+              <div className="p-2 bg-gray-800 border border-gray-700 rounded-md">
+                <CalendarIcon className="w-5 h-5 text-gray-200" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl font-bold text-gray-100">
                   Day Planner
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -374,7 +374,7 @@ export default function DayPlanner() {
                 onClick={() => setFocusMode(!focusMode)}
                 className={`p-2.5 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
                   focusMode
-                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900"
+                    ? "bg-gray-800 text-gray-100"
                     : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
                 }`}
                 title={focusMode ? "Exit focus mode" : "Enter focus mode"}
@@ -394,7 +394,7 @@ export default function DayPlanner() {
           </div>
 
           {/* Date Navigation Row */}
-          <div className="bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-lg p-4 flex items-center gap-3">
+          <div className="bg-gray-900 border border-gray-800 rounded-md p-3 flex items-center gap-3">
             <button
               type="button"
               onClick={() => {
@@ -402,7 +402,7 @@ export default function DayPlanner() {
                 prevDate.setDate(prevDate.getDate() - 1);
                 handleDateChange(prevDate.toISOString().split("T")[0]);
               }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              className="p-2 hover:bg-gray-800 text-gray-300 rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500"
               title="Previous day (← arrow key)"
             >
               <ChevronLeftIcon className="w-5 h-5" />
@@ -413,7 +413,7 @@ export default function DayPlanner() {
                 type="date"
                 value={planDate}
                 onChange={(e) => handleDateChange(e.target.value)}
-                className="flex-1 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:border-transparent transition-all duration-150"
+                className="flex-1 bg-gray-800 border border-gray-700 text-gray-100 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-gray-500 focus:border-transparent transition-all duration-150"
               />
               <div className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                 {user.timeZone}
@@ -423,8 +423,8 @@ export default function DayPlanner() {
                 onClick={() => handleDateChange(today)}
                 className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
                   planDate === today
-                    ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md"
-                    : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    ? "bg-gray-800 text-gray-100 shadow-sm"
+                    : "bg-gray-900 text-gray-300 hover:bg-gray-800"
                 }`}
               >
                 Today
@@ -438,7 +438,7 @@ export default function DayPlanner() {
                 nextDate.setDate(nextDate.getDate() + 1);
                 handleDateChange(nextDate.toISOString().split("T")[0]);
               }}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              className="p-2 hover:bg-gray-800 text-gray-300 rounded-md transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-500"
               title="Next day (→ arrow key)"
             >
               <ChevronRightIcon className="w-5 h-5" />

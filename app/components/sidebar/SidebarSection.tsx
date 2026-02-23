@@ -17,14 +17,14 @@ export default function SidebarSection({
 }: SidebarSectionProps) {
   return (
     <div
-      className={`space-y-1 ${!isFirst ? "pt-5" : "pt-2"} ${isAccountSection ? "border-t-2 border-gray-300 dark:border-gray-700 mt-5 pt-5" : ""}`}
+      className={`space-y-1 ${!isFirst ? "pt-4" : "pt-1"} ${isAccountSection ? "border-t border-gray-800 mt-4 pt-4" : ""}`}
     >
       {title && !isCollapsed && (
         <>
-          <h3 className="px-3 py-2 text-xs font-semibold uppercase tracking-widest text-gray-600 dark:text-gray-400 select-none">
+          <h3 className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-gray-500 select-none">
             {title}
           </h3>
-          <div className="border-b border-gray-300 dark:border-gray-700 mx-2 mb-3 opacity-50" />
+          <div className="border-b border-gray-800 mx-2 mb-2" />
         </>
       )}
       {children}

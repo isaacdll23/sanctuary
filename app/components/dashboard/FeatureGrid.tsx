@@ -19,14 +19,14 @@ export default function FeatureGrid({
     return (
       <div className="py-16 text-center">
         <div className="mb-4">
-          <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-            <SparklesIcon className="h-6 w-6 text-gray-400 dark:text-gray-600" />
+          <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full border border-gray-800 bg-gray-900">
+            <SparklesIcon className="h-6 w-6 text-gray-500" />
           </div>
         </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        <h3 className="mb-2 text-lg font-medium text-gray-100">
           No Accessible Features
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+        <p className="mx-auto max-w-md text-sm text-gray-400">
           Your administrator hasn't granted you access to any features yet. Contact them to request access.
         </p>
       </div>
@@ -42,11 +42,11 @@ export default function FeatureGrid({
       {/* Header */}
       {title && (
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="mb-1.5 text-xl font-semibold text-gray-100">
             {title}
           </h2>
           {subtitle && (
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-400">
               {subtitle}
             </p>
           )}

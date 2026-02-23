@@ -12,7 +12,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Tasks",
     description: "Create, track, and manage your tasks with steps and due dates",
     icon: "CheckCircleIcon",
-    color: "blue",
     route: "/tasks",
   },
   "day-planner": {
@@ -21,7 +20,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Day Planner",
     description: "Schedule your day with time-based task planning and calendar view",
     icon: "CalendarIcon",
-    color: "purple",
     route: "/day-planner",
   },
   notes: {
@@ -30,7 +28,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Notes",
     description: "Write, organize, and manage your notes with folders and encryption",
     icon: "BookOpenIcon",
-    color: "amber",
     route: "/notes",
   },
   finance: {
@@ -39,7 +36,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Finance",
     description: "Track expenses, manage budgets, and collaborate on shared finances",
     icon: "CurrencyDollarIcon",
-    color: "green",
     route: "/finance/expenses",
   },
   "utilities/commands": {
@@ -48,7 +44,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Commands",
     description: "Create and manage command snippets for quick access to common workflows",
     icon: "CommandLineIcon",
-    color: "indigo",
     route: "/utilities/commands",
   },
   settings: {
@@ -57,7 +52,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Settings",
     description: "Manage your account settings, preferences, and profile",
     icon: "Cog8ToothIcon",
-    color: "gray",
     route: "/settings",
   },
   admin: {
@@ -66,7 +60,6 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
     title: "Admin",
     description: "Manage users, permissions, and system-wide settings",
     icon: "ShieldCheckIcon",
-    color: "red",
     route: "/admin",
   },
 };
@@ -76,8 +69,7 @@ export const FEATURE_REGISTRY: Record<string, Omit<FeatureCard, "isAccessible">>
  * Returns feature cards sorted by default order with access status
  */
 export async function getAccessibleFeatures(
-  userId: number,
-  isAdmin: boolean
+  userId: number
 ): Promise<FeatureCard[]> {
   // Get user's accessible pages from PageAccessService
   const accessiblePages = await getUserAccessiblePages(userId);

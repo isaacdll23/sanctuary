@@ -82,7 +82,7 @@ export default function JoinBudgetPage() {
           </p>
           <a
             href="/finance/budgets/shared"
-            className="inline-block px-4 py-2 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-medium"
+            className="inline-block px-4 py-2 bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-100 rounded-lg font-medium"
           >
             View Your Budgets
           </a>
@@ -143,7 +143,7 @@ export default function JoinBudgetPage() {
             <button
               type="submit"
               disabled={fetcher.state === "submitting"}
-              className="w-full px-6 py-3 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-medium transition disabled:opacity-50"
+              className="w-full px-6 py-3 bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-100 rounded-lg font-medium transition disabled:opacity-50"
             >
               {fetcher.state === "submitting"
                 ? "Joining..."
@@ -166,7 +166,7 @@ export default function JoinBudgetPage() {
             <button
               type="submit"
               disabled={fetcher.state === "submitting"}
-              className="px-6 py-3 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-medium transition disabled:opacity-50"
+              className="px-6 py-3 bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-100 rounded-lg font-medium transition disabled:opacity-50"
             >
               {fetcher.state === "submitting" ? "Joining..." : "Join Budget"}
             </button>

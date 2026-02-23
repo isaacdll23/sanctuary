@@ -284,7 +284,7 @@ export default function SharedBudgetDetails() {
                     <button
                       type="submit"
                       disabled={fetcher.state === "submitting"}
-                      className="px-4 py-2 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-medium transition disabled:opacity-50 text-sm"
+                      className="px-4 py-2 bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-100 rounded-lg font-medium transition disabled:opacity-50 text-sm"
                     >
                       {fetcher.state === "submitting"
                         ? "Adding..."

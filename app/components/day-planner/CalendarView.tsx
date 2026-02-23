@@ -159,7 +159,7 @@ const CalendarView = forwardRef<HTMLDivElement, CalendarViewProps>(
         <button
           type="button"
           onClick={() => onAddTask()}
-          className="flex items-center gap-2 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-medium text-sm py-2 px-3.5 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+          className="flex items-center gap-2 bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-medium text-sm py-2 px-3.5 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
         >
           <PlusIcon className="w-4 h-4" />
           Add Task

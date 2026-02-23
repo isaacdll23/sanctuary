@@ -28,10 +28,12 @@ const icons: Record<ToastType, React.ElementType> = {
 };
 
 const toastStyles: Record<ToastType, string> = {
-  success: "bg-green-500 border-green-600",
-  error: "bg-red-500 border-red-600",
-  info: "bg-blue-500 border-blue-600",
-  warning: "bg-yellow-500 border-yellow-600",
+  success:
+    "bg-emerald-500/15 border-emerald-500/35 text-emerald-100 backdrop-blur-sm",
+  error: "bg-red-500/15 border-red-500/35 text-red-100 backdrop-blur-sm",
+  info: "bg-gray-700/55 border-gray-600 text-gray-100 backdrop-blur-sm",
+  warning:
+    "bg-amber-500/15 border-amber-500/35 text-amber-100 backdrop-blur-sm",
 };
 
 const ToastItem: React.FC<ToastItemProps> = ({
@@ -63,8 +65,8 @@ const ToastItem: React.FC<ToastItemProps> = ({
   return (
     <div
       className={`
-        flex items-center p-4 mb-3 rounded-md shadow-lg text-white
-        border-l-4 transition-all duration-300 ease-in-out
+        flex items-center p-3 mb-2.5 rounded-md shadow-md
+        border transition-all duration-300 ease-in-out
         ${toastStyles[type]}
         ${
           isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-full"
@@ -72,14 +74,14 @@ const ToastItem: React.FC<ToastItemProps> = ({
       `}
       role="alert"
     >
-      <Icon className="h-6 w-6 mr-3 flex-shrink-0" />
-      <div className="flex-grow mr-4">{message}</div>
+      <Icon className="h-5 w-5 mr-2.5 flex-shrink-0" />
+      <div className="flex-grow mr-3 text-sm">{message}</div>
       <button
         onClick={handleDismiss}
-        className="p-1 rounded-md hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+        className="p-1 rounded-md hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-gray-500/70"
         aria-label="Dismiss toast"
       >
-        <XMarkIcon className="h-5 w-5" />
+        <XMarkIcon className="h-4 w-4" />
       </button>
     </div>
   );

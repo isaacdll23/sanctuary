@@ -59,7 +59,7 @@ export default function FinancialSnapshotWidget({ data }: FinancialSnapshotProps
           </p>
           <a
             href="/finance/expenses"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
           >
             Create Budget
             <ChevronRightIcon className="w-4 h-4" />

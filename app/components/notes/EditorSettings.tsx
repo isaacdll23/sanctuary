@@ -5,12 +5,14 @@ interface EditorSettingsProps {
   preferences: EditorPreferences;
   onFontSizeChange: (size: number) => void;
   onTabSizeChange: (size: 2 | 4 | 8) => void;
+  onLineWrappingChange: (enabled: boolean) => void;
 }
 
 export function EditorSettings({
   preferences,
   onFontSizeChange,
   onTabSizeChange,
+  onLineWrappingChange,
 }: EditorSettingsProps) {
   const handleFontSizeIncrease = () => {
     onFontSizeChange(Math.min(24, preferences.fontSize + 1));
@@ -80,6 +82,29 @@ export function EditorSettings({
           <option value={4}>4 spaces</option>
           <option value={8}>8 spaces</option>
         </select>
+      </div>
+
+      {/* Line Wrapping Toggle */}
+      <div className="flex items-center gap-2">
+        <label className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+          Wrap
+        </label>
+        <button
+          type="button"
+          onClick={() => onLineWrappingChange(!preferences.lineWrapping)}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 ${
+            preferences.lineWrapping
+              ? "bg-gray-900 text-white dark:bg-gray-800 dark:text-gray-100"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+          }`}
+          title={
+            preferences.lineWrapping
+              ? "Disable line wrapping"
+              : "Enable line wrapping"
+          }
+        >
+          {preferences.lineWrapping ? "On" : "Off"}
+        </button>
       </div>
     </div>
   );

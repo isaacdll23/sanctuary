@@ -127,7 +127,7 @@ export default function CollapsibleNavItem({
 
       {/* Child Items - Show when expanded and not collapsed */}
       {isExpanded && !isCollapsed && (
-        <div className="ml-4 space-y-1 border-l-2 border-gray-300 dark:border-gray-600 pl-0">
+        <div className="ml-3 space-y-1 border-l border-gray-800 pl-0">
           {children.map((child) => (
             <SidebarLink
               key={child.to}
@@ -146,7 +146,7 @@ export default function CollapsibleNavItem({
       {isCollapsed && isMenuOpen && (
         <div
           ref={menuRef}
-          className="absolute left-14 top-0 z-50 mt-0 min-w-max bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 py-1 pointer-events-auto"
+          className="absolute left-14 top-0 z-50 mt-0 min-w-max bg-gray-900 rounded-md shadow-lg border border-gray-700 py-1 pointer-events-auto"
           role="menu"
           aria-orientation="vertical"
           aria-labelledby={buttonId}
@@ -161,8 +161,8 @@ export default function CollapsibleNavItem({
                 className={({ isActive }) =>
                   `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
                     isActive
-                      ? "bg-indigo-600 text-white"
-                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      ? "bg-gray-800 text-gray-100"
+                      : "text-gray-300 hover:bg-gray-800"
                   }`
                 }
                 role="menuitem"

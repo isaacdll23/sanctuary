@@ -66,7 +66,7 @@ export default function Register(_: Route.ComponentProps) {
   let errors = fetcher.data?.errors;
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 flex items-center justify-center p-4 md:p-8">
+    <div className="min-h-screen bg-transparent text-gray-100 flex items-center justify-center p-4 md:p-8">
       <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl p-8 md:p-10 flex flex-col items-center gap-8 w-full max-w-md md:w-96">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-600 mb-6">
           Create Account

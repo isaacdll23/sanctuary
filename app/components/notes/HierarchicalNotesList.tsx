@@ -161,7 +161,7 @@ export function HierarchicalNotesList({
           <button
             onClick={handleCreateFolder}
             disabled={!newFolderName.trim()}
-            className="px-2.5 py-1.5 rounded-md bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 flex-shrink-0 text-sm"
+            className="px-2.5 py-1.5 rounded-md bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 hover:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 flex-shrink-0 text-sm"
           >
             Add
           </button>

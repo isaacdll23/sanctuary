@@ -154,7 +154,7 @@ export function AddExpenseModal({
               type="submit"
               disabled={fetcher.state === "submitting"}
               onClick={() => onLastSubmitTimeChange(Date.now())}
-              className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+              className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
             >
               {fetcher.state === "submitting" ? (
                 <>
@@ -313,7 +313,7 @@ export function EditExpenseModal({
               type="submit"
               disabled={fetcher.state === "submitting"}
               onClick={() => onLastSubmitTimeChange(Date.now())}
-              className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+              className="flex-1 inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 font-medium py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
             >
               {fetcher.state === "submitting" ? (
                 <>

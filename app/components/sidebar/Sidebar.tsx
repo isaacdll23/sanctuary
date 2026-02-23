@@ -235,7 +235,7 @@ export default function Sidebar({
       {/* Hamburger Menu - Mobile */}
       <button
         onClick={toggleMobileMenu}
-        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg text-indigo-200 hover:text-white hover:bg-indigo-600 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-white transition-colors duration-150"
+        className="md:hidden fixed top-3 left-3 z-50 p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
         aria-controls="sidebar"
         aria-expanded={isMobileMenuOpen}
         aria-label="Open sidebar"
@@ -258,7 +258,7 @@ export default function Sidebar({
       {/* Sidebar */}
       <aside
         id="sidebar"
-        className={`fixed top-0 left-0 z-40 h-screen bg-gray-50 text-gray-900 dark:bg-gray-800 dark:text-white border-r border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out shadow-lg dark:shadow-2xl ${
+        className={`fixed top-0 left-0 z-40 h-screen bg-gray-950 text-gray-100 border-r border-gray-800 transition-all duration-300 ease-in-out shadow-lg ${
           isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 ${
           isDesktopCollapsed ? "md:w-20" : "md:w-56" // Dynamic width for desktop
@@ -266,7 +266,7 @@ export default function Sidebar({
       >
         {/* Sidebar Header (for mobile close and desktop collapse) */}
         <div
-          className={`flex items-center px-4 py-3 h-16 border-b border-gray-200 dark:border-gray-700 ${
+          className={`flex items-center px-4 py-3 h-14 border-b border-gray-800 ${
             isDesktopCollapsed && !isMobileMenuOpen
               ? "md:justify-center"
               : "justify-between"
@@ -274,11 +274,11 @@ export default function Sidebar({
         >
           {/* Logo or Title - visible when expanded on desktop, or on mobile */}
           <div
-            className={`flex items-center gap-2 text-xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent dark:from-indigo-400 dark:to-indigo-300 ${
+            className={`flex items-center gap-2 text-sm font-semibold tracking-wide text-gray-100 ${
               isDesktopCollapsed && !isMobileMenuOpen ? "md:hidden" : ""
             }`}
           >
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold">
+            <div className="w-7 h-7 rounded-md bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-200 font-semibold text-xs">
               S
             </div>
             <span className={isDesktopCollapsed && !isMobileMenuOpen ? "md:hidden" : ""}>
@@ -289,7 +289,7 @@ export default function Sidebar({
           {/* Mobile Close Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 rounded-lg text-indigo-600 hover:text-indigo-800 hover:bg-gray-100 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors duration-150"
+            className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
             aria-label="Close sidebar"
           >
             <svg
@@ -310,7 +310,7 @@ export default function Sidebar({
           {/* Desktop Collapse/Expand Button */}
           <button
             onClick={toggleDesktopCollapse}
-            className="hidden md:block p-2 rounded-lg text-indigo-600 hover:text-indigo-800 hover:bg-gray-100 dark:text-indigo-300 dark:hover:text-white dark:hover:bg-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors duration-150"
+            className="hidden md:block p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
             aria-label={
               isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }
@@ -324,7 +324,7 @@ export default function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 px-3 py-6 space-y-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <nav className="flex-1 px-2.5 py-3 space-y-0 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-transparent">
           {!isAuthenticated ? (
             // Render unauthenticated items
             navItemsUnauth.map((item) => (

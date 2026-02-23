@@ -81,7 +81,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   } = loaderData || {};
 
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -95,7 +95,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           content="black-translucent"
         />{" "}
       </head>
-      <body className="m-0 p-0 h-screen flex bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+      <body className="m-0 p-0 h-screen flex bg-gray-950 text-gray-100">
         <ToastProvider>
           <Sidebar
             isAuthenticated={isAuthenticated}
@@ -113,7 +113,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <main className="flex-1 overflow-y-auto p-0 bg-gray-950 text-gray-100">
       <Outlet />
     </main>
   );
@@ -136,7 +136,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <main className="pt-12 p-3 container mx-auto bg-gray-950 text-gray-100">
       <h1 className="text-2xl font-bold mb-4">{message}</h1>
       <p className="mb-4">{details}</p>
       {stack && (

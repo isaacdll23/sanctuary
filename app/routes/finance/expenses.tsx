@@ -146,7 +146,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   }, [fetcher.state, fetcher.data, lastSubmitTime]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent text-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div>
@@ -162,7 +162,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
               setIsModalOpen(true);
               setEditingExpense(null);
             }}
-            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
+            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
           >
             <PlusIcon className="w-5 h-5" />
             Add Expense

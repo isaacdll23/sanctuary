@@ -30,7 +30,7 @@ export default function NewSharedBudget() {
   }, [fetcher.data, addToast]);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 p-4 md:p-8">
+    <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="max-w-xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
@@ -116,7 +116,7 @@ export default function NewSharedBudget() {
             <button
               type="submit"
               disabled={fetcher.state === "submitting"}
-              className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-100 dark:hover:bg-gray-200 dark:disabled:bg-gray-400 text-white dark:text-gray-900 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 inline-flex justify-center items-center gap-2 min-h-[40px]"
+              className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 inline-flex justify-center items-center gap-2 min-h-[40px]"
             >
               {fetcher.state === "submitting" ? (
                 <>

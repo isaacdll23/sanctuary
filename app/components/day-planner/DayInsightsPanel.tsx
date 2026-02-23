@@ -86,7 +86,7 @@ export default function DayInsightsPanel({
           {totalCount > 0 && (
             <div className="mt-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 overflow-hidden">
               <div
-                className="bg-gray-900 dark:bg-gray-100 h-1.5 rounded-full transition-all duration-300"
+                className="bg-gray-900 dark:bg-gray-800 h-1.5 rounded-full transition-all duration-300"
                 style={{ width: `${completionPercentage}%` }}
               />
             </div>

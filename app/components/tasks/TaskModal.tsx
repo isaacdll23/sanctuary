@@ -300,7 +300,7 @@ export default function TaskModal({
                         </button>
                         <button
                           type="submit"
-                          className="px-4 py-2.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold text-sm rounded-lg flex items-center gap-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                          className="px-4 py-2.5 bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold text-sm rounded-lg flex items-center gap-2 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
                         >
                           <CheckIcon className="h-4 w-4" />
                           Save Changes
@@ -411,7 +411,7 @@ export default function TaskModal({
                     />
                     <button
                       type="submit"
-                      className="px-3.5 py-2.5 bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 rounded-lg flex items-center justify-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+                      className="px-3.5 py-2.5 bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 rounded-lg flex items-center justify-center transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
                       title="Add step"
                     >
                       <PlusIcon className="h-5 w-5" />
@@ -455,7 +455,7 @@ export default function TaskModal({
             <button
               type="submit"
               onClick={() => setLastSubmitTime(Date.now())}
-              className="w-full bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2.5 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+              className="w-full bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2.5 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
             >
               {task.completedAt ? (
                 <>

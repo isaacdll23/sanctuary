@@ -34,7 +34,7 @@ export default function TaskStep({
                 { method: "post" }
               );
             }}
-            className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 checked:bg-gray-900 dark:checked:bg-gray-100 checked:border-gray-900 dark:checked:border-gray-100 cursor-pointer transition-colors duration-150 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
+            className="w-5 h-5 rounded-md border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-600 checked:bg-gray-900 dark:checked:bg-gray-200 checked:border-gray-900 dark:checked:border-gray-200 cursor-pointer transition-colors duration-150 focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600"
           />
           <span
             className={`ml-3 text-sm transition-all duration-150 ${

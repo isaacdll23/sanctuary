@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { SparklesIcon, CheckIcon, ExclamationTriangleIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useToast } from "~/hooks/useToast";
 import { useAutoSave } from "~/hooks/useAutoSave";
-import ReactMarkdown from "react-markdown";
 import { AdvancedNoteEditor } from "./AdvancedNoteEditor";
 import { EditorSettings } from "./EditorSettings";
 import { SplitViewContainer } from "./SplitViewContainer";
@@ -252,6 +251,15 @@ export function NoteEditor({
     saveEditorPreferences(updatedPreferences);
   };
 
+  const handleLineWrappingChange = (enabled: boolean) => {
+    const updatedPreferences = {
+      ...editorPreferences,
+      lineWrapping: enabled,
+    };
+    setEditorPreferences(updatedPreferences);
+    saveEditorPreferences(updatedPreferences);
+  };
+
   return (
     <form
       onSubmit={(e) => {
@@ -335,7 +343,7 @@ export function NoteEditor({
             disabled={isGeneratingTitle || isSubmitting}
             title="Generate title from content using AI"
             aria-label="Generate title from content"
-            className="flex-shrink-0 px-3 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px]"
+            className="flex-shrink-0 px-3 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 font-medium hover:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px]"
           >
             {isGeneratingTitle ? (
               <svg
@@ -396,6 +404,7 @@ export function NoteEditor({
                   preferences={editorPreferences}
                   onFontSizeChange={handleFontSizeChange}
                   onTabSizeChange={handleTabSizeChange}
+                  onLineWrappingChange={handleLineWrappingChange}
                 />
                 <AdvancedNoteEditor
                   value={content}
@@ -458,7 +467,7 @@ export function NoteEditor({
         <button
           type="submit"
           disabled={(!isNew && !hasChanges) || isSubmitting}
-          className="px-4 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px] flex items-center gap-2 shadow-sm"
+          className="px-4 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 font-medium hover:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px] flex items-center gap-2 shadow-sm"
         >
           {isSubmitting && (
             <svg

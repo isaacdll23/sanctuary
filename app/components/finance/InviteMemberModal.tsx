@@ -82,7 +82,7 @@ export default function InviteMemberModal({
           </div>
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 rounded-lg font-semibold transition disabled:opacity-50"
+            className="w-full py-2 px-4 bg-gray-900 dark:bg-gray-800 text-gray-100 dark:text-gray-100 rounded-lg font-semibold transition disabled:opacity-50"
             disabled={fetcher.state === "submitting"}
           >
             {fetcher.state === "submitting" ? "Sending..." : "Send Invite"}

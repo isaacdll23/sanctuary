@@ -14,16 +14,43 @@ export interface FeatureCard {
     | "CommandLineIcon"
     | "Cog8ToothIcon"
     | "ShieldCheckIcon";
-  color:
-    | "blue"
-    | "purple"
-    | "amber"
-    | "green"
-    | "indigo"
-    | "gray"
-    | "red";
   route: string;
   isAccessible: boolean;
+}
+
+export interface DashboardSummary {
+  openTasks: number;
+  overdueTasks: number;
+  dueTodayTasks: number;
+  plannedTasksToday: number;
+  completedTasksToday: number;
+  totalNotes: number;
+  notesUpdatedLast7Days: number;
+  activeExpenses: number;
+  monthlyExpenseTotalCents: number;
+  commandCount: number;
+}
+
+export interface DashboardPriorityItem {
+  id: string;
+  title: string;
+  description: string;
+  href: string;
+  tone: "default" | "warning";
+}
+
+export interface DashboardTaskPreview {
+  id: number;
+  title: string;
+  dueDate: Date | string | null;
+  isOverdue: boolean;
+}
+
+export interface DashboardNotePreview {
+  id: number;
+  title: string;
+  updatedAt: Date | string | null;
+  folderName: string | null;
 }
 
 /**
@@ -31,6 +58,11 @@ export interface FeatureCard {
  */
 export interface DashboardLoaderData {
   features: FeatureCard[];
+  summary: DashboardSummary;
+  priorityItems: DashboardPriorityItem[];
+  upcomingTasks: DashboardTaskPreview[];
+  recentNotes: DashboardNotePreview[];
+  todayLabel: string;
   user: {
     id: number;
     username: string;

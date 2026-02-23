@@ -105,7 +105,7 @@ export default function AddTaskModal({
           <div className="flex gap-3 pt-4 border-t border-gray-300 dark:border-gray-700 md:col-span-2 md:pt-6">
             <button
               type="submit"
-              className="flex-1 flex items-center justify-center gap-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 font-semibold px-4 py-2.5 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-700 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
             >
               <PlusIcon className="h-4 w-4" />
               Add Task

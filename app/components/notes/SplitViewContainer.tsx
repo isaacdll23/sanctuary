@@ -41,9 +41,11 @@ export function SplitViewContainer({
         <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
           {leftPane}
         </div>
-        <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
-          {rightPane}
-        </div>
+        {showRightPane && (
+          <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
+            {rightPane}
+          </div>
+        )}
       </div>
     );
   }
