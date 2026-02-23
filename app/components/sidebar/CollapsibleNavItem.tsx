@@ -1,9 +1,13 @@
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router";
 import SidebarLink from "./SidebarLink";
 import CollapsedTooltip from "./CollapsedTooltip";
 import React from "react";
+import {
+  getSidebarItemClasses,
+  getSidebarItemIconClasses,
+} from "./sidebarStyles";
 
 interface ChildItem {
   to: string;
@@ -31,13 +35,14 @@ export default function CollapsibleNavItem({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const buttonId = useId();
 
   const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
+    setIsExpanded((value) => !value);
   };
 
   const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
+    setIsMenuOpen((value) => !value);
   };
 
   // Close menu when clicking outside
@@ -55,8 +60,16 @@ export default function CollapsibleNavItem({
 
     if (isMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          setIsMenuOpen(false);
+          buttonRef.current?.focus();
+        }
+      };
+      document.addEventListener("keydown", handleKeyDown);
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("keydown", handleKeyDown);
       };
     }
   }, [isMenuOpen]);
@@ -73,9 +86,14 @@ export default function CollapsibleNavItem({
       {/* Parent Item with Tooltip for collapsed state */}
       <CollapsedTooltip label={parentLabel} isCollapsed={isCollapsed}>
         <button
+          id={buttonId}
           ref={buttonRef}
           onClick={isCollapsed ? toggleMenu : toggleExpand}
-          className="flex items-center w-full px-3 py-2.5 rounded-lg text-base font-medium transition-all duration-150 group relative border-l-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 text-gray-700 hover:bg-gray-100 hover:text-gray-900 hover:scale-[1.02] border-l-transparent dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+          className={getSidebarItemClasses({
+            isActive: false,
+            isCollapsed,
+            className: "w-full",
+          })}
           title={isCollapsed ? parentLabel : undefined}
           aria-expanded={isCollapsed ? isMenuOpen : isExpanded}
           aria-label={
@@ -87,7 +105,7 @@ export default function CollapsibleNavItem({
         >
           {ParentIcon && (
             <ParentIcon
-              className={`h-6 w-6 flex-shrink-0 ${isCollapsed ? "" : "mr-2.5"} transition-transform duration-150 group-hover:scale-110`}
+              className={getSidebarItemIconClasses(isCollapsed)}
               aria-hidden="true"
             />
           )}
@@ -131,7 +149,7 @@ export default function CollapsibleNavItem({
           className="absolute left-14 top-0 z-50 mt-0 min-w-max bg-white dark:bg-gray-700 rounded-lg shadow-xl border border-gray-200 dark:border-gray-600 py-1 pointer-events-auto"
           role="menu"
           aria-orientation="vertical"
-          aria-labelledby="collapsed-menu-button"
+          aria-labelledby={buttonId}
         >
           {children.map((child) => {
             const ChildIcon = child.icon;
