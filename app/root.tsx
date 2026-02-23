@@ -17,7 +17,7 @@ import {
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
-import { ToastProvider } from "./context/ToastContext";
+import { ToastProvider } from "~/context/ToastContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
