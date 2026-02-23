@@ -2,8 +2,8 @@ import { AzureOpenAI } from "openai";
 import { z } from "zod";
 
 const endpoint = process.env.OPENAI_ENDPOINT || "";
-const modelName = "gpt-4.1-nano";
-const deployment = "gpt-4.1-nano";
+const modelName = "gpt-5-mini";
+const deployment = "gpt-5-mini";
 
 const apiKey = process.env.OPENAI_API_KEY || "";
 const apiVersion = "2024-04-01-preview";
@@ -35,7 +35,7 @@ export async function generateNoteTitle(content: string): Promise<string> {
     console.log("Content length:", content.length);
 
     const completion = await client.chat.completions.create({
-      model: "gpt-4.1-nano", // or use a different model as appropriate
+      model: modelName,
       messages: [
         {
           role: "system",
