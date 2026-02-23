@@ -6,6 +6,10 @@ import {
   ChevronRightIcon,
 } from "@heroicons/react/24/outline";
 import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "../dashboardStyles";
 
 interface TodayAtAGlanceProps {
   data: AggregatedDashboardData;
@@ -26,14 +30,13 @@ export default function TodayAtAGlanceWidget({ data }: TodayAtAGlanceProps) {
   const hasContent = plannedTasks > 0 || dueTasks > 0 || budgetMetrics.activeBudgets > 0;
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-          <div className="p-2 rounded-lg bg-blue-500/10">
-            <ClockIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
-          Today at a Glance
-        </h3>
+        <DashboardWidgetHeader
+          title="Today at a Glance"
+          icon={<ClockIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+          iconContainerClassName="bg-blue-500/10"
+        />
       </div>
 
       {!hasContent ? (

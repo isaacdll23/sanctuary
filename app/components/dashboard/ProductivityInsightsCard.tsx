@@ -1,5 +1,9 @@
 import React from "react";
 import { LightBulbIcon } from "@heroicons/react/24/outline";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "./dashboardStyles";
 
 interface ProductivityInsight {
   label: string;
@@ -18,13 +22,13 @@ export default function ProductivityInsightsCard({
   message,
 }: ProductivityInsightsCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-150 p-6">
-      <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-blue-500/10">
-          <LightBulbIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-        </div>
-        Productivity Insights
-      </h3>
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
+      <DashboardWidgetHeader
+        title="Productivity Insights"
+        icon={<LightBulbIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
+        iconContainerClassName="bg-blue-500/10"
+        className="mb-6"
+      />
 
       <div className="space-y-3">
         {insights.map((insight, idx) => (

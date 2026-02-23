@@ -1,4 +1,5 @@
 import React from "react";
+import { getDashboardPanelClasses } from "./dashboardStyles";
 
 interface DashboardStatCardProps {
   icon: React.ElementType;
@@ -41,7 +42,11 @@ export default function DashboardStatCard({
   const styles = colorStyles[color];
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 md:p-6 shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-150 group">
+    <div
+      className={getDashboardPanelClasses({
+        className: "p-5 md:p-6 group",
+      })}
+    >
       <div className="flex items-start gap-4">
         <div
           className={`p-2.5 rounded-lg ${styles.bg} flex-shrink-0 group-hover:scale-110 transition-transform duration-150`}

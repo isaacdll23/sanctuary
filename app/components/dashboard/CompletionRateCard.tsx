@@ -1,5 +1,9 @@
 import React from "react";
 import { ChartBarIcon } from "@heroicons/react/24/outline";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "./dashboardStyles";
 
 interface CompletionRateProps {
   last7Days: {
@@ -27,13 +31,13 @@ export default function CompletionRateCard({
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-150 p-6">
-      <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-purple-500/10">
-          <ChartBarIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-        </div>
-        Task Completion Rate
-      </h3>
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
+      <DashboardWidgetHeader
+        title="Task Completion Rate"
+        icon={<ChartBarIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+        iconContainerClassName="bg-purple-500/10"
+        className="mb-6"
+      />
 
       <div className="space-y-6">
         {/* 7 Days */}

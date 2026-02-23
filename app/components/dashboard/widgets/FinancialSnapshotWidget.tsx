@@ -1,6 +1,10 @@
 import React from "react";
 import { CurrencyDollarIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "../dashboardStyles";
 
 interface FinancialSnapshotProps {
   data: AggregatedDashboardData;
@@ -40,13 +44,13 @@ export default function FinancialSnapshotWidget({ data }: FinancialSnapshotProps
   const colors = colorClasses[healthColor];
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-green-500/10">
-          <CurrencyDollarIcon className="w-5 h-5 text-green-600 dark:text-green-400" />
-        </div>
-        Financial Snapshot
-      </h3>
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
+      <DashboardWidgetHeader
+        title="Financial Snapshot"
+        icon={<CurrencyDollarIcon className="w-5 h-5 text-green-600 dark:text-green-400" />}
+        iconContainerClassName="bg-green-500/10"
+        className="mb-6"
+      />
 
       {!hasActiveBudgets ? (
         <div className="py-8 text-center">

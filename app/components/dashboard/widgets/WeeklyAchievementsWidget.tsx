@@ -5,6 +5,10 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "../dashboardStyles";
 
 interface WeeklyAchievementsProps {
   data: AggregatedDashboardData;
@@ -112,13 +116,13 @@ export default function WeeklyAchievementsWidget({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-yellow-500/10">
-          <FireIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-        </div>
-        Weekly Achievements
-      </h3>
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
+      <DashboardWidgetHeader
+        title="Weekly Achievements"
+        icon={<FireIcon className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />}
+        iconContainerClassName="bg-yellow-500/10"
+        className="mb-6"
+      />
 
       {achievements.length === 0 ? (
         <div className="py-8 text-center">

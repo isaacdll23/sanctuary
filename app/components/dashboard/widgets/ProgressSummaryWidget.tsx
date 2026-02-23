@@ -1,6 +1,10 @@
 import React from "react";
 import { CheckCircleIcon, ArrowTrendingUpIcon } from "@heroicons/react/24/outline";
 import type { AggregatedDashboardData } from "~/routes/dashboard/+types/dashboard";
+import {
+  DashboardWidgetHeader,
+  getDashboardPanelClasses,
+} from "../dashboardStyles";
 
 interface ProgressSummaryProps {
   data: AggregatedDashboardData;
@@ -92,13 +96,13 @@ export default function ProgressSummaryWidget({ data }: ProgressSummaryProps) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
-        <div className="p-2 rounded-lg bg-purple-500/10">
-          <ArrowTrendingUpIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-        </div>
-        Progress Summary
-      </h3>
+    <div className={getDashboardPanelClasses({ className: "p-6" })}>
+      <DashboardWidgetHeader
+        title="Progress Summary"
+        icon={<ArrowTrendingUpIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />}
+        iconContainerClassName="bg-purple-500/10"
+        className="mb-6"
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {progressItems.map((item) => {

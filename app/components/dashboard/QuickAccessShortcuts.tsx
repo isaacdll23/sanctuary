@@ -7,6 +7,7 @@ import {
   PencilSquareIcon,
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
+import { getDashboardPanelClasses } from "./dashboardStyles";
 
 interface QuickAccessShortcut {
   id: string;
@@ -84,9 +85,15 @@ export default function QuickAccessShortcuts({
   showKeyboardHints = true,
 }: QuickAccessProps) {
   const shortcuts = QUICK_ACCESS_SHORTCUTS.slice(0, maxShortcuts);
+  void showKeyboardHints;
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 mb-6">
+    <div
+      className={getDashboardPanelClasses({
+        interactive: false,
+        className: "p-6 mb-6",
+      })}
+    >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Quick Access
       </h3>

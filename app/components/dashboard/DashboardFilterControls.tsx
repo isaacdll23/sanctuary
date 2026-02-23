@@ -1,6 +1,7 @@
 import React from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { DashboardFilters } from "~/hooks/useDashboardFilters";
+import { getDashboardPanelClasses } from "./dashboardStyles";
 
 interface DashboardFilterControlsProps {
   filters: DashboardFilters;
@@ -36,7 +37,12 @@ export default function DashboardFilterControls({
   hasActiveFilters,
 }: DashboardFilterControlsProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 mb-6">
+    <div
+      className={getDashboardPanelClasses({
+        interactive: false,
+        className: "p-6 mb-6",
+      })}
+    >
       {/* Title */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
