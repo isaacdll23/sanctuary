@@ -1,5 +1,5 @@
 import { useFetcher, redirect } from "react-router";
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { handleSharedBudgetAction } from "~/modules/services/SharedBudgetService";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
@@ -9,7 +9,7 @@ export const loader = pageAccessLoader("finance", async (user, request) => {
   return {};
 });
 
-export const action = pageAccessLoader("finance", async (user, request) => {
+export const action = pageAccessAction("finance", async (_user, request) => {
   const result = await handleSharedBudgetAction(request);
   if (result.success) {
     // Redirect to shared budgets list after creation

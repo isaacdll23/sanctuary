@@ -1,4 +1,4 @@
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import {
   getBudgetDetails,
   handleSharedBudgetAction,
@@ -25,17 +25,11 @@ export const loader = pageAccessLoader("finance", async (user, request) => {
   return result;
 });
 
-export const action = pageAccessLoader("finance", async (user, request) => {
+export const action = pageAccessAction("finance", async (_user, request) => {
   const formData = await request.formData();
-  console.log("Settings action - Intent:", formData.get("intent"));
-  console.log("Settings action - BudgetId:", formData.get("budgetId"));
-  console.log("Settings action - Email:", formData.get("email"));
-  console.log("Settings action - Role:", formData.get("role"));
-  console.log("Settings action - User ID:", user.id);
 
   // Pass the already-parsed formData instead of the request
   const result = await handleSharedBudgetAction(request, formData);
-  console.log("Settings action - Result:", result);
 
   // Redirect to budget list if budget was deleted
   if (result.success && result.message === "Budget deleted") {

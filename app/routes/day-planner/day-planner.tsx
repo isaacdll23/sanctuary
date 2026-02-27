@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigate, useFetcher } from "react-router";
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import DayInsightsPanel from "~/components/day-planner/DayInsightsPanel";
 import GoogleCalendarButton from "~/components/day-planner/GoogleCalendarButton";
 import TaskModalsContainer from "~/components/day-planner/TaskModalsContainer";
@@ -89,7 +89,7 @@ export const loader = pageAccessLoader("day-planner", async (user, request) => {
   };
 });
 
-export const action = async ({ request }: any) => {
+export const action = pageAccessAction("day-planner", async (_user, request) => {
   const { handleDayPlannerAction } = await import(
     "~/modules/services/DayPlannerService"
   );
@@ -109,7 +109,7 @@ export const action = async ({ request }: any) => {
   }
 
   return handleDayPlannerAction(request);
-};
+});
 
 type Task = {
   id: string;

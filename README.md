@@ -31,6 +31,18 @@ npm install && npm run dev
 
 Visit http://localhost:5173
 
+## Testing
+
+```bash
+npm test
+```
+
+Run type checks with:
+
+```bash
+npm run typecheck
+```
+
 ## Tech Stack
 
 - **Frontend**: React 19, React Router 7, Tailwind CSS

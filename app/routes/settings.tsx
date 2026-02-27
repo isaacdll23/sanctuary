@@ -1,5 +1,5 @@
 import { useLoaderData } from "react-router";
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { getGoogleOAuthUrl } from "~/modules/auth.server";
 import ProfileSettingsSection from "~/components/settings/ProfileSettingsSection";
 import CalendarSettingsSection from "~/components/settings/CalendarSettingsSection";
@@ -27,18 +27,18 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
   };
 });
 
-export const action = async ({ request }: any) => {
+export const action = pageAccessAction("settings", async (_user, request) => {
   // Clone the request so we can read the body to check intent
   const clonedRequest = request.clone();
   const formData = await clonedRequest.formData();
-  const intent = formData.get("intent");
+  const intent = String(formData.get("intent") || "");
 
-  if (intent?.startsWith("profile")) {
+  if (intent.startsWith("profile")) {
     const { handleProfileAction } = await import(
       "~/modules/services/ProfileService"
     );
     return handleProfileAction(request);
-  } else if (intent?.startsWith("calendar") || intent?.startsWith("update") || intent?.startsWith("disconnect") || intent?.startsWith("manualSync") || intent === "resolveSyncConflict") {
+  } else if (intent.startsWith("calendar") || intent.startsWith("update") || intent.startsWith("disconnect") || intent.startsWith("manualSync") || intent === "resolveSyncConflict") {
     const { handleGoogleCalendarAction } = await import(
       "~/modules/services/GoogleCalendarService"
     );
@@ -46,7 +46,7 @@ export const action = async ({ request }: any) => {
   }
 
   return { success: false, message: "Unknown action" };
-};
+});
 
 type User = {
   id: number;

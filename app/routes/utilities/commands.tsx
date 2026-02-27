@@ -5,10 +5,10 @@ import {
   utilitiesCommandsTable,
   utilitiesCommandsVersionsTable,
 } from "~/db/schema";
-import { getUserFromSession, requireAuth } from "~/modules/auth.server";
-import { eq, desc } from "drizzle-orm";
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { eq, desc, and } from "drizzle-orm";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { fuzzyMatch } from "~/utils/fuzzyMatch";
+import { parsePositiveInt } from "~/utils/numberParsing";
 import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { CommandCard } from "~/components/utilities/CommandCard";
 import { CommandModal } from "~/components/utilities/CommandModal";
@@ -35,42 +35,77 @@ export const loader = pageAccessLoader("commands", async (user, request) => {
   return { userCommands, userCommandVersions };
 });
 
-export async function action({ request }: Route.ActionArgs) {
-  await requireAuth(request);
+export const action = pageAccessAction("commands", async (user, request) => {
   const formData = await request.formData();
   const _action = formData.get("_action");
 
   if (_action === "delete") {
-    const id = formData.get("id") as string;
+    const id = parsePositiveInt(formData.get("id"));
+    if (!id) {
+      return { error: "Invalid command id" };
+    }
+
     // Delete all the version history for this command first
     await db
       .delete(utilitiesCommandsVersionsTable)
-      .where(eq(utilitiesCommandsVersionsTable.commandId, Number(id)));
+      .where(
+        and(
+          eq(utilitiesCommandsVersionsTable.commandId, id),
+          eq(utilitiesCommandsVersionsTable.userId, user.id)
+        )
+      );
+
     // Then delete the command record
-    await db
+    const deletedCommands = await db
       .delete(utilitiesCommandsTable)
-      .where(eq(utilitiesCommandsTable.id, Number(id)));
-    return;
+      .where(
+        and(eq(utilitiesCommandsTable.id, id), eq(utilitiesCommandsTable.userId, user.id))
+      )
+      .returning({ id: utilitiesCommandsTable.id });
+
+    if (deletedCommands.length === 0) {
+      return { error: "Command not found" };
+    }
+
+    return { _action: "delete", success: true };
   } else if (_action === "update") {
-    const id = formData.get("id") as string;
+    const id = parsePositiveInt(formData.get("id"));
     const title = formData.get("title") as string;
     const command = formData.get("command") as string;
 
-    if (!title || !command) {
+    if (!id || !title || !command) {
       return { error: "Invalid input" };
     }
+
+    const existingCommand = await db
+      .select({ id: utilitiesCommandsTable.id })
+      .from(utilitiesCommandsTable)
+      .where(
+        and(eq(utilitiesCommandsTable.id, id), eq(utilitiesCommandsTable.userId, user.id))
+      )
+      .limit(1);
+
+    if (existingCommand.length === 0) {
+      return { error: "Command not found" };
+    }
+
     await db
       .update(utilitiesCommandsTable)
       .set({ title })
-      .where(eq(utilitiesCommandsTable.id, Number(id)));
-
-    const user = await getUserFromSession(request);
+      .where(
+        and(eq(utilitiesCommandsTable.id, id), eq(utilitiesCommandsTable.userId, user.id))
+      );
 
     // Get the latest version for this command and increment it
     const versionRecords = await db
       .select()
       .from(utilitiesCommandsVersionsTable)
-      .where(eq(utilitiesCommandsVersionsTable.commandId, Number(id)))
+      .where(
+        and(
+          eq(utilitiesCommandsVersionsTable.commandId, id),
+          eq(utilitiesCommandsVersionsTable.userId, user.id)
+        )
+      )
       .orderBy(desc(utilitiesCommandsVersionsTable.version));
     const currentVersion =
       versionRecords.length > 0 ? versionRecords[0].version : 0;
@@ -84,19 +119,24 @@ export async function action({ request }: Route.ActionArgs) {
 
     await db.insert(utilitiesCommandsVersionsTable).values({
       userId: user.id,
-      commandId: Number(id),
+      commandId: id,
       version: newVersion,
       command,
     });
     return { _action: "update", newVersion: newVersion };
   } else if (_action === "loadVersion") {
-    const versionId = formData.get("versionId") as string;
+    const versionId = parsePositiveInt(formData.get("versionId"));
     if (!versionId) return { error: "No version id provided" };
 
     const versionRecord = await db
       .select()
       .from(utilitiesCommandsVersionsTable)
-      .where(eq(utilitiesCommandsVersionsTable.id, Number(versionId)));
+      .where(
+        and(
+          eq(utilitiesCommandsVersionsTable.id, versionId),
+          eq(utilitiesCommandsVersionsTable.userId, user.id)
+        )
+      );
     if (versionRecord.length === 0) return { error: "Version not found" };
 
     // Return the command content in the version with action marker
@@ -110,7 +150,6 @@ export async function action({ request }: Route.ActionArgs) {
       return { error: "Invalid input" };
     }
 
-    const user = await getUserFromSession(request);
     // Insert new command
     const result = await db
       .insert(utilitiesCommandsTable)
@@ -128,7 +167,7 @@ export async function action({ request }: Route.ActionArgs) {
       command,
     });
   }
-}
+});
 
 export default function Commands({ loaderData }: Route.ComponentProps) {
   // Search and filtering

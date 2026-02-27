@@ -1,4 +1,4 @@
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import {
   getBudgetDetails,
   handleSharedBudgetAction,
@@ -20,7 +20,7 @@ export const loader = pageAccessLoader("finance", async (user, request) => {
   return await getBudgetDetails(budgetId, user.id.toString());
 });
 
-export const action = pageAccessLoader("finance", async (user, request) => {
+export const action = pageAccessAction("finance", async (_user, request) => {
   return await handleSharedBudgetAction(request);
 });
 
