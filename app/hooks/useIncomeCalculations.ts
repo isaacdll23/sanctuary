@@ -16,7 +16,8 @@ interface IncomeCalculations {
 export function calculateIncomeCents(
   annualGrossIncomeCents: number | undefined,
   taxDeductionPercentage: number | undefined,
-  totalMonthlyCost: number = 0
+  totalMonthlyCost: number = 0,
+  totalYearlyCost: number = totalMonthlyCost * 12
 ): IncomeCalculations {
   const grossIncome = annualGrossIncomeCents || 0;
   const taxPercentage = taxDeductionPercentage || 0;
@@ -26,7 +27,7 @@ export function calculateIncomeCents(
   const monthlyTax = annualTax / 12;
   const annualNetIncome = grossIncome * (1 - taxPercentage / 100);
   const monthlyNetIncome = annualNetIncome / 12;
-  const netRemainingYearly = annualNetIncome - monthlyExpenses * 12;
+  const netRemainingYearly = annualNetIncome - totalYearlyCost;
   const netRemainingMonthly = monthlyNetIncome - monthlyExpenses;
 
   return {
@@ -43,10 +44,11 @@ export function calculateIncomeCents(
 export function useIncomeCalculations(
   annualGrossIncomeCents: number | undefined,
   taxDeductionPercentage: number | undefined,
-  totalMonthlyCost: number = 0
+  totalMonthlyCost: number = 0,
+  totalYearlyCost: number = totalMonthlyCost * 12
 ): IncomeCalculations {
   return useMemo(
-    () => calculateIncomeCents(annualGrossIncomeCents, taxDeductionPercentage, totalMonthlyCost),
-    [annualGrossIncomeCents, taxDeductionPercentage, totalMonthlyCost]
+    () => calculateIncomeCents(annualGrossIncomeCents, taxDeductionPercentage, totalMonthlyCost, totalYearlyCost),
+    [annualGrossIncomeCents, taxDeductionPercentage, totalMonthlyCost, totalYearlyCost]
   );
 }

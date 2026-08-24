@@ -1,4 +1,5 @@
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { Link } from "react-router";
 
 interface ExpenseSummaryCardsProps {
   totalMonthlyCost: number;
@@ -30,7 +31,7 @@ export default function ExpenseSummaryCards({
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Total Monthly Expenses:
+              Active Monthly Equivalent:
             </span>
             <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               $
@@ -42,7 +43,7 @@ export default function ExpenseSummaryCards({
           {hasIncome && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Net Remaining Monthly:
+                Estimated monthly income after recurring expenses:
               </span>
               <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 $
@@ -52,6 +53,7 @@ export default function ExpenseSummaryCards({
               </span>
             </div>
           )}
+          {!hasIncome && <p className="rounded-lg bg-gray-100 p-3 text-sm text-gray-700 dark:bg-gray-700/60 dark:text-gray-300">Income is not configured yet. <Link to="/finance/income" className="font-semibold underline underline-offset-2 hover:text-gray-950 dark:hover:text-white">Configure income</Link> to estimate what remains after recurring expenses.</p>}
         </div>
       </div>
 
@@ -64,7 +66,7 @@ export default function ExpenseSummaryCards({
         <div className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Total Yearly Expenses:
+              Active Yearly Expenses:
             </span>
             <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               $
@@ -76,7 +78,7 @@ export default function ExpenseSummaryCards({
           {hasIncome && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                Net Remaining Yearly:
+                Estimated yearly income after recurring expenses:
               </span>
               <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 $

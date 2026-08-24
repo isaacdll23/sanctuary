@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "~/db";
-import { financeExpensesTable, financeIncomeTable } from "~/db/schema";
+import { financeExpensesTable, financeIncomeTable, financePaymentAccountsTable } from "~/db/schema";
 import type { ExpenseActionResult, ExpenseFormErrors } from "~/types/expense";
 
 const moneySchema = z
@@ -9,7 +9,7 @@ const moneySchema = z
   .trim()
   .regex(/^\d+(?:\.\d{1,2})?$/, "Enter a valid amount with up to two decimal places.")
   .transform((value) => Math.round(Number(value) * 100))
-  .refine((value) => value > 0, "Monthly cost must be greater than zero.");
+  .refine((value) => value > 0, "Amount per charge must be greater than zero.");
 
 const idSchema = z
   .string()
@@ -17,6 +17,15 @@ const idSchema = z
   .regex(/^\d+$/, "Invalid expense.")
   .transform(Number)
   .pipe(z.number().int().positive("Invalid expense."));
+
+const optionalAccountIdSchema = z.union([z.literal(""), z.string().trim().regex(/^\d+$/, "Invalid payment account.").transform(Number).pipe(z.number().int().positive("Invalid payment account."))])
+  .transform((value) => value === "" ? null : value);
+
+const dateKeySchema = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid billing date.").refine((value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}, "Choose a valid billing date.");
 
 export function normalizeExpenseCategory(value: string): string {
   return value
@@ -43,12 +52,26 @@ const expenseFieldsSchema = z.object({
     .string()
     .transform(normalizeExpenseCategory)
     .pipe(z.string().min(1, "Category is required.").max(255, "Category must be 255 characters or fewer.")),
+  recurrenceFrequency: z.enum(["monthly", "weekly", "biweekly", "quarterly", "yearly"]),
+  recurrenceAnchor: dateKeySchema,
+  lastDayOfMonth: z.boolean(),
+  necessity: z.enum(["essential", "discretionary"]),
+  costType: z.enum(["fixed", "variable"]),
+  paymentMethod: z.enum(["autopay", "manual"]),
+  accountId: optionalAccountIdSchema,
   isActive: z.boolean(),
 });
 
 const addExpenseSchema = expenseFieldsSchema;
 const updateExpenseSchema = expenseFieldsSchema.extend({ id: idSchema });
 const deleteExpenseSchema = z.object({ id: idSchema });
+const expenseStatusSchema = z.object({
+  id: idSchema,
+  isActive: z.enum(["0", "1"]),
+});
+const paymentAccountSchema = z.object({
+  name: z.string().trim().min(1, "Account name is required.").max(255, "Account name must be 255 characters or fewer."),
+});
 
 type ExpenseFields = z.infer<typeof expenseFieldsSchema>;
 
@@ -74,6 +97,13 @@ function expenseFormInput(formData: FormData) {
     monthlyCost: formValue(formData, "monthlyCost"),
     chargeDay: formValue(formData, "chargeDay"),
     category: formValue(formData, "category"),
+    recurrenceFrequency: formValue(formData, "recurrenceFrequency"),
+    recurrenceAnchor: formValue(formData, "recurrenceAnchor"),
+    lastDayOfMonth: formData.get("lastDayOfMonth") === "1",
+    necessity: formValue(formData, "necessity"),
+    costType: formValue(formData, "costType"),
+    paymentMethod: formValue(formData, "paymentMethod"),
+    accountId: formValue(formData, "accountId"),
     isActive: formData.get("isActive") === "1",
   };
 }
@@ -88,9 +118,13 @@ export function validateExpenseForm(
     ? updateExpenseSchema.safeParse({ ...input, id: formValue(formData, "id") })
     : addExpenseSchema.safeParse(input);
 
-  return parsed.success
-    ? { success: true, data: parsed.data }
-    : { success: false, result: formErrors(parsed.error) };
+  if (parsed.success) {
+    const data = parsed.data.recurrenceFrequency === "monthly"
+      ? { ...parsed.data, recurrenceAnchor: `2000-01-${String(parsed.data.chargeDay).padStart(2, "0")}` }
+      : { ...parsed.data, chargeDay: Number(parsed.data.recurrenceAnchor.slice(-2)) };
+    return { success: true, data };
+  }
+  return { success: false, result: formErrors(parsed.error) };
 }
 
 export function validateExpenseDelete(formData: FormData):
@@ -100,6 +134,26 @@ export function validateExpenseDelete(formData: FormData):
   return parsed.success
     ? { success: true, id: parsed.data.id }
     : { success: false, result: formErrors(parsed.error) };
+}
+
+/** Validate the small, purpose-built payload used by the inline pause/resume control. */
+export function validateExpenseStatus(formData: FormData):
+  | { success: true; id: number; isActive: boolean }
+  | { success: false; result: ExpenseActionResult } {
+  const parsed = expenseStatusSchema.safeParse({
+    id: formValue(formData, "id"),
+    isActive: formValue(formData, "isActive"),
+  });
+  return parsed.success
+    ? { success: true, id: parsed.data.id, isActive: parsed.data.isActive === "1" }
+    : { success: false, result: formErrors(parsed.error) };
+}
+
+export function validatePaymentAccountForm(formData: FormData):
+  | { success: true; data: z.infer<typeof paymentAccountSchema> }
+  | { success: false; result: ExpenseActionResult } {
+  const parsed = paymentAccountSchema.safeParse({ name: formValue(formData, "name") });
+  return parsed.success ? { success: true, data: parsed.data } : { success: false, result: formErrors(parsed.error) };
 }
 
 export async function getExpensesForUser(userId: number) {
@@ -120,14 +174,50 @@ export async function getLatestIncomeForUser(userId: number) {
   return income;
 }
 
+export async function getPaymentAccountsForUser(userId: number) {
+  return db.select().from(financePaymentAccountsTable).where(eq(financePaymentAccountsTable.userId, userId)).orderBy(financePaymentAccountsTable.name);
+}
+
+export async function isPaymentAccountOwnedByUser(userId: number, accountId: number | null) {
+  if (accountId == null) return true;
+  const [account] = await db.select({ id: financePaymentAccountsTable.id }).from(financePaymentAccountsTable)
+    .where(and(eq(financePaymentAccountsTable.id, accountId), eq(financePaymentAccountsTable.userId, userId))).limit(1);
+  return Boolean(account);
+}
+
+export async function createPaymentAccountForUser(userId: number, name: string) {
+  return db.insert(financePaymentAccountsTable).values({ userId, name }).returning({ id: financePaymentAccountsTable.id });
+}
+
+/** Unlinks a user's expenses before removing their account; no expense is deleted. */
+export async function deletePaymentAccountForUser(userId: number, id: number) {
+  return db.transaction(async (tx) => {
+    const [account] = await tx.select({ id: financePaymentAccountsTable.id }).from(financePaymentAccountsTable)
+      .where(and(eq(financePaymentAccountsTable.id, id), eq(financePaymentAccountsTable.userId, userId))).limit(1);
+    if (!account) return [];
+    await tx.update(financeExpensesTable).set({ accountId: null, updatedAt: new Date() })
+      .where(and(eq(financeExpensesTable.userId, userId), eq(financeExpensesTable.accountId, id)));
+    return tx.delete(financePaymentAccountsTable).where(and(eq(financePaymentAccountsTable.id, id), eq(financePaymentAccountsTable.userId, userId))).returning({ id: financePaymentAccountsTable.id });
+  });
+}
+
 export async function createExpenseForUser(userId: number, values: ExpenseFields) {
-  await db.insert(financeExpensesTable).values({ userId, ...values, isActive: values.isActive ? 1 : 0 });
+  await db.insert(financeExpensesTable).values({ userId, ...values, lastDayOfMonth: values.lastDayOfMonth ? 1 : 0, isActive: values.isActive ? 1 : 0 });
 }
 
 export async function updateExpenseForUser(userId: number, id: number, values: ExpenseFields) {
   return db
     .update(financeExpensesTable)
-    .set({ ...values, isActive: values.isActive ? 1 : 0, updatedAt: new Date() })
+    .set({ ...values, lastDayOfMonth: values.lastDayOfMonth ? 1 : 0, isActive: values.isActive ? 1 : 0, updatedAt: new Date() })
+    .where(and(eq(financeExpensesTable.id, id), eq(financeExpensesTable.userId, userId)))
+    .returning({ id: financeExpensesTable.id });
+}
+
+/** Ownership is part of the write predicate so an expense can only be paused by its owner. */
+export async function setExpenseActiveForUser(userId: number, id: number, isActive: boolean) {
+  return db
+    .update(financeExpensesTable)
+    .set({ isActive: isActive ? 1 : 0, updatedAt: new Date() })
     .where(and(eq(financeExpensesTable.id, id), eq(financeExpensesTable.userId, userId)))
     .returning({ id: financeExpensesTable.id });
 }

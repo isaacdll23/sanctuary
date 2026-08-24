@@ -4,6 +4,7 @@ import {
   normalizeExpenseCategory,
   validateExpenseDelete,
   validateExpenseForm,
+  validateExpenseStatus,
 } from "./ExpenseService";
 
 function expenseForm(values: Partial<Record<string, string>> = {}) {
@@ -13,6 +14,12 @@ function expenseForm(values: Partial<Record<string, string>> = {}) {
     monthlyCost: "1250.50",
     chargeDay: "1",
     category: " home   & UTILITIES ",
+    recurrenceFrequency: "monthly",
+    recurrenceAnchor: "2000-01-01",
+    necessity: "essential",
+    costType: "fixed",
+    paymentMethod: "autopay",
+    accountId: "",
     isActive: "1",
     ...values,
   })) form.set(key, value);
@@ -29,6 +36,13 @@ describe("expense form validation", () => {
         monthlyCost: 125050,
         chargeDay: 1,
         category: "Home & Utilities",
+        recurrenceFrequency: "monthly",
+        recurrenceAnchor: "2000-01-01",
+        lastDayOfMonth: false,
+        necessity: "essential",
+        costType: "fixed",
+        paymentMethod: "autopay",
+        accountId: null,
         isActive: true,
       });
     }
@@ -52,7 +66,26 @@ describe("expense form validation", () => {
     assert.equal(validateExpenseDelete(expenseForm({ id: "0" })).success, false);
   });
 
+  it("validates the explicit active state used by inline pause and resume", () => {
+    assert.deepEqual(validateExpenseStatus(expenseForm({ id: "5", isActive: "0" })), {
+      success: true,
+      id: 5,
+      isActive: false,
+    });
+    assert.equal(validateExpenseStatus(expenseForm({ id: "5", isActive: "paused" })).success, false);
+  });
+
   it("uses a stable category display name", () => {
     assert.equal(normalizeExpenseCategory(" streaming   services "), "Streaming Services");
+  });
+
+  it("uses the supplied anchor for non-monthly schedules and rejects invalid account ids", () => {
+    const result = validateExpenseForm(expenseForm({ recurrenceFrequency: "weekly", recurrenceAnchor: "2026-08-24", accountId: "12" }), "add");
+    assert.equal(result.success, true);
+    if (result.success) {
+      assert.equal(result.data.chargeDay, 24);
+      assert.equal(result.data.accountId, 12);
+    }
+    assert.equal(validateExpenseForm(expenseForm({ accountId: "12oops" }), "add").success, false);
   });
 });

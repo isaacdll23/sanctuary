@@ -70,9 +70,22 @@ export const financeExpensesTable = pgTable("finance_expenses", {
   chargeDay: integer().notNull(),
   category: varchar({ length: 255 }).notNull().default("Subscription"),
   accountId: integer("account_id"),
+  recurrenceFrequency: varchar("recurrence_frequency", { length: 20 }).default("monthly").notNull(),
+  recurrenceAnchor: date("recurrence_anchor").default("2000-01-01").notNull(),
+  lastDayOfMonth: integer("last_day_of_month").default(0).notNull(),
+  necessity: varchar({ length: 20 }).default("essential").notNull(),
+  costType: varchar("cost_type", { length: 20 }).default("fixed").notNull(),
+  paymentMethod: varchar("payment_method", { length: 20 }).default("autopay").notNull(),
   isActive: integer("is_active").default(1).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const financePaymentAccountsTable = pgTable("finance_payment_accounts", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id").notNull().references(() => usersTable.id),
+  name: varchar({ length: 255 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const financeIncomeTable = pgTable("finance_income", {
@@ -296,4 +309,3 @@ export const calendarPreferencesTable = pgTable("calendar_preferences", {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
 });
-

@@ -1,5 +1,6 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "~/db";
+import { getNormalizedMonthlyCostCents } from "~/modules/finance/recurrence";
 import {
   dayPlansTable,
   dayPlanSectionsTable,
@@ -111,6 +112,10 @@ export async function getDashboardOverview({
             .select({
               monthlyCost: financeExpensesTable.monthlyCost,
               isActive: financeExpensesTable.isActive,
+              recurrenceFrequency: financeExpensesTable.recurrenceFrequency,
+              recurrenceAnchor: financeExpensesTable.recurrenceAnchor,
+              chargeDay: financeExpensesTable.chargeDay,
+              lastDayOfMonth: financeExpensesTable.lastDayOfMonth,
             })
             .from(financeExpensesTable)
             .where(eq(financeExpensesTable.userId, userId))
@@ -177,7 +182,7 @@ export async function getDashboardOverview({
 
   const activeExpenses = expenseRows.filter((expense) => expense.isActive !== 0);
   const monthlyExpenseTotalCents = activeExpenses.reduce(
-    (sum, expense) => sum + (expense.monthlyCost ?? 0),
+    (sum, expense) => sum + getNormalizedMonthlyCostCents(expense),
     0
   );
 

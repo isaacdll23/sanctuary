@@ -115,7 +115,7 @@ export default function Dashboard() {
       id: "monthly-expense",
       label: "Monthly Expenses",
       value: formatCurrency(summary.monthlyExpenseTotalCents),
-      detail: `${summary.activeExpenses} active`,
+      detail: `${summary.activeExpenses} active · monthly equivalent`,
       href: "/finance/expenses",
       tone: "default",
       icon: CurrencyDollarIcon,
