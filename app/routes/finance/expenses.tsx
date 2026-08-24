@@ -1,260 +1,154 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFetcher } from "react-router";
-import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
+import { CalendarDaysIcon, PlusIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types/expenses";
-import { eq, desc } from "drizzle-orm";
-import { PlusIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
+import {
+  createExpenseForUser,
+  deleteExpenseForUser,
+  getExpensesForUser,
+  getLatestIncomeForUser,
+  updateExpenseForUser,
+  validateExpenseDelete,
+  validateExpenseForm,
+} from "~/modules/services/ExpenseService";
 import { AddExpenseModal, EditExpenseModal } from "~/components/finance/ExpenseFormModal";
 import ExpenseSummaryCards from "~/components/finance/ExpenseSummaryCards";
 import ExpensesCategoryFilter from "~/components/finance/ExpensesCategoryFilter";
 import ExpensesTable from "~/components/finance/ExpensesTable";
 import { useExpenseFiltering } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
+import type { Expense, ExpenseActionResult } from "~/types/expense";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Expenses" }];
 }
 
-export const loader = pageAccessLoader("finance", async (user, request) => {
-  const { db } = await import("~/db");
-  const { financeExpensesTable, financeIncomeTable } = await import("~/db/schema");
-
-  const userExpenses = await db
-    .select()
-    .from(financeExpensesTable)
-    .where(eq(financeExpensesTable.userId, user.id))
-    .orderBy(desc(financeExpensesTable.createdAt));
-
-  const userIncomeRecords = await db
-    .select()
-    .from(financeIncomeTable)
-    .where(eq(financeIncomeTable.userId, user.id))
-    .orderBy(desc(financeIncomeTable.createdAt));
-
-  return {
-    userExpenses,
-    userIncome: userIncomeRecords.length > 0 ? userIncomeRecords[0] : undefined,
-  };
+export const loader = pageAccessLoader("finance", async (user) => {
+  const [userExpenses, userIncome] = await Promise.all([
+    getExpensesForUser(user.id),
+    getLatestIncomeForUser(user.id),
+  ]);
+  return { userExpenses, userIncome };
 });
 
-export const action = pageAccessAction("finance", async (user, request) => {
-  const { db } = await import("~/db");
-  const { financeExpensesTable } = await import("~/db/schema");
-
+export const action = pageAccessAction("finance", async (user, request): Promise<ExpenseActionResult> => {
   const formData = await request.formData();
-  const _action = formData.get("_action");
+  const intent = formData.get("_action");
 
-  if (_action === "delete") {
-    const id = formData.get("id") as string;
-    await db
-      .delete(financeExpensesTable)
-      .where(eq(financeExpensesTable.id, Number(id)));
-    return;
-  }
-
-  if (_action === "update") {
-    const id = formData.get("id") as string;
-    const name = formData.get("name") as string;
-    const monthlyCostStr = formData.get("monthlyCost") as string;
-    const chargeDayStr = formData.get("chargeDay") as string;
-    const category = formData.get("category") as string;
-
-    const monthlyCostFloat = parseFloat(monthlyCostStr);
-    const monthlyCost = Math.round(monthlyCostFloat * 100);
-    const chargeDay = parseInt(chargeDayStr, 10);
-
-    if (!name || isNaN(monthlyCostFloat) || isNaN(chargeDay)) {
-      return { error: "Invalid input" };
+  switch (intent) {
+    case "add": {
+      const parsed = validateExpenseForm(formData, "add");
+      if (!parsed.success) return parsed.result;
+      await createExpenseForUser(user.id, parsed.data);
+      return { ok: true, action: "add", message: "Expense added." };
     }
-
-    await db
-      .update(financeExpensesTable)
-      .set({ name, monthlyCost, chargeDay, category })
-      .where(eq(financeExpensesTable.id, Number(id)));
-    return;
+    case "update": {
+      const parsed = validateExpenseForm(formData, "update");
+      if (!parsed.success) return parsed.result;
+      const { id, ...values } = parsed.data;
+      const updated = await updateExpenseForUser(user.id, id!, values);
+      return updated.length
+        ? { ok: true, action: "update", message: "Expense updated." }
+        : { ok: false, error: "Expense not found or permission denied." };
+    }
+    case "delete": {
+      const parsed = validateExpenseDelete(formData);
+      if (!parsed.success) return parsed.result;
+      const deleted = await deleteExpenseForUser(user.id, parsed.id);
+      return deleted.length
+        ? { ok: true, action: "delete", message: "Expense deleted." }
+        : { ok: false, error: "Expense not found or permission denied." };
+    }
+    default:
+      return { ok: false, error: "Unsupported expense action." };
   }
-
-  const name = formData.get("name") as string;
-  const monthlyCostStr = formData.get("monthlyCost") as string;
-  const chargeDayStr = formData.get("chargeDay") as string;
-  const category = formData.get("category") as string;
-
-  const monthlyCostFloat = parseFloat(monthlyCostStr);
-  const monthlyCost = Math.round(monthlyCostFloat * 100);
-  const chargeDay = parseInt(chargeDayStr, 10);
-
-  if (!name || isNaN(monthlyCostFloat) || isNaN(chargeDay)) {
-    return { error: "Invalid input" };
-  }
-
-  await db.insert(financeExpensesTable).values({
-    userId: user.id,
-    name,
-    monthlyCost,
-    chargeDay,
-    category,
-  });
 });
 
 export default function Expenses({ loaderData }: Route.ComponentProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
-  const [lastSubmitTime, setLastSubmitTime] = useState(0);
-  const fetcher = useFetcher();
+  const [modalSubmissionPending, setModalSubmissionPending] = useState(false);
+  const fetcher = useFetcher<ExpenseActionResult>();
 
   const { distinctCategories, filteredExpenses, totalMonthlyCost, toggleCategory } =
     useExpenseFiltering(loaderData.userExpenses, filterCategories, setFilterCategories);
 
-  const { firstHalfTotal, secondHalfTotal } = useMemo(() => {
-    return filteredExpenses.reduce(
-      (acc, expense) => {
-        if (expense.chargeDay <= 14) {
-          acc.firstHalfTotal += expense.monthlyCost;
-        } else {
-          acc.secondHalfTotal += expense.monthlyCost;
-        }
-        return acc;
-      },
-      { firstHalfTotal: 0, secondHalfTotal: 0 }
-    );
-  }, [filteredExpenses]);
+  const { firstHalfTotal, secondHalfTotal } = useMemo(
+    () =>
+      filteredExpenses.reduce(
+        (acc, expense) => {
+          if (expense.isActive === 0) return acc;
+          if (expense.chargeDay <= 14) acc.firstHalfTotal += expense.monthlyCost;
+          else acc.secondHalfTotal += expense.monthlyCost;
+          return acc;
+        },
+        { firstHalfTotal: 0, secondHalfTotal: 0 }
+      ),
+    [filteredExpenses]
+  );
 
-  const firstHalfPercentage = totalMonthlyCost
-    ? (firstHalfTotal / totalMonthlyCost) * 100
-    : 0;
-  const secondHalfPercentage = totalMonthlyCost
-    ? (secondHalfTotal / totalMonthlyCost) * 100
-    : 0;
-
+  const firstHalfPercentage = totalMonthlyCost ? (firstHalfTotal / totalMonthlyCost) * 100 : 0;
+  const secondHalfPercentage = totalMonthlyCost ? (secondHalfTotal / totalMonthlyCost) * 100 : 0;
+  const annualGrossIncomeCents = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
+  const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
   const { netRemainingYearly, netRemainingMonthly } = useIncomeCalculations(
-    (loaderData.userIncome?.annualGrossIncome ?? 0) || undefined,
-    loaderData.userIncome?.taxDeductionPercentage || undefined,
+    annualGrossIncomeCents || undefined,
+    taxDeductionPercentage || undefined,
     totalMonthlyCost
   );
 
-  const totalYearlyCost = totalMonthlyCost * 12;
-  const annualGrossIncome = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
-  const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
-
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data && lastSubmitTime > 0) {
+    if (modalSubmissionPending && fetcher.state === "idle" && fetcher.data?.ok) {
       setIsModalOpen(false);
       setEditingExpense(null);
-      setLastSubmitTime(0);
+      setModalSubmissionPending(false);
     }
-  }, [fetcher.state, fetcher.data, lastSubmitTime]);
+  }, [fetcher.data, fetcher.state, modalSubmissionPending]);
+
+  const closeModals = () => {
+    setIsModalOpen(false);
+    setEditingExpense(null);
+    setModalSubmissionPending(false);
+  };
+
+  const totalYearlyCost = totalMonthlyCost * 12;
 
   return (
-    <div className="min-h-screen bg-transparent text-gray-100 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <div className="min-h-screen bg-transparent p-4 text-gray-100 md:p-8">
+      <div className="mx-auto max-w-7xl">
+        <header className="mb-8 flex flex-col items-start justify-between gap-6 md:mb-12 md:flex-row md:items-center">
           <div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-              Expenses
-            </h1>
-            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
-              Track and manage your monthly expenses.
-            </p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">Expenses</h1>
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Track recurring monthly expenses. Paused expenses stay visible but are excluded from totals.</p>
           </div>
-          <button
-            onClick={() => {
-              setIsModalOpen(true);
-              setEditingExpense(null);
-            }}
-            className="flex items-center gap-2 bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
-          >
-            <PlusIcon className="w-5 h-5" />
-            Add Expense
+          <button type="button" onClick={() => { setIsModalOpen(true); setEditingExpense(null); setModalSubmissionPending(false); }} className="flex min-h-[40px] items-center gap-2 rounded-lg bg-gray-900 px-6 py-2.5 font-semibold text-white shadow-sm transition-all duration-150 hover:bg-gray-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+            <PlusIcon className="h-5 w-5" /> Add Expense
           </button>
         </header>
 
-        <ExpenseSummaryCards
-          totalMonthlyCost={totalMonthlyCost}
-          totalYearlyCost={totalYearlyCost}
-          annualGrossIncome={annualGrossIncome}
-          taxDeductionPercentage={taxDeductionPercentage}
-          netRemainingMonthly={netRemainingMonthly}
-          netRemainingYearly={netRemainingYearly}
-        />
+        <ExpenseSummaryCards totalMonthlyCost={totalMonthlyCost} totalYearlyCost={totalYearlyCost} annualGrossIncomeCents={annualGrossIncomeCents} taxDeductionPercentage={taxDeductionPercentage} netRemainingMonthly={netRemainingMonthly} netRemainingYearly={netRemainingYearly} />
 
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <CalendarDaysIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Days 1-14</p>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  First Half of Month
-                </h3>
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              $
-              {(firstHalfTotal / 100).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {firstHalfPercentage.toFixed(1)}% of filtered monthly spend
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl shadow-sm hover:shadow-md transition-all duration-150 p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <CalendarDaysIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Days 15-End</p>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Second Half of Month
-                </h3>
-              </div>
-            </div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              $
-              {(secondHalfTotal / 100).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              {secondHalfPercentage.toFixed(1)}% of filtered monthly spend
-            </p>
-          </div>
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <PaymentHalfCard label="Days 1–14" title="First Half of Month" total={firstHalfTotal} percentage={firstHalfPercentage} />
+          <PaymentHalfCard label="Days 15–End" title="Second Half of Month" total={secondHalfTotal} percentage={secondHalfPercentage} />
         </div>
 
-        <ExpensesCategoryFilter
-          distinctCategories={distinctCategories}
-          filterCategories={filterCategories}
-          onToggleCategory={toggleCategory}
-          onClearFilters={() => setFilterCategories([])}
-        />
-
-        <ExpensesTable
-          filteredExpenses={filteredExpenses}
-          totalMonthlyCost={totalMonthlyCost}
-          onEditExpense={setEditingExpense}
-        />
+        <ExpensesCategoryFilter distinctCategories={distinctCategories} filterCategories={filterCategories} onToggleCategory={toggleCategory} onClearFilters={() => setFilterCategories([])} />
+        <ExpensesTable filteredExpenses={filteredExpenses} totalMonthlyCost={totalMonthlyCost} hasActiveFilters={filterCategories.length > 0} onEditExpense={(expense) => { setEditingExpense(expense); setIsModalOpen(false); setModalSubmissionPending(false); }} />
       </div>
 
-      <AddExpenseModal
-        isOpen={isModalOpen}
-        distinctCategories={distinctCategories}
-        onClose={() => setIsModalOpen(false)}
-        fetcher={fetcher}
-        onLastSubmitTimeChange={setLastSubmitTime}
-        lastSubmitTime={lastSubmitTime}
-      />
-
-      <EditExpenseModal
-        expense={editingExpense}
-        distinctCategories={distinctCategories}
-        onClose={() => setEditingExpense(null)}
-        fetcher={fetcher}
-        onLastSubmitTimeChange={setLastSubmitTime}
-        lastSubmitTime={lastSubmitTime}
-      />
+      <AddExpenseModal isOpen={isModalOpen} distinctCategories={distinctCategories} onClose={closeModals} fetcher={fetcher} submissionAttempted={modalSubmissionPending} onSubmit={() => setModalSubmissionPending(true)} />
+      <EditExpenseModal expense={editingExpense} distinctCategories={distinctCategories} onClose={closeModals} fetcher={fetcher} submissionAttempted={modalSubmissionPending} onSubmit={() => setModalSubmissionPending(true)} />
     </div>
   );
+}
+
+function PaymentHalfCard({ label, title, total, percentage }: { label: string; title: string; total: number; percentage: number }) {
+  return <div className="rounded-xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-150 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+    <div className="mb-4 flex items-center gap-3"><CalendarDaysIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" /><div><p className="text-sm text-gray-600 dark:text-gray-400">{label}</p><h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3></div></div>
+    <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">${(total / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{percentage.toFixed(1)}% of active filtered monthly spend</p>
+  </div>;
 }

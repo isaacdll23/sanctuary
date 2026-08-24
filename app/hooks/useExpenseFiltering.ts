@@ -1,16 +1,10 @@
 import { useMemo } from "react";
-
-interface Expense {
-  id: number;
-  name: string;
-  monthlyCost: number;
-  chargeDay: number;
-  category: string;
-}
+import type { Expense } from "~/types/expense";
 
 interface UseExpenseFilteringReturn {
   distinctCategories: string[];
   filteredExpenses: Expense[];
+  activeFilteredExpenses: Expense[];
   totalMonthlyCost: number;
   totalYearlyCost: number;
   filterCategories: string[];
@@ -27,7 +21,7 @@ export function useExpenseFiltering(
     () =>
       Array.from(
         new Set(expenses.map((expense) => expense.category).filter(Boolean))
-      ) as string[],
+      ).sort((a, b) => a.localeCompare(b)),
     [expenses]
   );
 
@@ -50,13 +44,18 @@ export function useExpenseFiltering(
     });
   }, [filteredExpenses]);
 
+  const activeFilteredExpenses = useMemo(
+    () => sortedExpenses.filter((expense) => expense.isActive !== 0),
+    [sortedExpenses]
+  );
+
   const totalMonthlyCost = useMemo(
     () =>
-      sortedExpenses.reduce(
+      activeFilteredExpenses.reduce(
         (acc: number, expense: Expense) => acc + expense.monthlyCost,
         0
       ),
-    [sortedExpenses]
+    [activeFilteredExpenses]
   );
 
   const totalYearlyCost = useMemo(
@@ -75,6 +74,7 @@ export function useExpenseFiltering(
   return {
     distinctCategories,
     filteredExpenses: sortedExpenses,
+    activeFilteredExpenses,
     totalMonthlyCost,
     totalYearlyCost,
     filterCategories,

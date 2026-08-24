@@ -1,28 +1,23 @@
 import { useFetcher } from "react-router";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
-
-interface Expense {
-  id: number;
-  name: string;
-  monthlyCost: number;
-  chargeDay: number;
-  category: string;
-}
+import type { Expense } from "~/types/expense";
 
 interface ExpensesTableProps {
   filteredExpenses: Expense[];
   totalMonthlyCost: number;
+  hasActiveFilters: boolean;
   onEditExpense: (expense: Expense) => void;
 }
 
 export default function ExpensesTable({
   filteredExpenses,
   totalMonthlyCost,
+  hasActiveFilters,
   onEditExpense,
 }: ExpensesTableProps) {
   const fetcher = useFetcher();
   const getShareOfTotal = (expense: Expense) => {
-    if (!totalMonthlyCost) return "0.0";
+    if (!totalMonthlyCost || expense.isActive === 0) return "—";
     return ((expense.monthlyCost / totalMonthlyCost) * 100).toFixed(1);
   };
 
@@ -47,7 +42,7 @@ export default function ExpensesTable({
                 />
               </svg>
               <p className="text-base font-medium">No expenses found.</p>
-              <p className="text-sm">Add your first expense to start tracking.</p>
+              <p className="text-sm">{hasActiveFilters ? "No expenses match these filters." : "Add your first expense to start tracking."}</p>
             </div>
           </div>
         ) : (
@@ -71,8 +66,9 @@ export default function ExpensesTable({
                 <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
                   {expense.category}
                 </span>
+                {expense.isActive === 0 && <span className="ml-2 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">Paused</span>}
                 <span className="text-xs text-gray-600 dark:text-gray-400">
-                  {getShareOfTotal(expense)}% of total
+                  {expense.isActive === 0 ? "Paused" : `${getShareOfTotal(expense)}% of total`}
                 </span>
               </div>
 
@@ -85,7 +81,7 @@ export default function ExpensesTable({
                   <PencilIcon className="w-4 h-4 mr-1.5" />
                   Edit
                 </button>
-                <fetcher.Form method="post" className="inline-block">
+                <fetcher.Form method="post" className="inline-block" onSubmit={(event) => { if (!window.confirm(`Delete ${expense.name}? This cannot be undone.`)) event.preventDefault(); }}>
                   <input type="hidden" name="_action" value="delete" />
                   <input type="hidden" name="id" value={expense.id} />
                   <button
@@ -146,9 +142,7 @@ export default function ExpensesTable({
                       />
                     </svg>
                     <p className="text-base font-medium">No expenses found.</p>
-                    <p className="text-sm">
-                      Add your first expense to start tracking.
-                    </p>
+                    <p className="text-sm">{hasActiveFilters ? "No expenses match these filters." : "Add your first expense to start tracking."}</p>
                   </div>
                 </td>
               </tr>
@@ -159,14 +153,14 @@ export default function ExpensesTable({
                   className="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors duration-150"
                 >
                   <td className="px-4 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {expense.name}
+                    <div className="flex items-center gap-2">{expense.name}{expense.isActive === 0 && <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">Paused</span>}</div>
                   </td>
                   <td className="px-4 py-4 text-sm">
                     <div className="font-medium text-gray-900 dark:text-gray-100">
                       ${(expense.monthlyCost / 100).toFixed(2)}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">
-                      {getShareOfTotal(expense)}% of total
+                      {expense.isActive === 0 ? "Paused" : `${getShareOfTotal(expense)}% of total`}
                     </div>
                   </td>
                   <td className="px-4 py-4 text-sm">
@@ -189,10 +183,7 @@ export default function ExpensesTable({
                         <PencilIcon className="w-4 h-4 mr-1" />
                         Edit
                       </button>
-                      <fetcher.Form
-                        method="post"
-                        className="inline-block"
-                      >
+                      <fetcher.Form method="post" className="inline-block" onSubmit={(event) => { if (!window.confirm(`Delete ${expense.name}? This cannot be undone.`)) event.preventDefault(); }}>
                         <input
                           type="hidden"
                           name="_action"

@@ -3,7 +3,7 @@ import { ArrowPathIcon } from "@heroicons/react/24/outline";
 interface ExpenseSummaryCardsProps {
   totalMonthlyCost: number;
   totalYearlyCost: number;
-  annualGrossIncome: number;
+  annualGrossIncomeCents: number;
   taxDeductionPercentage: number;
   netRemainingMonthly: number;
   netRemainingYearly: number;
@@ -12,12 +12,12 @@ interface ExpenseSummaryCardsProps {
 export default function ExpenseSummaryCards({
   totalMonthlyCost,
   totalYearlyCost,
-  annualGrossIncome,
+  annualGrossIncomeCents,
   taxDeductionPercentage,
   netRemainingMonthly,
   netRemainingYearly,
 }: ExpenseSummaryCardsProps) {
-  const hasIncome = annualGrossIncome !== 0;
+  const hasIncome = annualGrossIncomeCents !== 0;
 
   return (
     <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
