@@ -1,285 +1,173 @@
-import { useState } from "react";
-import { useFetcher, useLoaderData } from "react-router";
+import { useMemo, useState } from "react";
+import { ArrowPathIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
+import { useFetcher } from "react-router";
 import type { Route } from "./+types/income";
-import { pageAccessLoader, pageAccessAction } from "~/modules/middleware/pageAccess";
-import { eq } from "drizzle-orm";
-import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
+import { getExpectedPaycheckCents, getPayDatesAfter, getReferenceDateKey } from "~/modules/finance/paySchedule";
+import { formatDateKey, parseDateKey } from "~/modules/finance/recurrence";
+import { getIncomeOverviewForUser, saveIncomeOverviewForUser, validateIncomeForm } from "~/modules/services/IncomeService";
+import type { IncomeActionResult, IncomeFormErrors } from "~/types/income";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "Income Dashboard" }];
+  return [{ title: "Income" }];
 }
 
-export const loader = pageAccessLoader("finance", async (user, request) => {
-  const { db } = await import("~/db");
-  const { financeIncomeTable } = await import("~/db/schema");
+export const loader = pageAccessLoader("finance", async (user) => ({
+  ...await getIncomeOverviewForUser(user.id),
+  asOfDate: getReferenceDateKey(user.timeZone),
+}));
 
-  const [userIncome]: Array<typeof financeIncomeTable.$inferSelect> = await db
-    .select()
-    .from(financeIncomeTable)
-    .where(eq(financeIncomeTable.userId, user.id))
-    .limit(1);
-
-  if (!userIncome) {
-    return { annualGrossIncome: undefined, taxDeductionPercentage: undefined };
-  }
-
-  return {
-    annualGrossIncome: userIncome.annualGrossIncome,
-    taxDeductionPercentage: userIncome.taxDeductionPercentage,
-  };
-});
-
-export const action = pageAccessAction("finance", async (user, request) => {
-  const { db } = await import("~/db");
-  const { financeIncomeTable } = await import("~/db/schema");
-
-  const formData = await request.formData();
-  const annualGrossIncome = formData.get("annualGrossIncome");
-  const taxDeductionPercentage = formData.get("taxDeductionPercentage");
-
-  const [userIncome]: Array<typeof financeIncomeTable.$inferSelect> = await db
-    .select()
-    .from(financeIncomeTable)
-    .where(eq(financeIncomeTable.userId, user.id))
-    .limit(1);
-  if (userIncome) {
-    await db
-      .update(financeIncomeTable)
-      .set({
-        annualGrossIncome: Number(annualGrossIncome),
-        taxDeductionPercentage: Number(taxDeductionPercentage),
-      })
-      .where(eq(financeIncomeTable.userId, user.id));
-    return {};
-  }
-
-  // If user income doesn't exist, create a new record
-  await db.insert(financeIncomeTable).values({
-    userId: user.id,
-    annualGrossIncome: Number(annualGrossIncome),
-    taxDeductionPercentage: Number(taxDeductionPercentage),
-  });
-
-  return {};
+export const action = pageAccessAction("finance", async (user, request): Promise<IncomeActionResult> => {
+  const parsed = validateIncomeForm(await request.formData());
+  if (!parsed.success) return parsed.result;
+  const saved = await saveIncomeOverviewForUser(user.id, parsed.data);
+  return saved.ok ? { ok: true, message: "Income and pay schedule saved." } : saved;
 });
 
 export default function Income({ loaderData }: Route.ComponentProps) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<IncomeActionResult>();
+  const schedule = loaderData.paySchedule;
+  const initiallyScheduled = Boolean(schedule && schedule.isEnabled !== 0);
+  const [scheduleEnabled, setScheduleEnabled] = useState(initiallyScheduled);
+  const [firstNominalDay, setFirstNominalDay] = useState(String(schedule?.firstNominalDay ?? 15));
+  const [weekendAdjustment, setWeekendAdjustment] = useState(schedule?.weekendAdjustment ?? "previous-friday");
+  const [netPaycheckAmount, setNetPaycheckAmount] = useState(schedule?.netPaycheckAmountCents != null ? (schedule.netPaycheckAmountCents / 100).toFixed(2) : "");
+  const [depositAccountId, setDepositAccountId] = useState(String(schedule?.depositAccountId ?? ""));
+  const expected = getExpectedPaycheckCents(
+    { ...schedule, netPaycheckAmountCents: netPaycheckAmount ? Math.round(Number(netPaycheckAmount) * 100) : null },
+    loaderData.income?.annualGrossIncome,
+    loaderData.income?.taxDeductionPercentage
+  );
+  const preview = useMemo(
+    () => scheduleEnabled ? getPayDatesAfter({ ...schedule, firstNominalDay: Number(firstNominalDay), weekendAdjustment }, parseDateKey(loaderData.asOfDate), 6) : [],
+    [schedule, scheduleEnabled, firstNominalDay, weekendAdjustment, loaderData.asOfDate]
+  );
+  const errors = fetcher.data && !fetcher.data.ok ? fetcher.data : undefined;
+  const taxRate = loaderData.income?.taxDeductionPercentage;
+  const annualNetIncome = loaderData.income ? loaderData.income.annualGrossIncome * (1 - (taxRate ?? 0) / 100) : null;
+
+  const fieldError = (field: keyof IncomeFormErrors) => errors?.fieldErrors?.[field];
+  const fieldClass = (field: keyof IncomeFormErrors) =>
+    `mt-1.5 w-full rounded-lg border bg-gray-100 px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 ${fieldError(field) ? "border-red-500 focus:ring-red-400" : "border-gray-300 focus:ring-gray-400 dark:border-gray-600 dark:focus:ring-gray-600"}`;
+  const fieldA11y = (field: keyof IncomeFormErrors) => ({
+    "aria-invalid": Boolean(fieldError(field)),
+    "aria-describedby": fieldError(field) ? `${field}-error` : undefined,
+  });
 
   return (
-    <div className="min-h-screen bg-transparent text-gray-100 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <header className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">
-            Income Dashboard
-          </h1>
-          <p className="mt-3 text-lg text-gray-600 dark:text-gray-400">
-            Manage your income sources and track your earnings.
-          </p>
+    <div className="min-h-screen bg-transparent p-4 text-gray-100 md:p-8">
+      <div className="mx-auto max-w-4xl">
+        <header className="mb-8">
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">Income</h1>
+          <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Set annual income and a primary paycheck schedule for clearer cash flow.</p>
         </header>
 
-        {/* Income Stats */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 p-6 mb-8">
-          {loaderData.annualGrossIncome ? (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                    Annual Gross Income
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    ${loaderData.annualGrossIncome.toLocaleString()}
-                  </p>
-                </div>
-                <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4">
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">
-                    Tax Deduction Rate
-                  </p>
-                  <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
-                    {loaderData.taxDeductionPercentage}%
-                  </p>
-                </div>
-              </div>
+        {fetcher.data && <Feedback result={fetcher.data} />}
 
-              <div className="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-5 border border-gray-300 dark:border-gray-700">
-                <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                  Estimated Breakdowns
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">
-                      Annual Tax
-                    </p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      $
-                      {(
-                        (loaderData.annualGrossIncome *
-                          loaderData.taxDeductionPercentage) /
-                        100
-                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">
-                      Monthly Tax
-                    </p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      $
-                      {(
-                        (loaderData.annualGrossIncome *
-                          loaderData.taxDeductionPercentage) /
-                        1200
-                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">
-                      Annual Net Income
-                    </p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      $
-                      {(
-                        (loaderData.annualGrossIncome *
-                          (100 - loaderData.taxDeductionPercentage)) /
-                        100
-                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">
-                      Monthly Net Income
-                    </p>
-                    <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      $
-                      {(
-                        (loaderData.annualGrossIncome *
-                          (100 - loaderData.taxDeductionPercentage)) /
-                        1200
-                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 11.219 12.768 11 12 11c-.768 0-1.536.219-2.121.659-.922.689-.455 2.036.465 2.712Z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19.5 14.25A8.966 8.966 0 0 0 12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c2.485 0 4.73-.998 6.364-2.636"
-                />
-              </svg>
-              <p className="text-gray-600 dark:text-gray-400 text-lg mb-1">
-                No income data available yet.
-              </p>
-              <p className="text-gray-500 dark:text-gray-500 text-sm">
-                Please enter your income details below.
-              </p>
-            </div>
-          )}
+        <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Metric label="Annual gross income" value={loaderData.income ? `$${loaderData.income.annualGrossIncome.toLocaleString()}` : "Not configured"} />
+          <Metric label="Tax deduction rate" value={taxRate == null ? "Not configured" : `${taxRate}%`} />
+          <Metric label="Estimated annual net income" value={annualNetIncome == null ? "Not configured" : `$${annualNetIncome.toLocaleString(undefined, { maximumFractionDigits: 0 })}`} />
+          <Metric label={expected.isEstimate ? "Estimated net paycheck" : "Configured net paycheck"} value={scheduleEnabled ? `$${formatMoney(expected.amountCents)}` : "No schedule"} />
         </div>
 
-        {/* Income Form */}
-        <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 p-6">
-          <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-gray-100">
-            Update Income Details
-          </h2>
+        {scheduleEnabled && (
+          <section className="mb-6 rounded-xl border border-gray-300 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="flex items-center gap-2">
+              <CalendarDaysIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming actual paydays</h2>
+            </div>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              {weekendAdjustment === "previous-friday" ? "Weekend paydays move to the previous Friday." : "Weekend paydays remain on their calendar date."} {expected.isEstimate ? "Income is estimated from annual gross and taxes." : "Using your configured net amount."}
+            </p>
+            <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {preview.map((date) => <li key={formatDateKey(date)} className="rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-900 dark:bg-gray-700 dark:text-gray-100">{formatDateKey(date)}</li>)}
+            </ol>
+          </section>
+        )}
 
-          <fetcher.Form method="post" className="space-y-6">
-            <div>
-              <label
-                htmlFor="annualGrossIncome"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Annual Gross Income
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-600 dark:text-gray-400">
-                  $
-                </span>
-                <input
-                  type="number"
-                  name="annualGrossIncome"
-                  id="annualGrossIncome"
-                  placeholder="Enter your annual income"
-                  defaultValue={loaderData.annualGrossIncome}
-                  className="w-full pl-8 pr-4 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
-                  required
-                />
-              </div>
+        <section className="rounded-xl border border-gray-300 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Income and primary pay schedule</h2>
+          <fetcher.Form method="post" className="mt-5 space-y-5">
+            {errors && <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-200">{errors.error}</p>}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Annual gross income" field="annualGrossIncome" error={fieldError("annualGrossIncome")}>
+                <input id="annualGrossIncome" name="annualGrossIncome" type="number" min="0" step="1" required defaultValue={loaderData.income?.annualGrossIncome} className={fieldClass("annualGrossIncome")} {...fieldA11y("annualGrossIncome")} />
+              </Field>
+              <Field label="Tax deduction percentage" field="taxDeductionPercentage" error={fieldError("taxDeductionPercentage")}>
+                <input id="taxDeductionPercentage" name="taxDeductionPercentage" type="number" min="0" max="100" step="1" required defaultValue={loaderData.income?.taxDeductionPercentage} className={fieldClass("taxDeductionPercentage")} {...fieldA11y("taxDeductionPercentage")} />
+              </Field>
             </div>
 
-            <div>
-              <label
-                htmlFor="taxDeductionPercentage"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Tax Deduction Percentage
-              </label>
-              <div className="relative">
-                <input
-                  type="number"
-                  name="taxDeductionPercentage"
-                  id="taxDeductionPercentage"
-                  placeholder="Enter tax percentage"
-                  defaultValue={loaderData.taxDeductionPercentage}
-                  className="w-full pl-4 pr-8 py-2.5 bg-gray-100 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-colors duration-150"
-                  required
-                />
-                <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-600 dark:text-gray-400">
-                  %
-                </span>
-              </div>
-              <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
-                Enter the percentage of your income that goes to taxes.
-              </p>
-            </div>
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-gray-300 p-3 text-sm text-gray-700 dark:border-gray-600 dark:text-gray-300">
+              <input type="checkbox" name="scheduleEnabled" value="1" checked={scheduleEnabled} onChange={(event) => setScheduleEnabled(event.target.checked)} className="rounded" />
+              <span><span className="font-medium">Use a primary pay schedule</span><span className="block text-xs text-gray-600 dark:text-gray-400">Enables paycheck-period cash flow on Expenses.</span></span>
+            </label>
 
-            <button
-              type="submit"
-              disabled={fetcher.state === "submitting"}
-              className="w-full inline-flex justify-center items-center gap-2 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 font-semibold py-2.5 px-4 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 min-h-[40px]"
-            >
-              {fetcher.state === "submitting" ? (
-                <>
-                  <ArrowPathIcon className="animate-spin w-4 h-4" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Save Income Details
-                </>
-              )}
+            <fieldset disabled={!scheduleEnabled} aria-describedby="schedule-controls-help" className="space-y-5 disabled:opacity-75">
+              <legend className="sr-only">Primary pay schedule settings</legend>
+              <p id="schedule-controls-help" className="text-sm text-gray-600 dark:text-gray-400">{scheduleEnabled ? "Configure the dates and expected deposit for this primary schedule." : "Enable the primary pay schedule above to edit these settings."}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Schedule type" field="scheduleType" error={fieldError("scheduleType")}>
+                  <select id="scheduleType" value="semi-monthly" disabled className={fieldClass("scheduleType")} {...fieldA11y("scheduleType")}><option value="semi-monthly">Semi-monthly</option></select>
+                </Field>
+                <Field label="First nominal payday" field="firstNominalDay" error={fieldError("firstNominalDay")}>
+                  <select id="firstNominalDay" value={firstNominalDay} onChange={(event) => setFirstNominalDay(event.target.value)} className={fieldClass("firstNominalDay")} {...fieldA11y("firstNominalDay")}>
+                    {Array.from({ length: 27 }, (_, index) => index + 1).map((day) => <option key={day} value={day}>{ordinal(day)} of each month</option>)}
+                  </select>
+                </Field>
+                <Field label="Second payday" field="secondPaydayRule" error={fieldError("secondPaydayRule")}>
+                  <select id="secondPaydayRule" value="last-day" disabled className={fieldClass("secondPaydayRule")} {...fieldA11y("secondPaydayRule")}><option value="last-day">Last calendar day</option></select>
+                </Field>
+                <Field label="Weekend adjustment" field="weekendAdjustment" error={fieldError("weekendAdjustment")}>
+                  <select id="weekendAdjustment" value={weekendAdjustment} onChange={(event) => setWeekendAdjustment(event.target.value)} className={fieldClass("weekendAdjustment")} {...fieldA11y("weekendAdjustment")}><option value="previous-friday">Previous Friday</option><option value="none">No adjustment</option></select>
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Actual net amount per paycheck (optional)" field="netPaycheckAmount" error={fieldError("netPaycheckAmount")}>
+                  <input id="netPaycheckAmount" value={netPaycheckAmount} onChange={(event) => setNetPaycheckAmount(event.target.value)} type="number" min="0" step="0.01" placeholder="Use annual-income estimate" className={fieldClass("netPaycheckAmount")} {...fieldA11y("netPaycheckAmount")} />
+                </Field>
+                <Field label="Deposit account (optional)" field="depositAccountId" error={fieldError("depositAccountId")}>
+                  <select id="depositAccountId" value={depositAccountId} onChange={(event) => setDepositAccountId(event.target.value)} className={fieldClass("depositAccountId")} {...fieldA11y("depositAccountId")}><option value="">Unassigned</option>{loaderData.paymentAccounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select>
+                </Field>
+              </div>
+            </fieldset>
+
+            <input type="hidden" name="scheduleType" value="semi-monthly" />
+            <input type="hidden" name="firstNominalDay" value={firstNominalDay} />
+            <input type="hidden" name="secondPaydayRule" value="last-day" />
+            <input type="hidden" name="weekendAdjustment" value={weekendAdjustment} />
+            <input type="hidden" name="netPaycheckAmount" value={netPaycheckAmount} />
+            <input type="hidden" name="depositAccountId" value={depositAccountId} />
+
+            <button type="submit" disabled={fetcher.state !== "idle"} className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-60 dark:bg-gray-700 dark:hover:bg-gray-600">
+              {fetcher.state !== "idle" ? <><ArrowPathIcon className="h-4 w-4 animate-spin" />Saving...</> : "Save income and pay schedule"}
             </button>
           </fetcher.Form>
-        </div>
+        </section>
       </div>
     </div>
   );
+}
+
+function Feedback({ result }: { result: IncomeActionResult }) {
+  return <div role={result.ok ? "status" : "alert"} aria-live="polite" className={`mb-6 rounded-lg border px-4 py-3 text-sm ${result.ok ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200" : "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200"}`}>{result.ok ? result.message : result.error}</div>;
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-xl border border-gray-300 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"><p className="text-sm text-gray-600 dark:text-gray-400">{label}</p><p className="mt-1 text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p></div>;
+}
+
+function Field({ label, field, error, children }: { label: string; field: string; error?: string; children: React.ReactNode }) {
+  return <div><label htmlFor={field} className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>{children}{error && <p id={`${field}-error`} className="mt-1 text-xs text-red-600 dark:text-red-300">{error}</p>}</div>;
+}
+
+function ordinal(day: number) {
+  const suffix = day % 10 === 1 && day % 100 !== 11 ? "st" : day % 10 === 2 && day % 100 !== 12 ? "nd" : day % 10 === 3 && day % 100 !== 13 ? "rd" : "th";
+  return `${day}${suffix}`;
+}
+
+function formatMoney(cents: number) {
+  return (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }

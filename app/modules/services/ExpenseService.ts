@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "~/db";
-import { financeExpensesTable, financeIncomeTable, financePaymentAccountsTable } from "~/db/schema";
+import { financeExpensesTable, financeIncomeTable, financePaymentAccountsTable, financePaySchedulesTable } from "~/db/schema";
 import type { ExpenseActionResult, ExpenseFormErrors } from "~/types/expense";
 
 const moneySchema = z
@@ -197,6 +197,8 @@ export async function deletePaymentAccountForUser(userId: number, id: number) {
     if (!account) return [];
     await tx.update(financeExpensesTable).set({ accountId: null, updatedAt: new Date() })
       .where(and(eq(financeExpensesTable.userId, userId), eq(financeExpensesTable.accountId, id)));
+    await tx.update(financePaySchedulesTable).set({ depositAccountId: null, updatedAt: new Date() })
+      .where(and(eq(financePaySchedulesTable.userId, userId), eq(financePaySchedulesTable.depositAccountId, id)));
     return tx.delete(financePaymentAccountsTable).where(and(eq(financePaymentAccountsTable.id, id), eq(financePaymentAccountsTable.userId, userId))).returning({ id: financePaymentAccountsTable.id });
   });
 }

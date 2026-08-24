@@ -102,6 +102,21 @@ export const financeIncomeTable = pgTable("finance_income", {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+/** Optional primary schedule; separate from income totals so legacy income rows remain unscheduled. */
+export const financePaySchedulesTable = pgTable("finance_pay_schedules", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  userId: integer("user_id").notNull().unique().references(() => usersTable.id),
+  isEnabled: integer("is_enabled").default(0).notNull(),
+  scheduleType: varchar("schedule_type", { length: 30 }).default("semi-monthly").notNull(),
+  firstNominalDay: integer("first_nominal_day").default(15).notNull(),
+  secondPaydayRule: varchar("second_payday_rule", { length: 30 }).default("last-day").notNull(),
+  weekendAdjustment: varchar("weekend_adjustment", { length: 30 }).default("previous-friday").notNull(),
+  netPaycheckAmountCents: integer("net_paycheck_amount_cents"),
+  depositAccountId: integer("deposit_account_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 // Shared Budgets Tables
 
 export const budgetPeriodEnum = pgEnum("budget_period", [

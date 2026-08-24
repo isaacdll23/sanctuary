@@ -24,9 +24,13 @@ import ExpenseSummaryCards from "~/components/finance/ExpenseSummaryCards";
 import ExpensesCategoryFilter from "~/components/finance/ExpensesCategoryFilter";
 import ExpensesTable from "~/components/finance/ExpensesTable";
 import PaymentAccountsPanel from "~/components/finance/PaymentAccountsPanel";
+import PaycheckCashFlow from "~/components/finance/PaycheckCashFlow";
 import { useExpenseFiltering, type ExpenseSort, type ExpenseStatusFilter } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
 import { formatDateKey, getChargeDatesInRange, parseDateKey } from "~/modules/finance/recurrence";
+import { getReferenceDateKey } from "~/modules/finance/paySchedule";
+import { getPrimaryPayScheduleForUser } from "~/modules/services/IncomeService";
+import { Link } from "react-router";
 import type { Expense, ExpenseActionResult } from "~/types/expense";
 
 export function meta({}: Route.MetaArgs) {
@@ -34,12 +38,13 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export const loader = pageAccessLoader("finance", async (user) => {
-  const [userExpenses, userIncome, paymentAccounts] = await Promise.all([
+  const [userExpenses, userIncome, paymentAccounts, paySchedule] = await Promise.all([
     getExpensesForUser(user.id),
     getLatestIncomeForUser(user.id),
     getPaymentAccountsForUser(user.id),
+    getPrimaryPayScheduleForUser(user.id),
   ]);
-  return { userExpenses, userIncome, paymentAccounts, asOfDate: formatDateKey(new Date()) };
+  return { userExpenses, userIncome, paymentAccounts, paySchedule, asOfDate: getReferenceDateKey(user.timeZone) };
 });
 
 export const action = pageAccessAction("finance", async (user, request): Promise<ExpenseActionResult> => {
@@ -138,6 +143,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
     }
     return result;
   }, [loaderData.asOfDate, loaderData.userExpenses]);
+  const hasPaySchedule = Boolean(loaderData.paySchedule && loaderData.paySchedule.isEnabled !== 0);
   const annualGrossIncomeCents = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
   const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
   const { netRemainingYearly, netRemainingMonthly } = useIncomeCalculations(
@@ -195,10 +201,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
 
         <ExpenseSummaryCards totalMonthlyCost={totalMonthlyCost} totalYearlyCost={totalYearlyCost} annualGrossIncomeCents={annualGrossIncomeCents} taxDeductionPercentage={taxDeductionPercentage} netRemainingMonthly={netRemainingMonthly} netRemainingYearly={netRemainingYearly} />
 
-        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <UpcomingChargesCard label={upcomingCashFlow.firstLabel} title="Due in the next 14 days" total={upcomingCashFlow.firstTotal} count={upcomingCashFlow.firstCount} />
-          <UpcomingChargesCard label={upcomingCashFlow.secondLabel} title="Due in days 15–30" total={upcomingCashFlow.secondTotal} count={upcomingCashFlow.secondCount} />
-        </div>
+        {hasPaySchedule ? <PaycheckCashFlow schedule={loaderData.paySchedule!} annualGrossIncome={loaderData.userIncome?.annualGrossIncome} taxDeductionPercentage={loaderData.userIncome?.taxDeductionPercentage} expenses={loaderData.userExpenses} asOfDate={loaderData.asOfDate} paymentAccounts={loaderData.paymentAccounts} /> : <><div className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-gray-300 bg-gray-50 p-4 sm:flex-row sm:items-center dark:border-gray-700 dark:bg-gray-800/70"><p className="text-sm text-gray-700 dark:text-gray-300">Configure a primary pay schedule to see bills by paycheck period.</p><Link to="/finance/income" className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600">Configure Pay Schedule</Link></div><div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2"><UpcomingChargesCard label={upcomingCashFlow.firstLabel} title="Due in the next 14 days" total={upcomingCashFlow.firstTotal} count={upcomingCashFlow.firstCount} /><UpcomingChargesCard label={upcomingCashFlow.secondLabel} title="Due in days 15–30" total={upcomingCashFlow.secondTotal} count={upcomingCashFlow.secondCount} /></div></>}
 
         <PaymentAccountsPanel accounts={loaderData.paymentAccounts} fetcher={fetcher} />
         <ExpensesCategoryFilter distinctCategories={distinctCategories} filterCategories={filterCategories} onToggleCategory={toggleCategory} onClearFilters={clearFilters} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} status={statusFilter} onStatusChange={setStatusFilter} sort={sort} onSortChange={setSort} />
