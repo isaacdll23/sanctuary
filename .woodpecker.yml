@@ -5,6 +5,13 @@ when:
 steps:
   build-and-push:
     image: docker:29-cli
+    environment:
+      REGISTRY:
+        from_secret: REGISTRY
+      REGISTRY_USERNAME:
+        from_secret: REGISTRY_USERNAME
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     commands:
