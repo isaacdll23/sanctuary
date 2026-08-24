@@ -5,6 +5,8 @@ when:
 steps:
   build-and-push:
     image: docker:29-cli
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - SHORT_SHA="$(printf %s "$CI_COMMIT_SHA" | cut -c1-7)"
       - IMAGE="$REGISTRY/sanctuary:sha-$SHORT_SHA"
@@ -16,6 +18,3 @@ steps:
       - docker push "$REGISTRY/sanctuary:latest"
       - docker push "$MIGRATE_IMAGE"
       - docker push "$REGISTRY/sanctuary-migrate:latest"
-
-volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
