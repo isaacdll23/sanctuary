@@ -11,6 +11,10 @@ const options = { endpoint, apiKey, deployment, apiVersion };
 
 const client = new AzureOpenAI(options);
 
+export function isAiConfigured() {
+  return Boolean(endpoint && apiKey);
+}
+
 // Schema to validate AI response
 const titleResponseSchema = z.object({
   title: z.string(),
@@ -27,8 +31,8 @@ export async function generateNoteTitle(content: string): Promise<string> {
       throw new Error("Note content is empty");
     }
 
-    if (!client.apiKey) {
-      throw new Error("OpenAI API key is not configured");
+    if (!isAiConfigured()) {
+      throw new Error("AI title generation is not configured");
     }
 
     console.log("Calling OpenAI to generate note title...");

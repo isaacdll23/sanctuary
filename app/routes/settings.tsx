@@ -1,6 +1,6 @@
 import { useLoaderData } from "react-router";
 import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
-import { getGoogleOAuthUrl } from "~/modules/auth.server";
+import { getGoogleOAuthUrl, isGoogleOAuthConfigured } from "~/modules/auth.server";
 import ProfileSettingsSection from "~/components/settings/ProfileSettingsSection";
 import CalendarSettingsSection from "~/components/settings/CalendarSettingsSection";
 import TabNavigation from "~/components/settings/TabNavigation";
@@ -17,13 +17,15 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
 
   const googleCalendarAccount = await getGoogleCalendarAccount(user.id);
   const calendarPreferences = await getCalendarPreferences(user.id);
-  const oauthUrl = getGoogleOAuthUrl();
+  const googleOAuthEnabled = isGoogleOAuthConfigured();
+  const oauthUrl = googleOAuthEnabled ? getGoogleOAuthUrl() : null;
 
   return {
     user,
     googleCalendarAccount,
     calendarPreferences,
     oauthUrl,
+    googleOAuthEnabled,
   };
 });
 
@@ -39,6 +41,10 @@ export const action = pageAccessAction("settings", async (_user, request) => {
     );
     return handleProfileAction(request);
   } else if (intent.startsWith("calendar") || intent.startsWith("update") || intent.startsWith("disconnect") || intent.startsWith("manualSync") || intent === "resolveSyncConflict") {
+    const isCalendarViewPreference = intent === "updateCalendarPreferences";
+    if (!isCalendarViewPreference && !isGoogleOAuthConfigured()) {
+      return { success: false, message: "Google Calendar integration is not configured." };
+    }
     const { handleGoogleCalendarAction } = await import(
       "~/modules/services/GoogleCalendarService"
     );
@@ -80,12 +86,13 @@ type LoaderData = {
   user: User;
   googleCalendarAccount: GoogleCalendarAccount | null;
   calendarPreferences: CalendarPreferences | null;
-  oauthUrl: string;
+  oauthUrl: string | null;
+  googleOAuthEnabled: boolean;
 };
 
 export default function Settings() {
   const loaderData = useLoaderData<LoaderData>();
-  const { user, googleCalendarAccount, calendarPreferences, oauthUrl } = loaderData;
+  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled } = loaderData;
   const { activeTab, setActiveTab } = useSettingsTabNavigation();
 
   return (
@@ -106,6 +113,7 @@ export default function Settings() {
             googleCalendarAccount={googleCalendarAccount}
             calendarPreferences={calendarPreferences}
             oauthUrl={oauthUrl}
+            googleOAuthEnabled={googleOAuthEnabled}
           />
         )}
       </div>

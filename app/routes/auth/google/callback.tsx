@@ -9,7 +9,7 @@ export const meta = () => [{ title: "Connecting Google Calendar..." }];
 export async function loader({ request }: { request: Request }) {
   try {
     // Dynamic imports to keep server code away from client bundle
-    const { getUserFromSession, exchangeGoogleAuthCode } = await import("~/modules/auth.server");
+    const { getUserFromSession, exchangeGoogleAuthCode, isGoogleOAuthConfigured } = await import("~/modules/auth.server");
     const { db } = await import("~/db");
     const { googleCalendarAccountsTable, usersTable } = await import("~/db/schema");
     const { encryptToken } = await import("~/modules/services/TokenEncryptionService");
@@ -18,6 +18,10 @@ export async function loader({ request }: { request: Request }) {
 
     // Get user from session
     const user = await getUserFromSession(request);
+
+    if (!isGoogleOAuthConfigured()) {
+      throw redirect("/settings?error=google_not_configured");
+    }
 
     // Parse authorization code from URL
     const url = new URL(request.url);

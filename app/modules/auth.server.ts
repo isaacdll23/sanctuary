@@ -70,6 +70,10 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const GOOGLE_REDIRECT_URI = process.env.GOOGLE_REDIRECT_URI;
 
+export function isGoogleOAuthConfigured() {
+  return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET && GOOGLE_REDIRECT_URI);
+}
+
 if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET || !GOOGLE_REDIRECT_URI) {
   console.warn(
     "Google OAuth environment variables not configured. Google Calendar integration will not work."
@@ -87,13 +91,13 @@ const GOOGLE_CALENDAR_SCOPES = [
  * Generates the Google OAuth authorization URL
  */
 export function getGoogleOAuthUrl(state?: string): string {
-  if (!GOOGLE_CLIENT_ID || !GOOGLE_REDIRECT_URI) {
+  if (!isGoogleOAuthConfigured()) {
     throw new Error("Google OAuth credentials not configured");
   }
 
   const params = new URLSearchParams({
-    client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: GOOGLE_REDIRECT_URI,
+    client_id: GOOGLE_CLIENT_ID!,
+    redirect_uri: GOOGLE_REDIRECT_URI!,
     response_type: "code",
     scope: GOOGLE_CALENDAR_SCOPES.join(" "),
     access_type: "offline",

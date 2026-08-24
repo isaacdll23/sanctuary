@@ -2,7 +2,7 @@ import { db } from "~/db";
 import { budgetMembersTable } from "~/db/schema";
 import jwt from "jsonwebtoken";
 import { eq, and } from "drizzle-orm";
-import { sendEmail } from "~/modules/services/NotificationService";
+import { isEmailConfigured, sendEmail } from "~/modules/services/NotificationService";
 
 const INVITE_SECRET =
   process.env.BUDGET_INVITE_SECRET || "budget-invite-secret";
@@ -13,16 +13,22 @@ export async function sendBudgetInvite(
   email: string,
   inviterName: string
 ) {
+  if (!isEmailConfigured()) {
+    return { success: false, message: "Email delivery is not configured." };
+  }
+
   const token = generateInviteToken(budgetId, email);
   const inviteUrl = `${
     process.env.BASE_URL || "http://localhost:5173"
   }/finance/budgets/join/${token}`;
-  await sendEmail({
+  const emailResult = await sendEmail({
     to: email,
     subject: `Budget Invite from ${inviterName}`,
     html: `<p>You've been invited to join a shared budget. <a href='${inviteUrl}'>Click here to join</a></p>`,
   });
-  return { success: true, message: "Invite sent" };
+  return emailResult.success
+    ? { success: true, message: "Invite sent" }
+    : { success: false, message: "Failed to send invite email." };
 }
 
 export function generateInviteToken(budgetId: string, email: string) {

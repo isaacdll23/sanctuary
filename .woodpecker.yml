@@ -1,0 +1,21 @@
+when:
+  - event: push
+    branch: main
+
+steps:
+  build-and-push:
+    image: docker:29-cli
+    commands:
+      - SHORT_SHA="$(printf %s "$CI_COMMIT_SHA" | cut -c1-7)"
+      - IMAGE="$REGISTRY/sanctuary:sha-$SHORT_SHA"
+      - MIGRATE_IMAGE="$REGISTRY/sanctuary-migrate:sha-$SHORT_SHA"
+      - echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USERNAME" --password-stdin
+      - docker build --pull --target runtime --tag "$IMAGE" --tag "$REGISTRY/sanctuary:latest" .
+      - docker build --pull --target migrate --tag "$MIGRATE_IMAGE" --tag "$REGISTRY/sanctuary-migrate:latest" .
+      - docker push "$IMAGE"
+      - docker push "$REGISTRY/sanctuary:latest"
+      - docker push "$MIGRATE_IMAGE"
+      - docker push "$REGISTRY/sanctuary-migrate:latest"
+
+volumes:
+  - /var/run/docker.sock:/var/run/docker.sock

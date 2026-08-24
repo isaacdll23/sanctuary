@@ -3,7 +3,7 @@ import { db } from "~/db";
 import { notesTable, foldersTable } from "~/db/schema";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, getUserFromSession } from "~/modules/auth.server";
-import { generateNoteTitle } from "~/modules/ai.server";
+import { generateNoteTitle, isAiConfigured } from "~/modules/ai.server";
 import { encryptNoteContent, decryptNoteContent } from "~/modules/services/NoteEncryptionService";
 
 export async function handleNoteAction(request: Request) {
@@ -271,6 +271,9 @@ export async function handleNoteAction(request: Request) {
 
   // Generate note title
   if (intent === "generateNoteTitle") {
+    if (!isAiConfigured()) {
+      return { success: false, error: "AI title generation is not configured." };
+    }
     const content = formData.get("content") as string;
     if (!content) {
       throw new Error("Content is required to generate a title.");

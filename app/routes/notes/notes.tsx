@@ -24,13 +24,14 @@ export function meta() {
 
 export const loader = pageAccessLoader("notes", async (user, request) => {
   const { getNotes, getFolders } = await import("~/modules/services/NoteService");
+  const { isAiConfigured } = await import("~/modules/ai.server");
   const url = new URL(request.url);
   const searchTerm = url.searchParams.get("q") || "";
 
   const notes = await getNotes(user.id);
   const folders = await getFolders(user.id);
 
-  return { notes, folders, searchTerm };
+  return { notes, folders, searchTerm, aiEnabled: isAiConfigured() };
 });
 
 export const action = pageAccessAction("notes", async (_user, request) => {
@@ -90,6 +91,7 @@ export default function NotesPage() {
     notes: initialNotes,
     folders: initialFolders,
     searchTerm: initialSearchTerm,
+    aiEnabled,
   } = useLoaderData<typeof loader>();
   const noteMutationFetcher = useFetcher<typeof action>();
   const navMutationFetcher = useFetcher<typeof action>();
@@ -753,6 +755,7 @@ export default function NotesPage() {
                     onCancel={() => setIsEditing(false)}
                     folderId={selectedFolderId}
                     folders={folders}
+                    aiEnabled={aiEnabled}
                   />
                 ) : selectedNote ? (
                   <div className="mx-auto max-w-5xl">

@@ -30,11 +30,12 @@ export const loader = adminOnlyLoader(async (adminUser, request) => {
   // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
   const { db } = await import("~/db");
   const { usersTable } = await import("~/db/schema");
+  const { isEmailConfigured } = await import("~/modules/services/NotificationService");
 
   // Fetch all users for the admin dashboard
   const users = await db.select().from(usersTable).orderBy(usersTable.username);
 
-  return { users, currentUser: adminUser };
+  return { users, currentUser: adminUser, emailEnabled: isEmailConfigured() };
 });
 
 // Use the adminOnlyAction middleware to protect this action
@@ -80,9 +81,10 @@ export const action = adminOnlyAction(async (adminUser, request) => {
 });
 
 export default function Admin() {
-  const { users, currentUser } = useLoaderData<{
+  const { users, currentUser, emailEnabled } = useLoaderData<{
     users: any[];
     currentUser: any;
+    emailEnabled: boolean;
   }>();
   const encryptionFetcher = useFetcher<any>();
 
@@ -132,7 +134,7 @@ export default function Admin() {
         <main className="space-y-8">
           {/* Quick Actions & Email Utilities */}
           <section className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6 md:p-8 hover:shadow-md transition-all duration-150">
-            <EmailForm />
+            <EmailForm emailEnabled={emailEnabled} />
           </section>
 
           {/* Bulk Encryption Section */}

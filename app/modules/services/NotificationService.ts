@@ -3,18 +3,11 @@ import { Resend } from "resend";
 console.log("[NotificationService] Initializing NotificationService...");
 
 const resendApiKey = process.env.RESEND_API_KEY;
-console.log("[NotificationService] RESEND_API_KEY present:", !!resendApiKey);
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
-if (!resendApiKey) {
-  console.error(
-    "[NotificationService] ERROR: RESEND_API_KEY environment variable is not set."
-  );
-  throw new Error("RESEND_API_KEY environment variable is not set.");
+export function isEmailConfigured() {
+  return Boolean(resend);
 }
-
-console.log("[NotificationService] Creating Resend instance...");
-const resend = new Resend(resendApiKey);
-console.log("[NotificationService] Resend instance created successfully");
 
 export async function sendEmail({
   to,
@@ -25,6 +18,10 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
+  if (!resend) {
+    return { success: false, error: "Email delivery is not configured." };
+  }
+
   console.log("[NotificationService] sendEmail called with parameters:");
   console.log("[NotificationService] - to:", to);
   console.log("[NotificationService] - subject:", subject);

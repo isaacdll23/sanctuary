@@ -31,13 +31,15 @@ interface CalendarPreferences {
 interface CalendarSettingsSectionProps {
   googleCalendarAccount: GoogleCalendarAccount | null;
   calendarPreferences: CalendarPreferences | null;
-  oauthUrl: string;
+  oauthUrl: string | null;
+  googleOAuthEnabled: boolean;
 }
 
 export default function CalendarSettingsSection({
   googleCalendarAccount: initialGoogleCalendarAccount,
   calendarPreferences: initialCalendarPreferences,
   oauthUrl,
+  googleOAuthEnabled,
 }: CalendarSettingsSectionProps) {
   const calendarFetcher = useFetcher<any>();
   const { addToast } = useToast();
@@ -140,7 +142,11 @@ export default function CalendarSettingsSection({
           )}
         </h2>
 
-        {initialGoogleCalendarAccount && initialGoogleCalendarAccount.isSyncEnabled === 1 ? (
+        {!googleOAuthEnabled ? (
+          <p className="text-gray-600 dark:text-gray-400">
+            Google Calendar integration is not configured for this deployment.
+          </p>
+        ) : initialGoogleCalendarAccount && initialGoogleCalendarAccount.isSyncEnabled === 1 ? (
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400">Google Account</p>
@@ -187,7 +193,7 @@ export default function CalendarSettingsSection({
               Connect your Google Calendar to sync tasks and events between Sanctuary and Google Calendar.
             </p>
             <a
-              href={oauthUrl}
+              href={oauthUrl!}
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-600 min-h-[40px]"
             >
               Connect Google Calendar

@@ -394,6 +394,11 @@ export async function inviteMember(
       return { success: false, message: "Only owner can invite members" };
     }
 
+    const { isEmailConfigured } = await import("./NotificationService");
+    if (!isEmailConfigured()) {
+      return { success: false, message: "Email delivery is not configured." };
+    }
+
     // Check if email is already invited or active member (ignore removed members)
     const existingMember = await db
       .select()

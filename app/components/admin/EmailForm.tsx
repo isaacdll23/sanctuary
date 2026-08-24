@@ -4,9 +4,10 @@ import { EnvelopeIcon, CheckCircleIcon, XCircleIcon } from "@heroicons/react/24/
 
 interface EmailFormProps {
   onSuccess?: () => void;
+  emailEnabled: boolean;
 }
 
-export default function EmailForm({ onSuccess }: EmailFormProps) {
+export default function EmailForm({ onSuccess, emailEnabled }: EmailFormProps) {
   const [email, setEmail] = useState("");
   const fetcher = useFetcher();
   const isSubmitting = fetcher.state === "submitting";
@@ -51,7 +52,7 @@ export default function EmailForm({ onSuccess }: EmailFormProps) {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isSubmitting}
+              disabled={!emailEnabled || isSubmitting}
               className="w-full bg-gray-50 border border-gray-300 text-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:focus:ring-indigo-400 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-500 dark:placeholder-gray-400"
               placeholder="admin@example.com"
               aria-label="Recipient email address"
@@ -59,7 +60,7 @@ export default function EmailForm({ onSuccess }: EmailFormProps) {
           </div>
           <button
             type="submit"
-            disabled={isSubmitting || !email}
+            disabled={!emailEnabled || isSubmitting || !email}
             className="min-h-[44px] px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 whitespace-nowrap hover:shadow-md"
             aria-label="Send test email"
           >
@@ -67,6 +68,12 @@ export default function EmailForm({ onSuccess }: EmailFormProps) {
           </button>
         </div>
       </fetcher.Form>
+
+      {!emailEnabled && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Email delivery is not configured for this deployment.
+        </p>
+      )}
 
       {fetcher.data && (
         <div
