@@ -7,6 +7,8 @@ import {
 } from "~/db/schema";
 import { eq, and, or, desc } from "drizzle-orm";
 import { getUserFromSession } from "~/modules/auth.server";
+import { isEmailConfigured, sendEmail } from "./NotificationService";
+import { generateInviteToken } from "./BudgetInviteService";
 
 export async function handleSharedBudgetAction(
   request: Request,
@@ -394,7 +396,6 @@ export async function inviteMember(
       return { success: false, message: "Only owner can invite members" };
     }
 
-    const { isEmailConfigured } = await import("./NotificationService");
     if (!isEmailConfigured()) {
       return { success: false, message: "Email delivery is not configured." };
     }
@@ -434,15 +435,12 @@ export async function inviteMember(
 
     if (budget.length > 0) {
       // Generate invitation token
-      const { generateInviteToken } = await import("./BudgetInviteService");
       const inviteToken = generateInviteToken(budgetId, email);
       const joinUrl = `${
         process.env.BASE_URL || "http://localhost:5173"
       }/finance/budgets/join/${inviteToken}`;
 
       // Send invitation email
-      const { sendEmail } = await import("./NotificationService");
-
       const emailHtml = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>You've been invited to join a shared budget!</h2>

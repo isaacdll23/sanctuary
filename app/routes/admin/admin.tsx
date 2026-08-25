@@ -18,6 +18,12 @@ import {
   LockClosedIcon,
 } from "@heroicons/react/24/outline";
 import { useFetcher } from "react-router";
+import { db } from "~/db";
+import { usersTable } from "~/db/schema";
+import { isEmailConfigured, sendEmail } from "~/modules/services/NotificationService";
+import { handlePageAccessAction } from "~/modules/services/PageAccessService";
+import { handleUserManagementAction } from "~/modules/services/UserManagementService";
+import { bulkEncryptAllNotes } from "~/modules/services/NoteService";
 
 // Use React Router v7's auto-generated types (no need for manual import)
 
@@ -27,11 +33,6 @@ export function meta() {
 
 // Use the adminOnlyLoader middleware to protect this route
 export const loader = adminOnlyLoader(async (adminUser, request) => {
-  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
-  const { db } = await import("~/db");
-  const { usersTable } = await import("~/db/schema");
-  const { isEmailConfigured } = await import("~/modules/services/NotificationService");
-
   // Fetch all users for the admin dashboard
   const users = await db.select().from(usersTable).orderBy(usersTable.username);
 
@@ -40,17 +41,6 @@ export const loader = adminOnlyLoader(async (adminUser, request) => {
 
 // Use the adminOnlyAction middleware to protect this action
 export const action = adminOnlyAction(async (adminUser, request) => {
-  // Server-only imports (React Router v7 will automatically strip these out in the client bundle)
-  const { handlePageAccessAction } = await import(
-    "~/modules/services/PageAccessService"
-  );
-  const { handleUserManagementAction } = await import(
-    "~/modules/services/UserManagementService"
-  );
-  const { sendEmail } = await import("~/modules/services/NotificationService");
-  const { bulkEncryptAllNotes } = await import(
-    "~/modules/services/NoteService"
-  );
 
   const formData = await request.formData();
   const intent = formData.get("intent");

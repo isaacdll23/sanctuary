@@ -3,6 +3,7 @@ import type { FetcherWithComponents } from "react-router";
 import type { Expense, ExpenseActionResult } from "~/types/expense";
 import type { PaymentAccountOption } from "~/components/finance/PaymentAccountsPanel";
 import { formatDateKey, getNextChargeDate, getNormalizedMonthlyCostCents, getRecurrenceDescription, parseDateKey } from "~/modules/finance/recurrence";
+import { formatMoney } from "~/utils/money";
 
 interface ExpensesTableProps {
   filteredExpenses: Expense[];
@@ -61,7 +62,7 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{expense.name}</p>
-                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">${(expense.monthlyCost / 100).toFixed(2)} per charge · ${(getNormalizedMonthlyCostCents(expense) / 100).toFixed(2)}/month</p>
+                      <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">${formatMoney(expense.monthlyCost)} per charge{getNormalizedMonthlyCostCents(expense) !== expense.monthlyCost ? ` · ${formatMoney(getNormalizedMonthlyCostCents(expense))}/month` : ""}</p>
                     </div>
                     <span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-1 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">Next {formatDateKey(getNextChargeDate(expense, asOf))}</span>
                   </div>
@@ -98,8 +99,8 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
                       </div>
                     </td>
                     <td className="px-4 py-4 text-sm">
-                      <div className="font-medium text-gray-900 dark:text-gray-100">${(expense.monthlyCost / 100).toFixed(2)} per charge</div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">${(getNormalizedMonthlyCostCents(expense) / 100).toFixed(2)}/month normalized</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">${formatMoney(expense.monthlyCost)} per charge</div>
+                      {getNormalizedMonthlyCostCents(expense) !== expense.monthlyCost && <div className="text-xs text-gray-600 dark:text-gray-400">${formatMoney(getNormalizedMonthlyCostCents(expense))}/month</div>}
                       <div className="text-xs text-gray-600 dark:text-gray-400">{expense.isActive === 0 ? "Paused" : `${getShareOfTotal(expense)}% of active total`}</div>
                     </td>
                     <td className="px-4 py-4 text-sm"><div className="font-medium text-gray-900 dark:text-gray-100">{getRecurrenceDescription(expense)}</div><div className="text-xs text-gray-600 dark:text-gray-400">Next {formatDateKey(getNextChargeDate(expense, asOf))}</div></td>

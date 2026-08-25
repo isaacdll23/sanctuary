@@ -17,14 +17,14 @@ import { fuzzyMatch } from "~/utils/fuzzyMatch";
 import { useToast } from "~/hooks/useToast";
 import { NoteEditor } from "~/components/notes/NoteEditor";
 import { SearchBar } from "~/components/notes/SearchBar";
+import { getNotes, getFolders, handleNoteAction } from "~/modules/services/NoteService";
+import { isAiConfigured } from "~/modules/ai.server";
 
 export function meta() {
   return [{ title: "Notes" }];
 }
 
 export const loader = pageAccessLoader("notes", async (user, request) => {
-  const { getNotes, getFolders } = await import("~/modules/services/NoteService");
-  const { isAiConfigured } = await import("~/modules/ai.server");
   const url = new URL(request.url);
   const searchTerm = url.searchParams.get("q") || "";
 
@@ -35,7 +35,6 @@ export const loader = pageAccessLoader("notes", async (user, request) => {
 });
 
 export const action = pageAccessAction("notes", async (_user, request) => {
-  const { handleNoteAction } = await import("~/modules/services/NoteService");
   return handleNoteAction(request);
 });
 
