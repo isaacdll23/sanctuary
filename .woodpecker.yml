@@ -38,6 +38,7 @@ steps:
 
   deploy-production:
     image: docker:29-cli
+    entrypoint: ["/bin/sh", "-c", "echo $CI_SCRIPT | base64 -d | /bin/sh -e"]
     depends_on: [build-and-push]
     when:
       - event: manual
