@@ -21,3 +21,9 @@
 /drizzle/meta/
 /drizzle/*.ts
 /drizzle/*.js
+
+# Temporary plans and design notes
+/plans/
+
+# Local agent config (opencode subagents)
+/.opencode/
