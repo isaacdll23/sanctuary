@@ -28,12 +28,9 @@ steps:
       - SHORT_SHA="$(printf %s "$CI_COMMIT_SHA" | cut -c1-7)"
       - IMAGE="$REGISTRY/sanctuary:sha-$SHORT_SHA"
       - MIGRATE_IMAGE="$REGISTRY/sanctuary-migrate:sha-$SHORT_SHA"
-      - RUNTIME_CACHE="$REGISTRY/sanctuary-cache:runtime"
-      - MIGRATE_CACHE="$REGISTRY/sanctuary-cache:migrate"
       - echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USERNAME" --password-stdin
-      - docker buildx create --use --name sanctuary-builder --bootstrap
-      - docker buildx build --pull --target runtime --tag "$IMAGE" --tag "$REGISTRY/sanctuary:latest" --cache-from "type=registry,ref=$RUNTIME_CACHE" --cache-to "type=registry,ref=$RUNTIME_CACHE,mode=max" .
-      - docker buildx build --pull --target migrate --tag "$MIGRATE_IMAGE" --tag "$REGISTRY/sanctuary-migrate:latest" --cache-from "type=registry,ref=$MIGRATE_CACHE" --cache-to "type=registry,ref=$MIGRATE_CACHE,mode=max" .
+      - docker build --pull --target runtime --tag "$IMAGE" --tag "$REGISTRY/sanctuary:latest" .
+      - docker build --pull --target migrate --tag "$MIGRATE_IMAGE" --tag "$REGISTRY/sanctuary-migrate:latest" .
       - docker push "$IMAGE"
       - docker push "$REGISTRY/sanctuary:latest"
       - docker push "$MIGRATE_IMAGE"
