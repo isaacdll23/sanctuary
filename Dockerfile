@@ -1,7 +1,7 @@
 FROM node:22-alpine AS build-env
 COPY . /app
 WORKDIR /app
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 RUN npm run build
 
 FROM build-env AS migrate
