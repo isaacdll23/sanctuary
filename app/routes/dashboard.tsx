@@ -218,20 +218,24 @@ export default function Dashboard() {
           </div>
 
           <div className="ml-10 flex items-center gap-2">
-            <Link
-              to="/tasks"
-              className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-sky-400 backdrop-blur-md transition-colors hover:border-sky-400/40 hover:bg-zinc-900"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Task
-            </Link>
-            <Link
-              to="/notes"
-              className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-purple-400 backdrop-blur-md transition-colors hover:border-purple-400/40 hover:bg-zinc-900"
-            >
-              <PlusIcon className="h-4 w-4" />
-              Note
-            </Link>
+            {hasTasks && (
+              <Link
+                to="/tasks"
+                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-sky-400 backdrop-blur-md transition-colors hover:border-sky-400/40 hover:bg-zinc-900"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Task
+              </Link>
+            )}
+            {hasNotes && (
+              <Link
+                to="/notes"
+                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-purple-400 backdrop-blur-md transition-colors hover:border-purple-400/40 hover:bg-zinc-900"
+              >
+                <PlusIcon className="h-4 w-4" />
+                Note
+              </Link>
+            )}
             <p className="hidden text-xs font-medium uppercase tracking-[0.14em] text-gray-500 lg:block">
               {features.length} module{features.length === 1 ? "" : "s"}
             </p>
@@ -293,23 +297,21 @@ export default function Dashboard() {
                   <h2 className={PANEL_TITLE}>Today's Focus</h2>
                 </div>
 
-                <div className="mb-4 flex items-center gap-4">
-                  <VelocityRing
-                    completed={summary.completedTasksToday}
-                    planned={summary.plannedTasksToday}
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-gray-200">
-                      {summary.plannedTasksToday > 0
-                        ? `${summary.completedTasksToday} of ${summary.plannedTasksToday} planned tasks done`
-                        : "No plan created for today"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-gray-400">
-                      {hasDayPlanner
-                        ? "Set a plan to track daily momentum"
-                        : "Daily velocity reflects completed vs. planned"}
-                    </p>
-                    {hasDayPlanner && (
+                {hasDayPlanner && (
+                  <div className="mb-4 flex items-center gap-4">
+                    <VelocityRing
+                      completed={summary.completedTasksToday}
+                      planned={summary.plannedTasksToday}
+                    />
+                    <div>
+                      <p className="text-sm font-medium text-gray-200">
+                        {summary.plannedTasksToday > 0
+                          ? `${summary.completedTasksToday} of ${summary.plannedTasksToday} planned tasks done`
+                          : "No plan created for today"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        Set a plan to track daily momentum
+                      </p>
                       <Link
                         to="/day-planner"
                         className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-amber-400 hover:text-amber-300"
@@ -317,9 +319,9 @@ export default function Dashboard() {
                         Open day planner
                         <ArrowUpRightIcon className="h-3.5 w-3.5" />
                       </Link>
-                    )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   {priorityItems.length > 0 ? (
