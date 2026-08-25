@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build-env
+FROM node:22-alpine AS build-env
 COPY . /app
 WORKDIR /app
 RUN npm ci
@@ -7,7 +7,7 @@ RUN npm run build
 FROM build-env AS migrate
 CMD ["./node_modules/.bin/drizzle-kit", "push", "--force"]
 
-FROM node:20-alpine AS runtime
+FROM node:22-alpine AS runtime
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000

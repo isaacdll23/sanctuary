@@ -3,8 +3,22 @@ set -euo pipefail
 
 local_container_name="sanctuary-local-db"
 local_volume_name="sanctuary-local-postgres"
-local_database_url="postgresql://sanctuary:sanctuary_local_review_2026@127.0.0.1:5434/sanctuary_local"
+local_db_user="sanctuary"
+local_db_name="sanctuary_local"
+local_db_port="5434"
 local_app_port="4173"
+local_cred_file=".local-testing.env"
+
+if [[ ! -f "$local_cred_file" ]]; then
+  local_db_password="$(openssl rand -hex 24)"
+  print "LOCAL_DB_PASSWORD=$local_db_password" > "$local_cred_file"
+else
+  # shellcheck disable=SC1090
+  source "$local_cred_file"
+  local_db_password="$LOCAL_DB_PASSWORD"
+fi
+
+local_database_url="postgresql://${local_db_user}:${local_db_password}@127.0.0.1:${local_db_port}/${local_db_name}"
 
 if ! docker info >/dev/null 2>&1; then
   print -u2 "Docker is not available. Start Docker Desktop and run this script again."
@@ -18,16 +32,16 @@ else
     --name "$local_container_name" \
     --detach \
     --restart unless-stopped \
-    --publish 127.0.0.1:5434:5432 \
-    --env POSTGRES_USER=sanctuary \
-    --env POSTGRES_PASSWORD=sanctuary_local_review_2026 \
-    --env POSTGRES_DB=sanctuary_local \
+    --publish 127.0.0.1:${local_db_port}:5432 \
+    --env POSTGRES_USER="$local_db_user" \
+    --env POSTGRES_PASSWORD="$local_db_password" \
+    --env POSTGRES_DB="$local_db_name" \
     --volume "$local_volume_name:/var/lib/postgresql/data" \
     postgres:16 >/dev/null
 fi
 
 for attempt in {1..30}; do
-  if docker exec "$local_container_name" pg_isready --username=sanctuary --dbname=sanctuary_local >/dev/null 2>&1; then
+  if docker exec "$local_container_name" pg_isready --username="$local_db_user" --dbname="$local_db_name" >/dev/null 2>&1; then
     break
   fi
 
@@ -39,8 +53,8 @@ for attempt in {1..30}; do
   sleep 1
 done
 
-DATABASE_URL="$local_database_url" npx drizzle-kit push --force
-DATABASE_URL="$local_database_url" npx tsx skills/sanctuary-local-testing/scripts/seed-local-review-account.ts
+DATABASE_URL="$local_database_url" LOCAL_DB_PASSWORD="$local_db_password" npx drizzle-kit push --force
+DATABASE_URL="$local_database_url" LOCAL_DB_PASSWORD="$local_db_password" npx tsx skills/sanctuary-local-testing/scripts/seed-local-review-account.ts
 npm run build
 
 print "Sanctuary local test app: http://127.0.0.1:${local_app_port}"

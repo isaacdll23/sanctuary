@@ -5,11 +5,20 @@ const databaseUrl = process.env.DATABASE_URL;
 const reviewUsername = "test";
 const reviewEmail = "test@sanctuary.local";
 const reviewPassword = "test";
-const expectedDatabaseUrl =
-  "postgresql://sanctuary:sanctuary_local_review_2026@127.0.0.1:5434/sanctuary_local";
 
-if (databaseUrl !== expectedDatabaseUrl) {
-  throw new Error("Refusing to seed an account outside Sanctuary's local test database.");
+const expected = new URL(
+  databaseUrl ?? "postgresql://localhost"
+);
+
+if (
+  expected.hostname !== "127.0.0.1" ||
+  expected.port !== "5434" ||
+  expected.username !== "sanctuary" ||
+  !expected.pathname.startsWith("/sanctuary_local")
+) {
+  throw new Error(
+    "Refusing to seed an account outside Sanctuary's local test database."
+  );
 }
 
 const client = new Client({ connectionString: databaseUrl });
