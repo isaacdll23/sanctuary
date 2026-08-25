@@ -1,48 +1,11 @@
 when:
-  - event: [push, manual]
+  - event: manual
     branch: main
 
 steps:
-  test-and-typecheck:
-    image: node:22-alpine
-    volumes:
-      - sanctuary-npm-cache:/root/.npm
-    commands:
-      - npm ci
-      - npm run typecheck
-      - npm test
-
-  build-and-push:
-    image: docker:29-cli
-    depends_on: [test-and-typecheck]
-    environment:
-      REGISTRY:
-        from_secret: REGISTRY
-      REGISTRY_USERNAME:
-        from_secret: REGISTRY_USERNAME
-      REGISTRY_PASSWORD:
-        from_secret: REGISTRY_PASSWORD
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    commands:
-      - SHORT_SHA="$(printf %s "$CI_COMMIT_SHA" | cut -c1-7)"
-      - IMAGE="$REGISTRY/sanctuary:sha-$SHORT_SHA"
-      - MIGRATE_IMAGE="$REGISTRY/sanctuary-migrate:sha-$SHORT_SHA"
-      - echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USERNAME" --password-stdin
-      - docker build --pull --target runtime --tag "$IMAGE" --tag "$REGISTRY/sanctuary:latest" .
-      - docker build --pull --target migrate --tag "$MIGRATE_IMAGE" --tag "$REGISTRY/sanctuary-migrate:latest" .
-      - docker push "$IMAGE"
-      - docker push "$REGISTRY/sanctuary:latest"
-      - docker push "$MIGRATE_IMAGE"
-      - docker push "$REGISTRY/sanctuary-migrate:latest"
-
   deploy-production:
     image: docker:29-cli
     entrypoint: ["/bin/sh", "-c", "echo $CI_SCRIPT | base64 -d | /bin/sh -e"]
-    depends_on: [build-and-push]
-    when:
-      - event: manual
-        branch: main
     environment:
       REGISTRY:
         from_secret: REGISTRY

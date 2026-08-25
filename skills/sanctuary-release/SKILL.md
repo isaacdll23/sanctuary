@@ -15,8 +15,8 @@ Do not expose `.env`, database credentials, registry credentials, or the Woodpec
 - A push to `main` runs `.woodpecker.yml` and publishes exact tags:
   - `registry.isaacdelalama.dev/sanctuary:sha-<short-sha>`
   - `registry.isaacdelalama.dev/sanctuary-migrate:sha-<short-sha>`
-- A manually triggered `main` pipeline rebuilds the selected commit, then runs
-  the `deploy-production` step. Push pipelines never deploy.
+- A manually triggered `main` pipeline runs only the `deploy-production` step
+  against the SHA-tagged images published by the successful push pipeline.
 - Pin production to the exact `sha-<short-sha>` tag in `/opt/stacks/sanctuary/.env`; do not deploy `latest`.
 - **`IMAGE_TAG` always includes the literal `sha-` prefix.** The CI publishes only `sha-<short-sha>` tags — the bare short-sha (e.g. `fd3c231`) does not exist in the registry. A real example: the tag for commit `fd3c231` is `sha-fd3c231`. Never write the bare short-sha into `.env`.
 - The Compose `migrate` service runs `drizzle-kit push --force` and must complete successfully before `web` starts.
@@ -36,7 +36,7 @@ After the user has authorized deployment:
 
 1. Commit only the intended files, push `main`, then wait for the matching push pipeline to succeed. It tests, type-checks, builds, and publishes the exact images, but does not deploy.
 2. Decide the exact commit to release. Normally this is the current `origin/main` commit. Do not interpret an image tagged `latest` as the release target.
-3. Trigger a **manual** pipeline for `main`; Sanctuary's Woodpecker repository ID is `20`. The manual pipeline rebuilds and re-publishes the selected SHA-tagged images before it deploys. When operating from the LAN, bypass the unreliable hairpin route with `--resolve`:
+3. Trigger a **manual** pipeline for `main`; Sanctuary's Woodpecker repository ID is `20`. The manual pipeline deploys the exact SHA-tagged images published by the successful push pipeline; it does not rebuild or re-publish them. When operating from the LAN, bypass the unreliable hairpin route with `--resolve`:
     ```bash
     set -a; . ~/.config/woodpecker/env; set +a
     curl --resolve woodpecker.eesak.com:443:192.168.86.40 \
