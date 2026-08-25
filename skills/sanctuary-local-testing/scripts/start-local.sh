@@ -44,7 +44,7 @@ DATABASE_URL="$local_database_url" npx tsx skills/sanctuary-local-testing/script
 npm run build
 
 print "Sanctuary local test app: http://127.0.0.1:${local_app_port}"
-print "Review login: local-reviewer-20260824 / SanctuaryLocal!2026"
+print "Review login: test / test"
 exec env \
   DATABASE_URL="$local_database_url" \
   HOST=127.0.0.1 \

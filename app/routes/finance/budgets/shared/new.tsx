@@ -116,7 +116,7 @@ export default function NewSharedBudget() {
             <button
               type="submit"
               disabled={fetcher.state === "submitting"}
-              className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:disabled:bg-gray-700 text-white dark:text-gray-100 rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 inline-flex justify-center items-center gap-2 min-h-[40px]"
+              className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 text-white rounded-lg font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-indigo-500 inline-flex justify-center items-center gap-2 min-h-[40px]"
             >
               {fetcher.state === "submitting" ? (
                 <>

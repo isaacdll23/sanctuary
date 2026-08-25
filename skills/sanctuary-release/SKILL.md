@@ -16,6 +16,7 @@ Do not expose `.env`, database credentials, registry credentials, or the Woodpec
   - `registry.isaacdelalama.dev/sanctuary:sha-<short-sha>`
   - `registry.isaacdelalama.dev/sanctuary-migrate:sha-<short-sha>`
 - Pin production to the exact `sha-<short-sha>` tag in `/opt/stacks/sanctuary/.env`; do not deploy `latest`.
+- **`IMAGE_TAG` always includes the literal `sha-` prefix.** The CI publishes only `sha-<short-sha>` tags — the bare short-sha (e.g. `fd3c231`) does not exist in the registry. A real example: the tag for commit `fd3c231` is `sha-fd3c231`. Never write the bare short-sha into `.env`.
 - The Compose `migrate` service runs `drizzle-kit push --force` and must complete successfully before `web` starts.
 - Files in `migrations/` are **not** automatically executed by the image. Before release, confirm the Drizzle schema itself can migrate existing rows safely, especially new non-null columns.
 
@@ -32,12 +33,33 @@ Do not expose `.env`, database credentials, registry credentials, or the Woodpec
 After the user has authorized deployment:
 
 1. Commit only the intended files with no attribution trailer and push `main`.
-2. Wait for the matching Woodpecker pipeline to reach terminal `success`; a successful individual step is not enough.
-3. On `hs1`, inspect the current Compose definition and `IMAGE_TAG`.
-4. Before a schema-changing release, create:
-   - `/srv/sanctuary/backups/pre-<short-sha>.sql` using `pg_dump` inside the database container.
-   - `/opt/stacks/sanctuary/.env.bak-before-<short-sha>`.
-5. Set `IMAGE_TAG=sha-<short-sha>`, pull `migrate` and `web`, then run `docker compose up -d` from `/opt/stacks/sanctuary`.
+2. Wait for the matching Woodpecker pipeline to reach terminal `success`; a successful individual step is not enough. Poll reliably via the REST API (see Woodpecker skill — the CLI's `--output json` is polluted by its own stdout version-warning line):
+   ```bash
+   set -a; . ~/.config/woodpecker/env; set +a
+   # resolve the repo id once: curl -fsS "$WOODPECKER_SERVER/api/repos" -H "Authorization: Bearer $WOODPECKER_TOKEN"
+   STATUS=$(curl -fsS "$WOODPECKER_SERVER/api/repos/<repo-id>/pipelines/<n>" -H "Authorization: Bearer $WOODPECKER_TOKEN" | python3 -c "import sys,json;print(json.load(sys.stdin)['status'])")
+   ```
+3. **Compute the tag exactly once and verify it exists before touching `.env`.** Derive `sha-<short-sha>` from the commit (e.g. `sha-$(git rev-parse --short=7 <sha>)` → `sha-fd3c231`) and confirm both images are already in the registry — never let `docker compose pull` be the thing that discovers a typo:
+   ```bash
+   TAG="sha-$(git rev-parse --short=7 <sha>)"
+   echo "resolved TAG=$TAG"          # eyeball the sha- prefix here
+   ssh hs1 'docker manifest inspect registry.isaacdelalama.dev/sanctuary:'"$TAG"' && \
+     docker manifest inspect registry.isaacdelalama.dev/sanctuary-migrate:'"$TAG"'" \
+     && echo "both images present"
+   ```
+   Only proceed if both resolves.
+4. On `hs1`, inspect the current Compose definition and `IMAGE_TAG` (this is the rollback `IMAGE_TAG`).
+5. Before **any** deploy, back up the current `.env` FIRST — copy before modifying, so the backup holds the previous good `IMAGE_TAG`:
+   ```bash
+   ssh hs1 'cp /opt/stacks/sanctuary/.env /opt/stacks/sanctuary/.env.bak-before-<short-sha>'
+   ```
+   Additionally, for a schema-changing release, create `/srv/sanctuary/backups/pre-<short-sha>.sql` using `pg_dump` inside the database container.
+6. Set `IMAGE_TAG=<the resolved $TAG from step 3>` — reuse that exact string, do not retype it — then pull and up:
+   ```bash
+   ssh hs1 'sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=<TAG>/" /opt/stacks/sanctuary/.env && \
+     grep -E "^IMAGE_TAG" /opt/stacks/sanctuary/.env'   # confirm it reads sha-<short-sha>
+   ssh hs1 'cd /opt/stacks/sanctuary && docker compose pull && docker compose up -d'
+   ```
 
 ## Verification
 
@@ -46,7 +68,8 @@ Do not report success until all of these hold:
 - The Woodpecker pipeline is `success`.
 - The migrate container exited 0 and its logs report the schema changes applied.
 - The database and web containers are running; the database is healthy.
-- `docker inspect sanctuary-web-1` shows the exact expected image tag.
+- `docker inspect sanctuary-web-1` shows the exact expected image tag, and that tag string begins with `sha-` (e.g. `registry.isaacdelalama.dev/sanctuary:sha-fd3c231`) — never the bare short-sha.
+- The pre-deploy `docker manifest inspect` of both `sanctuary` and `sanctuary-migrate` succeeded (i.e. `IMAGE_TAG` was proven to exist before `.env` was touched).
 - For schema changes, query `information_schema` or the relevant table to verify the deployed columns, defaults, nullability, and new tables without selecting user financial data.
 - Web logs show the React Router server listening on port 3000 without a new fatal error.
 - `/` returns 200 and unauthenticated `/finance/expenses` redirects to `/auth/login`.

@@ -196,7 +196,7 @@ export default function Dashboard() {
   const hasActivityHub = hasNotes;
 
   return (
-    <div className="relative min-h-screen bg-[#0B0F17] p-3 md:p-6">
+    <div className="relative min-h-screen bg-transparent p-3 md:p-6">
       {/* Ambient radial glows for optical depth */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-32 left-1/4 h-80 w-80 rounded-full bg-indigo-500/10 blur-3xl" />
@@ -221,7 +221,7 @@ export default function Dashboard() {
             {hasTasks && (
               <Link
                 to="/tasks"
-                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-sky-400 backdrop-blur-md transition-colors hover:border-sky-400/40 hover:bg-zinc-900"
+                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-gray-300 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-zinc-900 hover:text-gray-100"
               >
                 <PlusIcon className="h-4 w-4" />
                 Task
@@ -230,7 +230,7 @@ export default function Dashboard() {
             {hasNotes && (
               <Link
                 to="/notes"
-                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-purple-400 backdrop-blur-md transition-colors hover:border-purple-400/40 hover:bg-zinc-900"
+                className="group inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-gray-300 backdrop-blur-md transition-colors hover:border-white/20 hover:bg-zinc-900 hover:text-gray-100"
               >
                 <PlusIcon className="h-4 w-4" />
                 Note
@@ -338,7 +338,7 @@ export default function Dashboard() {
                         <div className="flex items-start gap-3">
                           <span
                             className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                              item.tone === "warning" ? "bg-amber-400" : "bg-sky-400/70"
+                              item.tone === "warning" ? "bg-amber-400" : "bg-gray-500"
                             }`}
                           />
                           <div>

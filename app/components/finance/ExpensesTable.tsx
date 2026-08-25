@@ -155,7 +155,7 @@ function EmptyState({ isEmpty, onAddExpense, onClearFilters }: { isEmpty: boolea
       <p className="text-base font-medium">{isEmpty ? "No expenses yet." : "No expenses match these filters."}</p>
       <p className="mt-1 text-sm">{isEmpty ? "Add your first recurring expense to start tracking." : "Try clearing filters or changing your search."}</p>
       {isEmpty ? (
-        <button type="button" onClick={onAddExpense} className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600">
+        <button type="button" onClick={onAddExpense} className="mt-4 inline-flex min-h-[40px] items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
           <PlusIcon className="h-4 w-4" />Add Expense
         </button>
       ) : (

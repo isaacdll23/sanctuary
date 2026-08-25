@@ -50,7 +50,7 @@ export default function PaymentAccountsPanel({ accounts, fetcher }: { accounts: 
           <input type="hidden" name="_action" value="addPaymentAccount" />
           <label className="sr-only" htmlFor="payment-account-name">New payment account</label>
           <input id="payment-account-name" name="name" required maxLength={255} placeholder="e.g., Visa ending 1234" className="min-w-0 rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:ring-gray-600" />
-          <button type="submit" disabled={fetcher.state !== "idle"} className="inline-flex min-h-[40px] items-center gap-1 rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50 dark:bg-gray-700 dark:hover:bg-gray-600">
+          <button type="submit" disabled={fetcher.state !== "idle"} className="inline-flex min-h-[40px] items-center gap-1 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50">
             <PlusIcon className="h-4 w-4" />Add
           </button>
         </fetcher.Form>

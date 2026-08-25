@@ -129,7 +129,7 @@ function ExpenseModal({ title, submitLabel, action, expense, distinctCategories,
             </div>
           </details>
           <div className="flex flex-col gap-3 pt-4 sm:flex-row">
-            <button type="submit" disabled={fetcher.state === "submitting"} className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 font-medium text-white transition-all hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:bg-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+            <button type="submit" disabled={fetcher.state === "submitting"} className="inline-flex min-h-[40px] flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 font-medium text-white transition-all hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-600">
               {fetcher.state === "submitting" ? <><ArrowPathIcon className="h-4 w-4 animate-spin" /> Saving...</> : action === "add" ? <><PlusIcon className="h-4 w-4" /> {submitLabel}</> : <><PencilIcon className="h-4 w-4" /> {submitLabel}</>}
             </button>
             <button type="button" onClick={onClose} className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:ring-gray-600">Cancel</button>

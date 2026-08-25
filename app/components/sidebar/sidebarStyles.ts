@@ -2,7 +2,7 @@ export const sidebarItemBaseClasses =
   "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 group relative border-l-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900";
 
 export const sidebarItemActiveClasses =
-  "bg-gray-800 text-gray-100 border-l-gray-300";
+  "bg-indigo-500/10 text-indigo-400 border-l-indigo-500";
 
 export const sidebarItemInactiveClasses =
   "text-gray-400 hover:bg-gray-900 hover:text-gray-200 border-l-transparent";

@@ -104,7 +104,7 @@ export default function QuickAddTaskBar({
           <button
             type="submit"
             disabled={!title.trim() || fetcher.state === "submitting"}
-            className="px-4 py-2 bg-gray-900 dark:bg-gray-800 hover:bg-gray-800 dark:hover:bg-gray-700 text-white dark:text-gray-100 font-medium text-sm rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 flex items-center gap-2 whitespace-nowrap"
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm rounded-lg transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-2 whitespace-nowrap"
           >
             <PlusIcon className="w-4 h-4" />
             {fetcher.state === "submitting" ? "Adding..." : "Add"}

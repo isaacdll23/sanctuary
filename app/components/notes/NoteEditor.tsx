@@ -490,7 +490,7 @@ export function NoteEditor({
         <button
           type="submit"
           disabled={(!isNew && !hasChanges) || isSubmitting}
-          className="px-4 py-2.5 rounded-lg bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-100 font-medium hover:bg-gray-800 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-gray-400 dark:focus:ring-gray-600 transition-all duration-150 min-h-[40px] flex items-center gap-2 shadow-sm"
+          className="px-4 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-150 min-h-[40px] flex items-center gap-2 shadow-sm"
         >
           {isSubmitting && (
             <svg

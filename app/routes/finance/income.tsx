@@ -125,7 +125,7 @@ export default function Income({ loaderData }: Route.ComponentProps) {
             <input type="hidden" name="netPaycheckAmount" value={netPaycheckAmount} />
             <input type="hidden" name="depositAccountId" value={depositAccountId} />
 
-            <button type="submit" disabled={fetcher.state !== "idle"} className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-gray-900 px-4 py-2.5 font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-60 dark:bg-gray-700 dark:hover:bg-gray-600">
+            <button type="submit" disabled={fetcher.state !== "idle"} className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-60">
               {fetcher.state !== "idle" ? <><ArrowPathIcon className="h-4 w-4 animate-spin" />Saving...</> : "Save income and pay schedule"}
             </button>
           </fetcher.Form>

@@ -2,9 +2,9 @@ import { hash } from "argon2";
 import { Client } from "pg";
 
 const databaseUrl = process.env.DATABASE_URL;
-const reviewUsername = "local-reviewer-20260824";
-const reviewEmail = "local-reviewer-20260824@sanctuary.local";
-const reviewPassword = "SanctuaryLocal!2026";
+const reviewUsername = "test";
+const reviewEmail = "test@sanctuary.local";
+const reviewPassword = "test";
 const expectedDatabaseUrl =
   "postgresql://sanctuary:sanctuary_local_review_2026@127.0.0.1:5434/sanctuary_local";
 
