@@ -66,7 +66,6 @@ steps:
       - grep -q '^IMAGE_TAG=' /stack/.env
       - sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$TAG/" /stack/.env
       - docker compose --project-directory /stack config --images
-      - docker compose --project-directory /stack pull
       - docker compose --project-directory /stack up -d
       - MIGRATE_CONTAINER="$(docker compose --project-directory /stack ps -a -q migrate)"
       - test -n "$MIGRATE_CONTAINER"
