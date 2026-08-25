@@ -2,10 +2,11 @@
 
 ## Sanctuary Quick Guide
 
-- Stack: React Router 7, React 19, TypeScript, Tailwind CSS v4, Drizzle ORM, PostgreSQL.
+- Stack: React Router 8, React 19, TypeScript, Tailwind CSS v4, Drizzle ORM, PostgreSQL.
 - App code lives in `app/`.
 - Route files are in `app/routes/**`.
 - Server/business logic is in `app/modules/services/**`.
+- `docs/CODING_STANDARDS.md` is the source of truth for coding, architecture, security, UI, testing, and completion standards. Read it before changing code.
 
 ## Common Commands
 
@@ -44,6 +45,7 @@
 
 ## Before Finishing Changes
 
-1. Run `npm test` and `npm run typecheck`.
-2. If UI changed, sanity-check desktop + mobile behavior.
-3. Avoid destructive git commands unless explicitly requested.
+1. Follow the Definition of Done in `docs/CODING_STANDARDS.md`.
+2. At minimum, run `npm test` and `npm run typecheck`.
+3. If UI changed, sanity-check desktop and mobile behavior, keyboard use, and relevant dark-mode states.
+4. Avoid destructive git commands unless explicitly requested.

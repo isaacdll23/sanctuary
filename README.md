@@ -2,7 +2,7 @@
 
 A full-stack productivity platform demonstrating modern web development practices.
 
-**Built with**: React Router 7 • TypeScript • Drizzle ORM • PostgreSQL • Tailwind CSS
+**Built with**: React Router 8 • TypeScript • Drizzle ORM • PostgreSQL • Tailwind CSS
 
 <img width="2506" height="1187" alt="image" src="https://github.com/user-attachments/assets/5861217d-a17e-4bd3-87ab-bd905411645a" />
 
@@ -43,9 +43,13 @@ Run type checks with:
 npm run typecheck
 ```
 
+## Contributing
+
+All changes should follow the repository's [coding standards](docs/CODING_STANDARDS.md). They define the architecture, TypeScript, security, database, UI, accessibility, testing, and completion requirements used for review.
+
 ## Tech Stack
 
-- **Frontend**: React 19, React Router 7, Tailwind CSS
+- **Frontend**: React 19, React Router 8, Tailwind CSS
 - **Backend**: Node.js, Drizzle ORM, PostgreSQL
 - **Auth**: Custom authentication with Argon2
 - **Build**: Vite, TypeScript
