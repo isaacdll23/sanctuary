@@ -5,6 +5,9 @@
 /.react-router/
 /build/
 
+# Local browser-testing snapshots and console logs
+/.playwright-cli/
+
 # Environment variables
 .env
 

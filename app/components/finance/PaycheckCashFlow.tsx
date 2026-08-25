@@ -1,4 +1,4 @@
-import { BanknotesIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, ChevronDownIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import type { Expense } from "~/types/expense";
 import type { PaymentAccountOption } from "~/components/finance/PaymentAccountsPanel";
 import { formatDateKey, parseDateKey } from "~/modules/finance/recurrence";
@@ -11,9 +11,27 @@ export default function PaycheckCashFlow({ schedule, annualGrossIncome, taxDeduc
   const beforePaydayTotal = beforePayday.reduce((sum, bill) => sum + bill.amountCents, 0);
   const accountName = schedule.depositAccountId ? paymentAccounts.find((account) => account.id === schedule.depositAccountId)?.name : undefined;
 
-  return <section className="mb-8" aria-label="Paycheck cash flow"><div className="mb-4 rounded-xl border border-gray-300 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><div className="flex items-center gap-2"><BanknotesIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" /><div><h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Next payday: {formatDateKey(payDates[0])}</h2><p className="text-sm text-gray-600 dark:text-gray-400">Expected deposit ${formatMoney(expected.amountCents)}{expected.isEstimate ? " (estimate)" : ""}{accountName ? ` to ${accountName}` : ""}</p></div></div><p className="text-sm text-gray-600 dark:text-gray-400">{beforePayday.length} bill{beforePayday.length === 1 ? "" : "s"} · ${formatMoney(beforePaydayTotal)} due before payday</p></div></div>
-    <div className="grid gap-4 lg:grid-cols-2">{payDates.slice(0, 2).map((payDate, index) => <PayPeriod key={formatDateKey(payDate)} payDate={payDate} nextPayDate={payDates[index + 1]} expected={expected} expenses={expenses} />)}</div>
-  </section>;
+  return (
+    <details className="group mb-4 rounded-xl border border-gray-300 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 focus:outline-none focus:ring-2 focus:ring-gray-400 [&::-webkit-details-marker]:hidden dark:focus:ring-gray-600 sm:p-5">
+        <div className="flex min-w-0 items-center gap-2">
+          <BanknotesIcon className="h-5 w-5 shrink-0 text-gray-600 dark:text-gray-400" />
+          <div className="min-w-0">
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100">Cash flow by paycheck</h2>
+            <p className="truncate text-sm text-gray-600 dark:text-gray-400">Next payday {formatDateKey(payDates[0])} · ${formatMoney(expected.amountCents)}{expected.isEstimate ? " estimate" : ""}{accountName ? ` to ${accountName}` : ""}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2 text-right text-sm text-gray-600 dark:text-gray-400">
+          <span className="hidden sm:inline">{beforePayday.length} bill{beforePayday.length === 1 ? "" : "s"} · ${formatMoney(beforePaydayTotal)} due</span>
+          <ChevronDownIcon className="h-5 w-5 transition-transform group-open:rotate-180" aria-hidden="true" />
+        </div>
+      </summary>
+      <div className="border-t border-gray-300 p-4 dark:border-gray-700 sm:p-5">
+        <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">{beforePayday.length} bill{beforePayday.length === 1 ? "" : "s"} · ${formatMoney(beforePaydayTotal)} due before the next payday.</p>
+        <div className="grid gap-4 lg:grid-cols-2">{payDates.slice(0, 2).map((payDate, index) => <PayPeriod key={formatDateKey(payDate)} payDate={payDate} nextPayDate={payDates[index + 1]} expected={expected} expenses={expenses} />)}</div>
+      </div>
+    </details>
+  );
 }
 
 function PayPeriod({ payDate, nextPayDate, expected, expenses }: { payDate: Date; nextPayDate: Date; expected: { amountCents: number; isEstimate: boolean }; expenses: Expense[] }) {

@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetcher } from "react-router";
-import { CalendarDaysIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types/expenses";
 import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import {
@@ -25,9 +25,9 @@ import ExpensesCategoryFilter from "~/components/finance/ExpensesCategoryFilter"
 import ExpensesTable from "~/components/finance/ExpensesTable";
 import PaymentAccountsPanel from "~/components/finance/PaymentAccountsPanel";
 import PaycheckCashFlow from "~/components/finance/PaycheckCashFlow";
+import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { useExpenseFiltering, type ExpenseSort, type ExpenseStatusFilter } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
-import { formatDateKey, getChargeDatesInRange, parseDateKey } from "~/modules/finance/recurrence";
 import { getReferenceDateKey } from "~/modules/finance/paySchedule";
 import { getPrimaryPayScheduleForUser } from "~/modules/services/IncomeService";
 import { Link } from "react-router";
@@ -117,32 +117,6 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const { distinctCategories, filteredExpenses, filteredMonthlyCost, filteredYearlyCost, filteredActiveCount, totalMonthlyCost, totalYearlyCost, toggleCategory } =
     useExpenseFiltering(loaderData.userExpenses, filterCategories, setFilterCategories, searchQuery, statusFilter, sort, loaderData.asOfDate);
 
-  const upcomingCashFlow = useMemo(() => {
-    const start = parseDateKey(loaderData.asOfDate);
-    const middle = new Date(start.getTime() + 13 * 86_400_000);
-    const end = new Date(start.getTime() + 29 * 86_400_000);
-    const result = {
-      firstTotal: 0,
-      firstCount: 0,
-      secondTotal: 0,
-      secondCount: 0,
-      firstLabel: `${formatDateKey(start)} – ${formatDateKey(middle)}`,
-      secondLabel: `${formatDateKey(new Date(middle.getTime() + 86_400_000))} – ${formatDateKey(end)}`,
-    };
-    for (const expense of loaderData.userExpenses) {
-      if (expense.isActive === 0) continue;
-      for (const chargeDate of getChargeDatesInRange(expense, start, end)) {
-        if (chargeDate <= middle) {
-          result.firstTotal += expense.monthlyCost;
-          result.firstCount += 1;
-        } else {
-          result.secondTotal += expense.monthlyCost;
-          result.secondCount += 1;
-        }
-      }
-    }
-    return result;
-  }, [loaderData.asOfDate, loaderData.userExpenses]);
   const hasPaySchedule = Boolean(loaderData.paySchedule && loaderData.paySchedule.isEnabled !== 0);
   const annualGrossIncomeCents = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
   const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
@@ -187,7 +161,7 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   return (
     <div className="min-h-screen bg-transparent p-4 text-gray-100 md:p-8">
       <div className="mx-auto max-w-7xl">
-        <header className="mb-8 flex flex-col items-start justify-between gap-6 md:mb-12 md:flex-row md:items-center">
+        <header className="mb-6 flex flex-col items-start justify-between gap-6 md:mb-8 md:flex-row md:items-center">
           <div>
             <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-gray-100">Expenses</h1>
             <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">Track recurring expenses across billing schedules. Paused expenses stay visible but are excluded from totals.</p>
@@ -197,27 +171,21 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
           </button>
         </header>
 
+        <FinanceSubnav />
+
         {feedback && <div role={feedback.kind === "error" ? "alert" : "status"} aria-live="polite" className={`mb-6 flex items-start justify-between gap-4 rounded-lg border px-4 py-3 text-sm ${feedback.kind === "error" ? "border-red-300 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200" : "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"}`}><span>{feedback.message}</span><button type="button" onClick={() => setFeedback(null)} className="font-semibold underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-current">Dismiss</button></div>}
 
         <ExpenseSummaryCards totalMonthlyCost={totalMonthlyCost} totalYearlyCost={totalYearlyCost} annualGrossIncomeCents={annualGrossIncomeCents} taxDeductionPercentage={taxDeductionPercentage} netRemainingMonthly={netRemainingMonthly} netRemainingYearly={netRemainingYearly} />
 
-        {hasPaySchedule ? <PaycheckCashFlow schedule={loaderData.paySchedule!} annualGrossIncome={loaderData.userIncome?.annualGrossIncome} taxDeductionPercentage={loaderData.userIncome?.taxDeductionPercentage} expenses={loaderData.userExpenses} asOfDate={loaderData.asOfDate} paymentAccounts={loaderData.paymentAccounts} /> : <><div className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-gray-300 bg-gray-50 p-4 sm:flex-row sm:items-center dark:border-gray-700 dark:bg-gray-800/70"><p className="text-sm text-gray-700 dark:text-gray-300">Configure a primary pay schedule to see bills by paycheck period.</p><Link to="/finance/income" className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600">Configure Pay Schedule</Link></div><div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2"><UpcomingChargesCard label={upcomingCashFlow.firstLabel} title="Due in the next 14 days" total={upcomingCashFlow.firstTotal} count={upcomingCashFlow.firstCount} /><UpcomingChargesCard label={upcomingCashFlow.secondLabel} title="Due in days 15–30" total={upcomingCashFlow.secondTotal} count={upcomingCashFlow.secondCount} /></div></>}
+        {hasPaySchedule ? <PaycheckCashFlow schedule={loaderData.paySchedule!} annualGrossIncome={loaderData.userIncome?.annualGrossIncome} taxDeductionPercentage={loaderData.userIncome?.taxDeductionPercentage} expenses={loaderData.userExpenses} asOfDate={loaderData.asOfDate} paymentAccounts={loaderData.paymentAccounts} /> : <div className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-gray-300 bg-gray-50 p-4 sm:flex-row sm:items-center dark:border-gray-700 dark:bg-gray-800/70"><p className="text-sm text-gray-700 dark:text-gray-300">Add a primary pay schedule to plan bills by paycheck.</p><Link to="/finance/income" className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600">Set up pay schedule</Link></div>}
 
-        <PaymentAccountsPanel accounts={loaderData.paymentAccounts} fetcher={fetcher} />
         <ExpensesCategoryFilter distinctCategories={distinctCategories} filterCategories={filterCategories} onToggleCategory={toggleCategory} onClearFilters={clearFilters} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} status={statusFilter} onStatusChange={setStatusFilter} sort={sort} onSortChange={setSort} />
         <ExpensesTable filteredExpenses={filteredExpenses} totalExpenseCount={loaderData.userExpenses.length} totalMonthlyCost={totalMonthlyCost} filteredMonthlyCost={filteredMonthlyCost} filteredYearlyCost={filteredYearlyCost} filteredActiveCount={filteredActiveCount} hasActiveFilters={hasActiveFilters} onClearFilters={clearFilters} onAddExpense={openAddExpense} fetcher={fetcher} paymentAccounts={loaderData.paymentAccounts} asOfDate={loaderData.asOfDate} onEditExpense={(expense) => { setEditingExpense(expense); setIsModalOpen(false); setModalSubmissionPending(false); }} />
+        <PaymentAccountsPanel accounts={loaderData.paymentAccounts} fetcher={fetcher} />
       </div>
 
       <AddExpenseModal isOpen={isModalOpen} distinctCategories={distinctCategories} paymentAccounts={loaderData.paymentAccounts} onClose={closeModals} fetcher={fetcher} submissionAttempted={modalSubmissionPending} onSubmit={() => setModalSubmissionPending(true)} />
       <EditExpenseModal expense={editingExpense} distinctCategories={distinctCategories} paymentAccounts={loaderData.paymentAccounts} onClose={closeModals} fetcher={fetcher} submissionAttempted={modalSubmissionPending} onSubmit={() => setModalSubmissionPending(true)} />
     </div>
   );
-}
-
-function UpcomingChargesCard({ label, title, total, count }: { label: string; title: string; total: number; count: number }) {
-  return <div className="rounded-xl border border-gray-300 bg-white p-6 shadow-sm transition-all duration-150 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
-    <div className="mb-4 flex items-center gap-3"><CalendarDaysIcon className="h-5 w-5 text-gray-600 dark:text-gray-400" /><div><p className="text-sm text-gray-600 dark:text-gray-400">{label}</p><h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{title}</h3></div></div>
-    <div className="text-3xl font-bold text-gray-900 dark:text-gray-100">${(total / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{count} scheduled {count === 1 ? "charge" : "charges"}</p>
-  </div>;
 }

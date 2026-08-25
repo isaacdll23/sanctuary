@@ -2,6 +2,7 @@ import { Link, useLoaderData } from "react-router";
 import { pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { getBudgetsForUser } from "~/modules/services/SharedBudgetService";
 import SharedBudgetCard from "~/components/finance/SharedBudgetCard";
+import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 export const loader = pageAccessLoader("finance", async (user, request) => {
@@ -31,6 +32,7 @@ export default function SharedBudgetsIndex() {
   return (
     <div className="min-h-screen bg-transparent p-4 md:p-8">
       <div className="max-w-3xl mx-auto">
+        <FinanceSubnav />
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">

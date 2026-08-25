@@ -14,6 +14,12 @@
 - Start prod build: `npm run start`
 - Typecheck (main quality gate): `npm run typecheck`
 
+## Project Skills
+
+- Use `skills/sanctuary-expenses/SKILL.md` for work on the recurring Expenses domain.
+- Use `skills/sanctuary-release/SKILL.md` for Sanctuary production releases and rollback checks.
+- Use `skills/sanctuary-local-testing/SKILL.md` when starting the app locally, staging its isolated Docker database, or signing in with the local review account for browser testing.
+
 ## Architecture Notes
 
 - Access control is enforced via `pageAccessLoader` / `pageAccessAction`.

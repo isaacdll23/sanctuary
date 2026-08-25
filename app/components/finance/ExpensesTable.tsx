@@ -119,6 +119,7 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
 
 function ExpenseActions({ expense, fetcher, isSubmitting, onEditExpense }: { expense: Expense; fetcher: FetcherWithComponents<ExpenseActionResult>; isSubmitting: boolean; onEditExpense: (expense: Expense) => void }) {
   const buttonClass = "inline-flex min-h-[36px] items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-gray-600";
+  const deleteButtonClass = "inline-flex min-h-[36px] items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-800 shadow-sm transition-colors hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/60 dark:focus:ring-red-600";
   const statusLabel = expense.isActive === 0 ? "Resume" : "Pause";
   return (
     <div className="mt-3 flex flex-wrap justify-end gap-2 md:mt-0">
@@ -137,7 +138,7 @@ function ExpenseActions({ expense, fetcher, isSubmitting, onEditExpense }: { exp
       <fetcher.Form method="post" onSubmit={(event) => { if (!window.confirm(`Delete ${expense.name}? This cannot be undone.`)) event.preventDefault(); }}>
         <input type="hidden" name="_action" value="delete" />
         <input type="hidden" name="id" value={expense.id} />
-        <button type="submit" disabled={isSubmitting} className={buttonClass} aria-label={`Delete ${expense.name}`}>
+        <button type="submit" disabled={isSubmitting} className={deleteButtonClass} aria-label={`Delete ${expense.name}`}>
           <TrashIcon className="mr-1 h-4 w-4" />Delete
         </button>
       </fetcher.Form>

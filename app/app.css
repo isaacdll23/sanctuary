@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* The app deliberately uses the `.dark` class on `<html>`, independent of OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
