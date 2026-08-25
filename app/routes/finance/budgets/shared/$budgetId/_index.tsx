@@ -6,6 +6,7 @@ import {
 import { useFetcher, useLoaderData, Link } from "react-router";
 import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
+import { formatMoney } from "~/utils/money";
 import BudgetProgressBar from "~/components/finance/BudgetProgressBar";
 import {
   CogIcon,
@@ -14,10 +15,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
-export const loader = pageAccessLoader("finance", async (user, request) => {
-  const url = new URL(request.url);
-  const budgetId = url.pathname.split("/").slice(-1)[0];
-  return await getBudgetDetails(budgetId, user.id.toString());
+export const loader = pageAccessLoader("finance", async (user, request, params) => {
+  return await getBudgetDetails(params.budgetId!, user.id.toString());
 });
 
 export const action = pageAccessAction("finance", async (_user, request) => {
@@ -66,11 +65,11 @@ export default function SharedBudgetDetails() {
     budget,
     members,
     transactions,
-    spentAmount,
+    spentAmountCents,
     currentUserRole,
     currentUserId,
   } = loaderData.data!;
-  const totalAmount = parseFloat(budget.totalAmount);
+  const totalAmountCents = budget.totalAmountCents;
   const isOwnerOrContributor =
     currentUserRole === "owner" || currentUserRole === "contributor";
 
@@ -116,7 +115,7 @@ export default function SharedBudgetDetails() {
               Total Budget
             </div>
             <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              ${totalAmount.toLocaleString()}
+              ${formatMoney(totalAmountCents)}
             </div>
           </div>
           <div>
@@ -124,7 +123,7 @@ export default function SharedBudgetDetails() {
               Spent
             </div>
             <div className="text-2xl font-bold text-red-500">
-              ${spentAmount.toLocaleString()}
+              ${formatMoney(spentAmountCents)}
             </div>
           </div>
           <div>
@@ -132,12 +131,12 @@ export default function SharedBudgetDetails() {
               Remaining
             </div>
             <div className="text-2xl font-bold text-green-500">
-              ${(totalAmount - spentAmount).toLocaleString()}
+              ${formatMoney(totalAmountCents - spentAmountCents)}
             </div>
           </div>
         </div>
 
-        <BudgetProgressBar total={totalAmount} spent={spentAmount} />
+        <BudgetProgressBar total={totalAmountCents} spent={spentAmountCents} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -339,7 +338,7 @@ export default function SharedBudgetDetails() {
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <div className="font-bold text-red-500">
-                            ${parseFloat(transaction.amount).toLocaleString()}
+                            ${formatMoney(transaction.amountCents)}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {new Date(

@@ -76,14 +76,14 @@ export default function SharedBudgetsIndex() {
               </p>
             </div>
           ) : (
-            budgets.map(({ budget, member, members, spentAmount }) => (
+            budgets.map(({ budget, member, members, spentAmountCents }) => (
               <SharedBudgetCard
                 key={budget.id}
                 id={budget.id}
                 name={budget.name}
                 description={budget.description || ""}
-                totalAmount={parseFloat(budget.totalAmount)}
-                spentAmount={spentAmount}
+                totalAmountCents={budget.totalAmountCents}
+                spentAmountCents={spentAmountCents}
                 period={budget.period}
                 members={members
                   .filter((m) => m.status === "active")

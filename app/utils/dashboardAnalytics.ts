@@ -96,34 +96,34 @@ export function calculateBudgetMetrics(
     return member?.status === "active";
   });
 
-  let totalBudgetAmount = 0;
-  let totalSpent = 0;
+  let totalBudgetCents = 0;
+  let totalSpentCents = 0;
   const budgetUtilizations: number[] = [];
   let highestUtilizationBudget: any;
   let maxUtilization = 0;
 
   // For each budget, calculate spending
   activeBudgets.forEach((budget) => {
-    const amount = parseFloat(budget.totalAmount || "0");
-    totalBudgetAmount += amount;
+    const amountCents = budget.totalAmountCents;
+    totalBudgetCents += amountCents;
 
     const budgetTransactions = transactions.filter(
       (t) => t.budgetId === budget.id
     );
-    const spent = budgetTransactions.reduce((sum, t) => {
-      return sum + parseFloat(t.amount || "0");
+    const spentCents = budgetTransactions.reduce((sum, t) => {
+      return sum + t.amountCents;
     }, 0);
 
-    totalSpent += spent;
-    const utilization = amount > 0 ? (spent / amount) * 100 : 0;
+    totalSpentCents += spentCents;
+    const utilization = amountCents > 0 ? (spentCents / amountCents) * 100 : 0;
     budgetUtilizations.push(utilization);
 
     if (utilization > maxUtilization) {
       maxUtilization = utilization;
       highestUtilizationBudget = {
         name: budget.name,
-        utilized: parseFloat(spent.toFixed(2)),
-        total: amount,
+        utilized: spentCents / 100,
+        total: amountCents / 100,
         percentage: Math.round(utilization),
       };
     }
@@ -135,8 +135,8 @@ export function calculateBudgetMetrics(
       t.transactionDate >= startOfThirtyDays &&
       t.transactionDate <= endOfDay(now)
   );
-  const upcomingExpenses = upcomingTransactions.reduce((sum, t) => {
-    return sum + parseFloat(t.amount || "0");
+  const upcomingExpensesCents = upcomingTransactions.reduce((sum, t) => {
+    return sum + t.amountCents;
   }, 0);
 
   const averageBudgetHealth =
@@ -151,14 +151,14 @@ export function calculateBudgetMetrics(
   return {
     totalBudgets: budgets.length,
     activeBudgets: activeBudgets.length,
-    totalBudgetAmount: parseFloat(totalBudgetAmount.toFixed(2)),
-    totalSpent: parseFloat(totalSpent.toFixed(2)),
+    totalBudgetAmount: totalBudgetCents / 100,
+    totalSpent: totalSpentCents / 100,
     budgetUtilizationRate: Math.round(
-      totalBudgetAmount > 0 ? (totalSpent / totalBudgetAmount) * 100 : 0
+      totalBudgetCents > 0 ? (totalSpentCents / totalBudgetCents) * 100 : 0
     ),
     averageBudgetHealth: parseFloat(averageBudgetHealth.toFixed(2)),
     highestUtilizationBudget,
-    upcomingExpenses30d: parseFloat(upcomingExpenses.toFixed(2)),
+    upcomingExpenses30d: upcomingExpensesCents / 100,
     hasOverBudgetBudgets,
   };
 }
@@ -361,11 +361,11 @@ export function generateSpendingTimeSeries(transactions: any[]): TimeSeriesMetri
         (t) =>
           t.transactionDate >= dayStart && t.transactionDate <= dayEnd
       )
-      .reduce((sum, t) => sum + parseFloat(t.amount || "0"), 0);
+      .reduce((sum, t) => sum + t.amountCents, 0);
 
     return {
       date: format(date, "yyyy-MM-dd"),
-      value: parseFloat(daySpending.toFixed(2)),
+      value: parseFloat((daySpending / 100).toFixed(2)),
     };
   });
 }

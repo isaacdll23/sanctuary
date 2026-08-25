@@ -1,5 +1,8 @@
 import { redirect } from "react-router";
 import { getUserFromSession, requireAuth } from "../auth.server";
+import { usersTable } from "~/db/schema";
+
+export type AuthenticatedUser = typeof usersTable.$inferSelect;
 
 /**
  * Middleware to ensure only admin users can access a route
@@ -30,7 +33,7 @@ export async function requireAdminUser(
  * Uses the auto-generated types from React Router v7
  */
 export function adminOnlyLoader<LoaderData>(
-  loaderFn: (user: any, request: Request) => Promise<LoaderData> | LoaderData
+  loaderFn: (user: AuthenticatedUser, request: Request) => Promise<LoaderData> | LoaderData
 ) {
   return async ({ request }: { request: Request }) => {
     // Get admin user or redirect
@@ -46,7 +49,7 @@ export function adminOnlyLoader<LoaderData>(
  * Uses the auto-generated types from React Router v7
  */
 export function adminOnlyAction<ActionData>(
-  actionFn: (user: any, request: Request) => Promise<ActionData> | ActionData
+  actionFn: (user: AuthenticatedUser, request: Request) => Promise<ActionData> | ActionData
 ) {
   return async ({ request }: { request: Request }) => {
     // Get admin user or redirect

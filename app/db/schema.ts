@@ -9,7 +9,6 @@ import {
   uuid,
   date,
   time,
-  decimal,
   pgEnum,
 } from "drizzle-orm/pg-core";
 
@@ -147,7 +146,7 @@ export const budgetsTable = pgTable("budgets", {
   id: uuid().primaryKey().defaultRandom(),
   name: varchar({ length: 255 }).notNull(),
   description: text(),
-  totalAmount: decimal({ precision: 12, scale: 2 }).notNull(),
+  totalAmountCents: integer("total_amount_cents").notNull(),
   period: budgetPeriodEnum().notNull(),
   createdById: integer()
     .notNull()
@@ -177,7 +176,7 @@ export const budgetTransactionsTable = pgTable("budget_transactions", {
   addedById: integer()
     .notNull()
     .references(() => usersTable.id),
-  amount: decimal({ precision: 12, scale: 2 }).notNull(),
+  amountCents: integer("amount_cents").notNull(),
   description: varchar({ length: 1024 }),
   category: varchar({ length: 255 }),
   transactionDate: date().notNull(),

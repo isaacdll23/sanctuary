@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 import BudgetProgressBar from "./BudgetProgressBar";
+import { formatMoney } from "~/utils/money";
 
 interface SharedBudgetCardProps {
   id: string | number;
   name: string;
   description?: string;
-  totalAmount: number;
-  spentAmount: number;
+  totalAmountCents: number;
+  spentAmountCents: number;
   period: string;
   members: Array<{
     id: string | number;
@@ -22,16 +23,18 @@ export default function SharedBudgetCard({
   id,
   name,
   description,
-  totalAmount,
-  spentAmount,
+  totalAmountCents,
+  spentAmountCents,
   period,
   members,
   currentUserId,
   role,
 }: SharedBudgetCardProps) {
-  const remainingAmount = totalAmount - spentAmount;
+  const remainingCents = totalAmountCents - spentAmountCents;
   const percentUsed =
-    totalAmount > 0 ? Math.round((spentAmount / totalAmount) * 100) : 0;
+    totalAmountCents > 0
+      ? Math.round((spentAmountCents / totalAmountCents) * 100)
+      : 0;
 
   return (
     <Link
@@ -65,13 +68,13 @@ export default function SharedBudgetCard({
         <div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Total</div>
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            ${totalAmount.toLocaleString()}
+            ${formatMoney(totalAmountCents)}
           </div>
         </div>
         <div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Spent</div>
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            ${spentAmount.toLocaleString()}
+            ${formatMoney(spentAmountCents)}
           </div>
         </div>
         <div>
@@ -79,12 +82,12 @@ export default function SharedBudgetCard({
             Remaining
           </div>
           <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            ${remainingAmount.toLocaleString()}
+            ${formatMoney(remainingCents)}
           </div>
         </div>
       </div>
 
-      <BudgetProgressBar total={totalAmount} spent={spentAmount} />
+      <BudgetProgressBar total={totalAmountCents} spent={spentAmountCents} />
 
       <div className="flex items-center justify-between mt-4">
         <div className="flex items-center gap-2">

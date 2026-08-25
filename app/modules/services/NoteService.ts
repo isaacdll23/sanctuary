@@ -84,7 +84,7 @@ export async function handleNoteAction(request: Request) {
         folderId,
         updatedAt: new Date(),
       })
-      .where(eq(notesTable.id, noteId))
+      .where(and(eq(notesTable.id, noteId), eq(notesTable.userId, user.id)))
       .returning();
 
     // Return decrypted note to client
@@ -135,7 +135,7 @@ export async function handleNoteAction(request: Request) {
           folderId,
           updatedAt: new Date(),
         })
-        .where(eq(notesTable.id, noteId))
+        .where(and(eq(notesTable.id, noteId), eq(notesTable.userId, user.id)))
         .returning();
 
       if (updatedNotes.length === 0) {
@@ -164,7 +164,9 @@ export async function handleNoteAction(request: Request) {
     if (!noteId) {
       throw new Error("Note ID is required for deletion.");
     }
-    await db.delete(notesTable).where(eq(notesTable.id, noteId));
+    await db
+      .delete(notesTable)
+      .where(and(eq(notesTable.id, noteId), eq(notesTable.userId, user.id)));
     return { success: true, message: "Note deleted." };
   }
 
@@ -255,10 +257,22 @@ export async function handleNoteAction(request: Request) {
       ? Number(formData.get("folderId"))
       : null;
     if (!noteId) throw new Error("Note ID required.");
+    const folder = folderId
+      ? await db
+          .select({ id: foldersTable.id })
+          .from(foldersTable)
+          .where(
+            and(eq(foldersTable.id, folderId), eq(foldersTable.userId, user.id))
+          )
+          .limit(1)
+      : [];
+    if (folderId && folder.length === 0) {
+      return { success: false, error: "Folder not found or permission denied." };
+    }
     const updated = await db
       .update(notesTable)
       .set({ folderId })
-      .where(eq(notesTable.id, noteId))
+      .where(and(eq(notesTable.id, noteId), eq(notesTable.userId, user.id)))
       .returning();
     return {
       success: true,

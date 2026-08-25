@@ -5,6 +5,7 @@ import {
 } from "~/modules/services/BudgetInviteService";
 import { getBudgetDetails } from "~/modules/services/SharedBudgetService";
 import { getUserFromSession, isSessionCreated } from "~/modules/auth.server";
+import { formatMoney } from "~/utils/money";
 import type { Route } from "./+types/$token";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
@@ -124,7 +125,7 @@ export default function JoinBudgetPage() {
                   Total Budget:
                 </span>
                 <div className="font-semibold text-gray-900 dark:text-gray-100">
-                  ${budget.budget.totalAmount}
+                  ${formatMoney(budget.budget.totalAmountCents)}
                 </div>
               </div>
               <div>

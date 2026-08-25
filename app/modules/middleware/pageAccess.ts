@@ -1,6 +1,9 @@
 import { redirect } from "react-router";
 import { getUserFromSession, requireAuth } from "../auth.server";
 import { hasPageAccess } from "../services/PageAccessService";
+import { usersTable } from "~/db/schema";
+
+export type AuthenticatedUser = typeof usersTable.$inferSelect;
 
 /**
  * Middleware to ensure users have access to a specific page
@@ -46,14 +49,18 @@ export async function requirePageAccess(
  */
 export function pageAccessLoader<LoaderData>(
   pageId: string,
-  loaderFn: (user: any, request: Request) => Promise<LoaderData> | LoaderData
+  loaderFn: (
+    user: AuthenticatedUser,
+    request: Request,
+    params: Record<string, string | undefined>
+  ) => Promise<LoaderData> | LoaderData
 ) {
-  return async ({ request }: { request: Request }) => {
+  return async ({ request, params }: { request: Request; params: Record<string, string | undefined> }) => {
     // Get user with page access or redirect
     const user = await requirePageAccess(request, pageId);
 
     // Call the actual loader function with the user
-    return loaderFn(user, request);
+    return loaderFn(user, request, params);
   };
 }
 
@@ -66,13 +73,17 @@ export function pageAccessLoader<LoaderData>(
  */
 export function pageAccessAction<ActionData>(
   pageId: string,
-  actionFn: (user: any, request: Request) => Promise<ActionData> | ActionData
+  actionFn: (
+    user: AuthenticatedUser,
+    request: Request,
+    params: Record<string, string | undefined>
+  ) => Promise<ActionData> | ActionData
 ) {
-  return async ({ request }: { request: Request }) => {
+  return async ({ request, params }: { request: Request; params: Record<string, string | undefined> }) => {
     // Get user with page access or redirect
     const user = await requirePageAccess(request, pageId);
 
     // Call the actual action function with the user
-    return actionFn(user, request);
+    return actionFn(user, request, params);
   };
 }

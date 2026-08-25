@@ -1,3 +1,5 @@
+import { formatMoney } from "~/utils/money";
+
 interface BudgetProgressBarProps {
   total: number;
   spent: number;
@@ -19,10 +21,10 @@ export default function BudgetProgressBar({
     <div className="w-full mt-2">
       <div className="flex justify-between text-xs mb-1">
         <span className="text-gray-600 dark:text-gray-400">
-          Spent: ${spent.toFixed(2)}
+          Spent: ${formatMoney(spent)}
         </span>
         <span className="text-gray-600 dark:text-gray-400">
-          Budget: ${total.toFixed(2)}
+          Budget: ${formatMoney(total)}
         </span>
       </div>
       <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">

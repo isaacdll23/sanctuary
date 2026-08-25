@@ -6,3 +6,11 @@ export function formatMoney(cents: number): string {
   const grouped = whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return `${sign}${grouped}.${fraction}`;
 }
+
+export function toCents(value: string): number {
+  const trimmed = value.trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(trimmed)) {
+    return NaN;
+  }
+  return Math.round(Number(trimmed) * 100);
+}

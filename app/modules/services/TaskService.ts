@@ -1,6 +1,6 @@
 import { db } from "~/db";
 import { tasksTable, taskStepsTable } from "~/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { getUserFromSession } from "~/modules/auth.server";
 import type { TaskActionResponse } from "~/types/task.types";
 
@@ -17,31 +17,31 @@ export async function handleTaskAction(
       return await createTask(formData, user.id);
 
     case "updateTaskDetails":
-      return await updateTaskDetails(formData);
+      return await updateTaskDetails(formData, user.id);
 
     case "setTaskReminder":
-      return await setTaskReminder(formData);
+      return await setTaskReminder(formData, user.id);
 
     case "updateCategory":
-      return await updateCategory(formData);
+      return await updateCategory(formData, user.id);
 
     case "completeTask":
-      return await completeTask(formData);
+      return await completeTask(formData, user.id);
 
     case "incompleteTask":
-      return await incompleteTask(formData);
+      return await incompleteTask(formData, user.id);
 
     case "deleteTask":
-      return await deleteTask(formData);
+      return await deleteTask(formData, user.id);
 
     case "addStep":
       return await addStep(formData, user.id);
 
     case "completeStep":
-      return await completeStep(formData);
+      return await completeStep(formData, user.id);
 
     case "deleteStep":
-      return await deleteStep(formData);
+      return await deleteStep(formData, user.id);
 
     default:
       return handleLegacyActions(formData, user.id);
@@ -74,7 +74,8 @@ async function createTask(
 }
 
 async function updateTaskDetails(
-  formData: FormData
+  formData: FormData,
+  userId: number
 ): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("taskId"));
   const title = formData.get("title") as string;
@@ -96,13 +97,14 @@ async function updateTaskDetails(
         ? { reminderDate: new Date(reminderDate), reminderSent: 0 }
         : {}),
     })
-    .where(eq(tasksTable.id, taskId));
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   return { success: true, message: "Task updated successfully" };
 }
 
 async function setTaskReminder(
-  formData: FormData
+  formData: FormData,
+  userId: number
 ): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("taskId"));
   const reminderDate = formData.get("reminderDate") as string | null;
@@ -117,24 +119,30 @@ async function setTaskReminder(
       reminderDate: new Date(reminderDate),
       reminderSent: 0,
     })
-    .where(eq(tasksTable.id, taskId));
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   return { success: true, message: "Reminder set successfully" };
 }
 
-async function updateCategory(formData: FormData): Promise<TaskActionResponse> {
+async function updateCategory(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("updateCategory"));
   const category = (formData.get("category") as string) || null;
 
   await db
     .update(tasksTable)
     .set({ category })
-    .where(eq(tasksTable.id, taskId));
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   return { success: true, message: "Category updated successfully" };
 }
 
-async function completeTask(formData: FormData): Promise<TaskActionResponse> {
+async function completeTask(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("completeTask"));
 
   if (!taskId) {
@@ -144,30 +152,44 @@ async function completeTask(formData: FormData): Promise<TaskActionResponse> {
   await db
     .update(tasksTable)
     .set({ completedAt: new Date() })
-    .where(eq(tasksTable.id, taskId));
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   return { success: true, message: "Task marked as complete" };
 }
 
-async function incompleteTask(formData: FormData): Promise<TaskActionResponse> {
+async function incompleteTask(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("incompleteTask"));
 
   if (!taskId) {
     return { success: false, error: "Task ID is required" };
   }
 
-  await db.update(tasksTable).set({ completedAt: null }).where(eq(tasksTable.id, taskId));
+  await db
+    .update(tasksTable)
+    .set({ completedAt: null })
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   // Mark all task steps as incomplete
   await db
     .update(taskStepsTable)
     .set({ completedAt: null })
-    .where(eq(taskStepsTable.taskId, taskId));
+    .where(
+      and(
+        eq(taskStepsTable.taskId, taskId),
+        eq(taskStepsTable.userId, userId)
+      )
+    );
 
   return { success: true, message: "Task marked as incomplete" };
 }
 
-async function deleteTask(formData: FormData): Promise<TaskActionResponse> {
+async function deleteTask(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const taskId = Number(formData.get("deleteTask"));
 
   if (!taskId) {
@@ -175,8 +197,12 @@ async function deleteTask(formData: FormData): Promise<TaskActionResponse> {
   }
 
   // Delete all task steps first
-  await db.delete(taskStepsTable).where(eq(taskStepsTable.taskId, taskId));
-  await db.delete(tasksTable).where(eq(tasksTable.id, taskId));
+  await db
+    .delete(taskStepsTable)
+    .where(and(eq(taskStepsTable.taskId, taskId), eq(taskStepsTable.userId, userId)));
+  await db
+    .delete(tasksTable)
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
   return { success: true, message: "Task deleted successfully" };
 }
@@ -192,6 +218,15 @@ async function addStep(
     return { success: false, error: "Task ID and step description are required" };
   }
 
+  const task = await db
+    .select({ id: tasksTable.id })
+    .from(tasksTable)
+    .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)))
+    .limit(1);
+  if (task.length === 0) {
+    return { success: false, error: "Task not found or permission denied" };
+  }
+
   await db.insert(taskStepsTable).values({
     taskId,
     userId,
@@ -202,7 +237,10 @@ async function addStep(
   return { success: true, message: "Step added successfully" };
 }
 
-async function completeStep(formData: FormData): Promise<TaskActionResponse> {
+async function completeStep(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const stepId = Number(formData.get("completeStep"));
   const isChecked = formData.get("isChecked") === "true";
 
@@ -210,23 +248,38 @@ async function completeStep(formData: FormData): Promise<TaskActionResponse> {
     return { success: false, error: "Step ID is required" };
   }
 
-  // Update step completion status
+  // Update step completion status (step must belong to a task owned by the user)
   await db
     .update(taskStepsTable)
     .set({ completedAt: isChecked ? new Date() : null })
-    .where(eq(taskStepsTable.id, stepId));
+    .where(
+      and(
+        eq(taskStepsTable.id, stepId),
+        eq(taskStepsTable.userId, userId)
+      )
+    );
 
   // Update parent task completion based on all steps
   const [stepRecord] = await db
     .select()
     .from(taskStepsTable)
-    .where(eq(taskStepsTable.id, stepId));
+    .where(
+      and(
+        eq(taskStepsTable.id, stepId),
+        eq(taskStepsTable.userId, userId)
+      )
+    );
 
   if (stepRecord) {
     const allSteps = await db
       .select()
       .from(taskStepsTable)
-      .where(eq(taskStepsTable.taskId, stepRecord.taskId));
+      .where(
+        and(
+          eq(taskStepsTable.taskId, stepRecord.taskId),
+          eq(taskStepsTable.userId, userId)
+        )
+      );
 
     const allComplete =
       allSteps.length > 0 && allSteps.every((s) => s.completedAt !== null);
@@ -234,20 +287,30 @@ async function completeStep(formData: FormData): Promise<TaskActionResponse> {
     await db
       .update(tasksTable)
       .set({ completedAt: allComplete ? new Date() : null })
-      .where(eq(tasksTable.id, stepRecord.taskId));
+      .where(
+        and(
+          eq(tasksTable.id, stepRecord.taskId),
+          eq(tasksTable.userId, userId)
+        )
+      );
   }
 
   return { success: true, message: "Step updated successfully" };
 }
 
-async function deleteStep(formData: FormData): Promise<TaskActionResponse> {
+async function deleteStep(
+  formData: FormData,
+  userId: number
+): Promise<TaskActionResponse> {
   const stepId = Number(formData.get("deleteStep"));
 
   if (!stepId) {
     return { success: false, error: "Step ID is required" };
   }
 
-  await db.delete(taskStepsTable).where(eq(taskStepsTable.id, stepId));
+  await db
+    .delete(taskStepsTable)
+    .where(and(eq(taskStepsTable.id, stepId), eq(taskStepsTable.userId, userId)));
 
   return { success: true, message: "Step deleted successfully" };
 }
@@ -260,22 +323,22 @@ async function handleLegacyActions(
   // Handle legacy form submissions that don't use intent field
   const deleteStepValue = formData.get("deleteStep");
   if (deleteStepValue && typeof deleteStepValue === "string" && deleteStepValue.trim()) {
-    return await deleteStep(formData);
+    return await deleteStep(formData, userId);
   }
 
   const deleteTaskValue = formData.get("deleteTask");
   if (deleteTaskValue && typeof deleteTaskValue === "string" && deleteTaskValue.trim()) {
-    return await deleteTask(formData);
+    return await deleteTask(formData, userId);
   }
 
   const completeTaskValue = formData.get("completeTask");
   if (completeTaskValue && typeof completeTaskValue === "string" && completeTaskValue.trim()) {
-    return await completeTask(formData);
+    return await completeTask(formData, userId);
   }
 
   const incompleteTaskValue = formData.get("incompleteTask");
   if (incompleteTaskValue && typeof incompleteTaskValue === "string" && incompleteTaskValue.trim()) {
-    return await incompleteTask(formData);
+    return await incompleteTask(formData, userId);
   }
 
   const completeStepLegacy = formData.get("completeStep");
@@ -286,7 +349,7 @@ async function handleLegacyActions(
     completeStepLegacy.trim() &&
     typeof isChecked === "string"
   ) {
-    return await completeStep(formData);
+    return await completeStep(formData, userId);
   }
 
   const stepDescription = formData.get("stepDescription");
@@ -303,7 +366,7 @@ async function handleLegacyActions(
 
   const updateCategoryValue = formData.get("updateCategory");
   if (updateCategoryValue) {
-    return await updateCategory(formData);
+    return await updateCategory(formData, userId);
   }
 
   return { success: false, error: "No valid action found" };

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatMoney } from "./money";
+import { formatMoney, toCents } from "./money";
 
 describe("formatMoney", () => {
   it("formats cents with two decimals", () => {
@@ -18,5 +18,22 @@ describe("formatMoney", () => {
   it("handles negative values", () => {
     assert.equal(formatMoney(-1250), "-12.50");
     assert.equal(formatMoney(-327255), "-3,272.55");
+  });
+});
+
+describe("toCents", () => {
+  it("converts dollar amounts to integer cents", () => {
+    assert.equal(toCents("0"), 0);
+    assert.equal(toCents("0.05"), 5);
+    assert.equal(toCents("12.50"), 1250);
+    assert.equal(toCents("3272.55"), 327255);
+  });
+
+  it("rejects invalid amounts", () => {
+    assert.ok(Number.isNaN(toCents("abc")));
+    assert.ok(Number.isNaN(toCents("")));
+    assert.ok(Number.isNaN(toCents("1.2345")));
+    assert.ok(Number.isNaN(toCents("1.005")));
+    assert.ok(Number.isNaN(toCents("-5")));
   });
 });

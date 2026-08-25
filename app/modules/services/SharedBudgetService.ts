@@ -9,6 +9,21 @@ import { eq, and, or, desc } from "drizzle-orm";
 import { getUserFromSession } from "~/modules/auth.server";
 import { isEmailConfigured, sendEmail } from "./NotificationService";
 import { generateInviteToken } from "./BudgetInviteService";
+import { formatMoney, toCents } from "~/utils/money";
+
+const BUDGET_PERIODS = ["monthly", "weekly", "yearly"] as const;
+const MEMBER_ROLES = ["owner", "contributor"] as const;
+
+type BudgetPeriod = (typeof BUDGET_PERIODS)[number];
+type MemberRole = (typeof MEMBER_ROLES)[number];
+
+function isBudgetPeriod(value: string): value is BudgetPeriod {
+  return (BUDGET_PERIODS as readonly string[]).includes(value);
+}
+
+function isMemberRole(value: string): value is MemberRole {
+  return (MEMBER_ROLES as readonly string[]).includes(value);
+}
 
 export async function handleSharedBudgetAction(
   request: Request,
@@ -82,20 +97,26 @@ export async function handleSharedBudgetAction(
 }
 
 export async function createBudget(userId: string, formData: FormData) {
-  const name = String(formData.get("name") || "");
+  const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "");
   const totalAmount = String(formData.get("totalAmount") || "0");
-  const period = String(formData.get("period") || "monthly");
-  if (!name || !totalAmount || !period) {
-    return { success: false, message: "Missing required fields" };
+  const periodValue = String(formData.get("period") || "monthly");
+  const totalAmountCents = toCents(totalAmount);
+  if (
+    !name ||
+    !Number.isFinite(totalAmountCents) ||
+    totalAmountCents <= 0 ||
+    !isBudgetPeriod(periodValue)
+  ) {
+    return { success: false, message: "Missing or invalid required fields" };
   }
   const [budget] = await db
     .insert(budgetsTable)
     .values({
       name,
       description,
-      totalAmount,
-      period: period as "monthly" | "weekly" | "yearly",
+      totalAmountCents,
+      period: periodValue,
       createdById: parseInt(userId),
     })
     .returning();
@@ -148,12 +169,12 @@ export async function getBudgetsForUser(userId: string) {
 
       // Get total spent amount from transactions
       const transactions = await db
-        .select({ amount: budgetTransactionsTable.amount })
+        .select({ amountCents: budgetTransactionsTable.amountCents })
         .from(budgetTransactionsTable)
         .where(eq(budgetTransactionsTable.budgetId, budget.id));
 
-      const spentAmount = transactions.reduce(
-        (sum, t) => sum + parseFloat(t.amount),
+      const spentAmountCents = transactions.reduce(
+        (sum, t) => sum + t.amountCents,
         0
       );
 
@@ -161,7 +182,7 @@ export async function getBudgetsForUser(userId: string) {
         budget,
         member,
         members: allMembers,
-        spentAmount,
+        spentAmountCents,
       };
     })
   );
@@ -208,7 +229,7 @@ export async function getBudgetDetails(budgetId: string, userId: string) {
   const transactions = await db
     .select({
       id: budgetTransactionsTable.id,
-      amount: budgetTransactionsTable.amount,
+      amountCents: budgetTransactionsTable.amountCents,
       description: budgetTransactionsTable.description,
       category: budgetTransactionsTable.category,
       transactionDate: budgetTransactionsTable.transactionDate,
@@ -221,8 +242,8 @@ export async function getBudgetDetails(budgetId: string, userId: string) {
     .orderBy(desc(budgetTransactionsTable.transactionDate));
 
   // Calculate spent amount
-  const spentAmount = transactions.reduce(
-    (sum, t) => sum + parseFloat(t.amount),
+  const spentAmountCents = transactions.reduce(
+    (sum, t) => sum + t.amountCents,
     0
   );
 
@@ -232,7 +253,7 @@ export async function getBudgetDetails(budgetId: string, userId: string) {
       budget: budget[0],
       members,
       transactions,
-      spentAmount,
+      spentAmountCents,
       currentUserRole: member[0].role,
       currentUserId: parseInt(userId),
     },
@@ -292,21 +313,22 @@ export async function addTransaction(
     return { success: false, message: "Access denied" };
   }
 
-  const amount = String(formData.get("amount") || "0");
+  const amountValue = String(formData.get("amount") || "0");
+  const amountCents = toCents(amountValue);
   const description = String(formData.get("description") || "");
   const category = String(formData.get("category") || "");
   const transactionDate = String(
     formData.get("transactionDate") || new Date().toISOString().split("T")[0]
   );
 
-  if (!amount || parseFloat(amount) <= 0) {
+  if (!Number.isFinite(amountCents) || amountCents <= 0) {
     return { success: false, message: "Amount must be greater than 0" };
   }
 
   await db.insert(budgetTransactionsTable).values({
     budgetId,
     addedById: parseInt(userId),
-    amount,
+    amountCents,
     description,
     category,
     transactionDate: transactionDate,
@@ -380,6 +402,9 @@ export async function inviteMember(
   invitedById: string
 ) {
   try {
+    if (!isMemberRole(role)) {
+      return { success: false, message: "Invalid role" };
+    }
     // Only owner can invite
     const owner = await db
       .select()
@@ -422,7 +447,7 @@ export async function inviteMember(
     await db.insert(budgetMembersTable).values({
       budgetId,
       email,
-      role: role as "owner" | "contributor",
+      role,
       status: "pending",
       invitedAt: new Date(),
     });
@@ -448,7 +473,7 @@ export async function inviteMember(
           <p><strong>Budget Details:</strong></p>
           <ul>
             <li>Name: ${budget[0].name}</li>
-            <li>Total Amount: $${budget[0].totalAmount}</li>
+            <li>Total Amount: $${formatMoney(budget[0].totalAmountCents)}</li>
             <li>Your Role: ${role}</li>
           </ul>
           
@@ -515,9 +540,13 @@ export async function updateMemberRole(
     return { success: false, message: "Only owner can update member roles" };
   }
 
+  if (!isMemberRole(newRole)) {
+    return { success: false, message: "Invalid role" };
+  }
+
   await db
     .update(budgetMembersTable)
-    .set({ role: newRole as "owner" | "contributor" })
+    .set({ role: newRole })
     .where(
       and(
         eq(budgetMembersTable.budgetId, budgetId),
@@ -549,11 +578,12 @@ export async function updateBudget(
     return { success: false, message: "Only owner can update budget" };
   }
 
-  const name = String(formData.get("name") || "");
+  const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "");
   const totalAmount = String(formData.get("totalAmount") || "0");
+  const totalAmountCents = toCents(totalAmount);
 
-  if (!name || !totalAmount || parseFloat(totalAmount) <= 0) {
+  if (!name || !Number.isFinite(totalAmountCents) || totalAmountCents <= 0) {
     return { success: false, message: "Name and valid amount are required" };
   }
 
@@ -562,7 +592,7 @@ export async function updateBudget(
     .set({
       name,
       description,
-      totalAmount,
+      totalAmountCents,
       updatedAt: new Date(),
     })
     .where(eq(budgetsTable.id, budgetId));
