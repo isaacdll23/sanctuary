@@ -1,6 +1,4 @@
-import { redirect } from "react-router";
 import type { Route } from "./+types/home";
-import { isSessionCreated } from "~/modules/auth.server";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -9,14 +7,12 @@ export function meta({}: Route.MetaArgs) {
   ];
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  if (await isSessionCreated(request)) {
-    throw redirect("/dashboard");
-  }
-
-  throw redirect("/auth/login");
-}
-
 export default function Home() {
-  return null;
+  return (
+    <div className="h-full flex flex-col justify-center items-center">
+      <h1 className="text-3xl mb-4">Welcome to Sanctuary!</h1>
+      <p>You probably shouldn't be here..</p>
+      <p>Might be a good idea to leave</p>
+    </div>
+  );
 }
