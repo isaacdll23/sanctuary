@@ -7,9 +7,10 @@ const deployment = "gpt-5-mini";
 
 const apiKey = process.env.OPENAI_API_KEY || "";
 const apiVersion = "2024-04-01-preview";
-const options = { endpoint, apiKey, deployment, apiVersion };
 
-const client = new AzureOpenAI(options);
+function getClient() {
+  return new AzureOpenAI({ endpoint, apiKey, deployment, apiVersion });
+}
 
 export function isAiConfigured() {
   return Boolean(endpoint && apiKey);
@@ -38,6 +39,7 @@ export async function generateNoteTitle(content: string): Promise<string> {
     console.log("Calling OpenAI to generate note title...");
     console.log("Content length:", content.length);
 
+    const client = getClient();
     const completion = await client.chat.completions.create({
       model: modelName,
       messages: [
