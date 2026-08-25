@@ -42,11 +42,6 @@ export async function getIncomeOverviewForUser(userId: number) {
   return { income, paySchedule, paymentAccounts };
 }
 
-export async function getPrimaryPayScheduleForUser(userId: number) {
-  const [schedule] = await db.select().from(financePaySchedulesTable).where(eq(financePaySchedulesTable.userId, userId)).limit(1);
-  return schedule ?? null;
-}
-
 export async function saveIncomeOverviewForUser(userId: number, data: z.infer<typeof incomeFormSchema>) {
   const [account] = data.depositAccountId == null ? [true] : await db.select({ id: financePaymentAccountsTable.id }).from(financePaymentAccountsTable).where(and(eq(financePaymentAccountsTable.userId, userId), eq(financePaymentAccountsTable.id, data.depositAccountId))).limit(1);
   if (!account) return { ok: false as const, error: "Select one of your payment accounts." };

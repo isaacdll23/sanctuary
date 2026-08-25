@@ -29,7 +29,9 @@ import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { useExpenseFiltering, type ExpenseSort, type ExpenseStatusFilter } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
 import { getReferenceDateKey } from "~/modules/finance/paySchedule";
-import { getPrimaryPayScheduleForUser } from "~/modules/services/IncomeService";
+import { eq } from "drizzle-orm";
+import { db } from "~/db";
+import { financePaySchedulesTable } from "~/db/schema";
 import { Link } from "react-router";
 import type { Expense, ExpenseActionResult } from "~/types/expense";
 
@@ -42,7 +44,7 @@ export const loader = pageAccessLoader("finance", async (user) => {
     getExpensesForUser(user.id),
     getLatestIncomeForUser(user.id),
     getPaymentAccountsForUser(user.id),
-    getPrimaryPayScheduleForUser(user.id),
+    db.select().from(financePaySchedulesTable).where(eq(financePaySchedulesTable.userId, user.id)).limit(1).then((rows) => rows[0] ?? null),
   ]);
   return { userExpenses, userIncome, paymentAccounts, paySchedule, asOfDate: getReferenceDateKey(user.timeZone) };
 });
