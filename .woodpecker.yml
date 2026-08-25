@@ -1,5 +1,5 @@
 when:
-  - event: push
+  - event: [push, manual]
     branch: main
 
 steps:
@@ -35,3 +35,45 @@ steps:
       - docker push "$REGISTRY/sanctuary:latest"
       - docker push "$MIGRATE_IMAGE"
       - docker push "$REGISTRY/sanctuary-migrate:latest"
+
+  deploy-production:
+    image: docker:29-cli
+    depends_on: [build-and-push]
+    when:
+      - event: manual
+        branch: main
+    environment:
+      REGISTRY:
+        from_secret: REGISTRY
+      REGISTRY_USERNAME:
+        from_secret: REGISTRY_USERNAME
+      REGISTRY_PASSWORD:
+        from_secret: REGISTRY_PASSWORD
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /opt/stacks/sanctuary:/stack
+      - /srv/sanctuary/backups:/backups
+    commands:
+      - SHORT_SHA="$(printf %s "$CI_COMMIT_SHA" | cut -c1-7)"
+      - TAG="sha-$SHORT_SHA"
+      - echo "$REGISTRY_PASSWORD" | docker login "$REGISTRY" --username "$REGISTRY_USERNAME" --password-stdin
+      - docker manifest inspect "$REGISTRY/sanctuary:$TAG" >/dev/null
+      - docker manifest inspect "$REGISTRY/sanctuary-migrate:$TAG" >/dev/null
+      - BACKUP_TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+      - ENV_BACKUP="/stack/.env.bak-before-$SHORT_SHA-$BACKUP_TIMESTAMP"
+      - cp /stack/.env "$ENV_BACKUP"
+      - docker compose --project-directory /stack exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "/backups/pre-$SHORT_SHA-$BACKUP_TIMESTAMP.sql"
+      - grep -q '^IMAGE_TAG=' /stack/.env
+      - sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$TAG/" /stack/.env
+      - docker compose --project-directory /stack config --images | grep -Fx "$REGISTRY/sanctuary:$TAG"
+      - docker compose --project-directory /stack config --images | grep -Fx "$REGISTRY/sanctuary-migrate:$TAG"
+      - docker compose --project-directory /stack pull
+      - docker compose --project-directory /stack up -d
+      - MIGRATE_CONTAINER="$(docker compose --project-directory /stack ps -a -q migrate)"
+      - test -n "$MIGRATE_CONTAINER"
+      - for attempt in $(seq 1 60); do MIGRATE_STATE="$(docker inspect --format '{{.State.Status}}' "$MIGRATE_CONTAINER")"; [ "$MIGRATE_STATE" != running ] && break; sleep 2; done
+      - test "$MIGRATE_STATE" = exited
+      - test "$(docker inspect --format '{{.State.ExitCode}}' "$MIGRATE_CONTAINER")" = 0
+      - test -n "$(docker compose --project-directory /stack ps --status running -q db)"
+      - test -n "$(docker compose --project-directory /stack ps --status running -q web)"
+      - test "$(docker inspect --format '{{.Config.Image}}' sanctuary-web-1)" = "$REGISTRY/sanctuary:$TAG"
