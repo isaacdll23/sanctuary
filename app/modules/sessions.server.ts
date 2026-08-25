@@ -4,6 +4,10 @@ type SessionData = {
   userId: number;
 };
 
+const DAY_IN_SECONDS = 24 * 60 * 60;
+
+export const REMEMBER_ME_MAX_AGE = 30 * DAY_IN_SECONDS;
+
 function getSessionSecrets(): string[] {
   const rawSecrets = process.env.SESSION_SECRETS || process.env.SESSION_SECRET;
 

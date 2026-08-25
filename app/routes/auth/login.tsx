@@ -7,7 +7,7 @@ import {
   useLoaderData,
 } from "react-router";
 import type { Route } from "./+types/login";
-import { getSession, commitSession } from "~/modules/sessions.server";
+import { getSession, commitSession, REMEMBER_ME_MAX_AGE } from "~/modules/sessions.server";
 import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import { eq } from "drizzle-orm";
@@ -28,6 +28,7 @@ export async function action({ request }: Route.ActionArgs) {
   let formData = await request.formData();
   let username = String(formData.get("username"));
   let password = String(formData.get("password"));
+  let rememberMe = formData.get("rememberMe") === "on";
 
   const errors = {
     invalid: "",
@@ -61,7 +62,10 @@ export async function action({ request }: Route.ActionArgs) {
 
   return redirect("/dashboard", {
     headers: {
-      "Set-Cookie": await commitSession(session),
+      "Set-Cookie": await commitSession(
+        session,
+        rememberMe ? { maxAge: REMEMBER_ME_MAX_AGE } : undefined
+      ),
     },
   });
 }
@@ -140,6 +144,16 @@ export default function Login() {
               required
               aria-label="Password"
             />
+
+            <label className="w-full flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="rememberMe"
+                className="h-4 w-4 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500 focus:ring-2"
+                aria-label="Remember me"
+              />
+              Remember me for 30 days
+            </label>
 
             <button
               type="submit"
