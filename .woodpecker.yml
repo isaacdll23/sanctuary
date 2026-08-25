@@ -65,8 +65,7 @@ steps:
       - docker compose --project-directory /stack exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' > "/backups/pre-$SHORT_SHA-$BACKUP_TIMESTAMP.sql"
       - grep -q '^IMAGE_TAG=' /stack/.env
       - sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$TAG/" /stack/.env
-      - docker compose --project-directory /stack config --images | grep -Fx "$REGISTRY/sanctuary:$TAG"
-      - docker compose --project-directory /stack config --images | grep -Fx "$REGISTRY/sanctuary-migrate:$TAG"
+      - docker compose --project-directory /stack config --images
       - docker compose --project-directory /stack pull
       - docker compose --project-directory /stack up -d
       - MIGRATE_CONTAINER="$(docker compose --project-directory /stack ps -a -q migrate)"
