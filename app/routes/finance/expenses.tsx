@@ -121,8 +121,8 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
   const annualGrossIncomeCents = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
   const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
   const { netRemainingYearly, netRemainingMonthly } = useIncomeCalculations(
-    annualGrossIncomeCents || undefined,
-    taxDeductionPercentage || undefined,
+    annualGrossIncomeCents,
+    taxDeductionPercentage,
     totalMonthlyCost,
     totalYearlyCost
   );

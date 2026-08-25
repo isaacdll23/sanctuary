@@ -16,4 +16,13 @@ describe("calculateIncomeCents", () => {
     assert.equal(result.netRemainingMonthly, 5_667);
     assert.equal(result.netRemainingYearly, 68_000);
   });
+
+  it("masks a configured zero income and zero tax like an unconfigured one (expenses.tsx guard is a no-op)", () => {
+    const configuredZero = calculateIncomeCents(0, 0, 200_000, 2_400_000);
+    const unconfigured = calculateIncomeCents(undefined, undefined, 200_000, 2_400_000);
+    assert.equal(configuredZero.netRemainingMonthly, unconfigured.netRemainingMonthly);
+    assert.equal(configuredZero.netRemainingYearly, unconfigured.netRemainingYearly);
+    assert.equal(configuredZero.annualNetIncome, 0);
+    assert.equal(configuredZero.netRemainingYearly, -2_400_000);
+  });
 });
