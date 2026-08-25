@@ -15,6 +15,12 @@ describe("formatMoney", () => {
     assert.equal(formatMoney(3927064), "39,270.64");
   });
 
+  it("rounds fractional cents to the nearest cent", () => {
+    assert.equal(formatMoney(383448.66666666662786), "3,834.49");
+    assert.equal(formatMoney(466666.6666666666), "4,666.67");
+    assert.equal(formatMoney(0.4), "0.00");
+  });
+
   it("handles negative values", () => {
     assert.equal(formatMoney(-1250), "-12.50");
     assert.equal(formatMoney(-327255), "-3,272.55");
