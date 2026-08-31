@@ -15,6 +15,7 @@ import {
   isUserAdmin,
 } from "./modules/auth.server";
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
+import { parseNavigationPreferences } from "./modules/navigation";
 import {
   parseFeatureOverrides,
   platformAvailableFeatureIds,
@@ -42,6 +43,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     let isAdmin = false;
     let accessiblePages: string[] = [];
     let enabledFeatures: string[] = [];
+    let mobileTabIds: string[] = [];
 
     if (isAuthenticated) {
       try {
@@ -56,6 +58,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         enabledFeatures = platformAvailableFeatureIds().filter((featureId) =>
           resolveFeatureEnabled(featureId, overrides)
         );
+
+        // Pinned mobile bottom-bar tabs (validated; defaults when unset)
+        mobileTabIds = [
+          ...parseNavigationPreferences(user.navigationPreferences).mobileTabIds,
+        ];
       } catch (error) {
         // If there's an error getting the user or their pages, fallback to defaults
         console.error("Error fetching user data:", error);
@@ -63,10 +70,11 @@ export async function loader({ request }: Route.LoaderArgs) {
         isAdmin = false;
         accessiblePages = [];
         enabledFeatures = [];
+        mobileTabIds = [];
       }
     }
 
-    return { isAuthenticated, isAdmin, accessiblePages, enabledFeatures };
+    return { isAuthenticated, isAdmin, accessiblePages, enabledFeatures, mobileTabIds };
   } catch (error) {
     console.error("Error in root loader:", error);
     // Return default values to prevent the app from crashing
@@ -75,6 +83,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       isAdmin: false,
       accessiblePages: [],
       enabledFeatures: [],
+      mobileTabIds: [],
     };
   }
 }
@@ -85,6 +94,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     isAdmin: boolean;
     accessiblePages: string[];
     enabledFeatures: string[];
+    mobileTabIds: string[];
   }>();
 
   // Provide fallback values if loader data is undefined
@@ -93,6 +103,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     isAdmin = false,
     accessiblePages = [],
     enabledFeatures = [],
+    mobileTabIds = [],
   } = loaderData || {};
 
   return (
@@ -149,6 +160,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             isAuthenticated={isAuthenticated}
             isAdmin={isAdmin}
             accessiblePages={accessiblePages}
+            mobileTabIds={mobileTabIds}
           />
           <ScrollRestoration />
           <Scripts />

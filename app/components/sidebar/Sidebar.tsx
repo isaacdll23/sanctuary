@@ -3,23 +3,19 @@ import SidebarLink from "./SidebarLink";
 import SidebarSection from "./SidebarSection";
 import CollapsibleNavItem from "./CollapsibleNavItem";
 import {
-  HomeIcon,
-  UserCircleIcon,
-  CurrencyDollarIcon,
-  ClipboardDocumentListIcon,
+  ArrowRightEndOnRectangleIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
-  ArrowRightEndOnRectangleIcon,
-  ArrowLeftEndOnRectangleIcon,
-  CommandLineIcon,
-  BookOpenIcon,
-  Cog8ToothIcon,
-  CheckCircleIcon,
-  CalendarIcon,
-  ArrowUpRightIcon,
-  ArrowDownLeftIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import { platformAvailableFeatureIds, type FeatureId } from "~/modules/featureFlags";
+import { platformAvailableFeatureIds } from "~/modules/featureFlags";
+import {
+  adminNavSection,
+  isNavItemVisible,
+  navSections,
+  type NavItemDef,
+  type NavSectionDef,
+} from "~/components/navigation/navConfig";
 
 interface SidebarProps {
   isAuthenticated: boolean;
@@ -29,149 +25,23 @@ interface SidebarProps {
   enabledFeatures?: readonly string[];
 }
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ElementType;
-  pageId: string;
-  featureId?: FeatureId; // Gated independently of pageId (e.g. Shared Budgets under finance)
-  children?: NavItem[]; // Support for nested child items
-}
-
-interface NavSection {
-  title?: string;
-  items: NavItem[];
-}
-
 const navItemsUnauth = [
   { to: "/auth/login", label: "Login", icon: ArrowRightEndOnRectangleIcon },
   { to: "/auth/register", label: "Register", icon: UserCircleIcon },
 ];
 
-// Organized auth navigation with sections
-const navSectionsAuth: NavSection[] = [
-  {
-    title: "Core Tools",
-    items: [
-      { to: "/dashboard", label: "Dashboard", icon: HomeIcon, pageId: "dashboard" },
-      {
-        to: "/tasks",
-        label: "Tasks",
-        icon: CheckCircleIcon,
-        pageId: "tasks",
-      },
-      {
-        to: "/day-planner",
-        label: "Day Planner",
-        icon: CalendarIcon,
-        pageId: "day-planner",
-      },
-      {
-        to: "/notes",
-        label: "Notes",
-        icon: BookOpenIcon,
-        pageId: "notes",
-      },
-    ],
-  },
-  {
-    title: "Financial",
-    items: [
-      {
-        to: "/finance/expenses",
-        label: "Finance",
-        icon: CurrencyDollarIcon,
-        pageId: "finance",
-        children: [
-          {
-            to: "/finance/expenses",
-            label: "Expenses",
-            icon: ArrowUpRightIcon,
-            pageId: "finance",
-          },
-          {
-            to: "/finance/income",
-            label: "Income",
-            icon: ArrowDownLeftIcon,
-            pageId: "finance",
-          },
-          {
-            to: "/finance/budgets/shared",
-            label: "Shared Budgets",
-            icon: ClipboardDocumentListIcon,
-            pageId: "finance",
-            featureId: "shared-budgets",
-          },
-        ],
-      },
-    ],
-  },
-  {
-    title: "Tools",
-    items: [
-      {
-        to: "/utilities/commands",
-        label: "Commands",
-        icon: CommandLineIcon,
-        pageId: "utilities/commands",
-      },
-    ],
-  },
-  {
-    title: "Account",
-    items: [
-      {
-        to: "/settings",
-        label: "Settings",
-        icon: Cog8ToothIcon,
-        pageId: "settings",
-      },
-      {
-        to: "/auth/logout",
-        label: "Logout",
-        icon: ArrowLeftEndOnRectangleIcon,
-        pageId: "logout",
-      },
-    ],
-  },
-];
-
-// Admin navigation sections
-const navSectionsAdmin: NavSection[] = [
-  {
-    title: "Administration",
-    items: [
-      { to: "/admin", label: "Admin", icon: Cog8ToothIcon, pageId: "admin" },
-    ],
-  },
-  ...navSectionsAuth,
-];
-
-function isPageAccessible(pageId: string, accessiblePages: Set<string>) {
-  if (pageId === "logout") return true;
-  return accessiblePages.has(pageId);
-}
-
-function isNavItemVisible(
-  item: NavItem,
-  accessiblePages: Set<string>,
-  enabledFeatures: ReadonlySet<string>
-) {
-  if (!isPageAccessible(item.pageId, accessiblePages)) return false;
-  if (item.featureId && !enabledFeatures.has(item.featureId)) return false;
-  return true;
-}
-
 function filterNavSectionsByAccess(
-  navSections: readonly NavSection[],
-  accessiblePages: Set<string>,
+  sections: readonly NavSectionDef[],
+  accessiblePages: ReadonlySet<string>,
   enabledFeatures: ReadonlySet<string>
 ) {
-  return navSections
+  return sections
     .map((section) => ({
       ...section,
       items: section.items
-        .filter((item) => isNavItemVisible(item, accessiblePages, enabledFeatures))
+        .filter((item) =>
+          isNavItemVisible(item, accessiblePages, enabledFeatures)
+        )
         .map((item) => {
           if (!item.children?.length) {
             return item;
@@ -184,7 +54,7 @@ function filterNavSectionsByAccess(
             ),
           };
         }),
-      }))
+    }))
     .filter((section) => section.items.length > 0);
 }
 
@@ -212,7 +82,7 @@ export default function Sidebar({
 
   // Helper function to render nav items recursively
   function renderNavItem(
-    item: NavItem,
+    item: NavItemDef,
     isSidebarCollapsed: boolean,
     onItemClick?: () => void
   ) {
@@ -240,13 +110,22 @@ export default function Sidebar({
     );
   }
 
-  const navSections = useMemo(() => {
+  const sections = useMemo(() => {
     if (!isAuthenticated) return [];
     // Feature flags apply to admins too: disabled pages are filtered out for
     // everyone via accessiblePages (root loader data) and featureId gates.
-    const sections = isAdmin ? navSectionsAdmin : navSectionsAuth;
-    return filterNavSectionsByAccess(sections, accessiblePagesSet, enabledFeaturesSet);
-  }, [isAuthenticated, isAdmin, accessiblePagesSet, enabledFeaturesSet]);
+    return isAdmin ? [adminNavSection, ...navSections] : [...navSections];
+  }, [isAuthenticated, isAdmin]);
+
+  const filteredSections = useMemo(
+    () =>
+      filterNavSectionsByAccess(
+        sections,
+        accessiblePagesSet,
+        enabledFeaturesSet
+      ),
+    [sections, accessiblePagesSet, enabledFeaturesSet]
+  );
 
   return (
     <>
@@ -283,9 +162,9 @@ export default function Sidebar({
             onClick={toggleDesktopCollapse}
             className="p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
             aria-label={
-              isDesktopCollapsed ? "Expand sidebar" : "Collapse sidebar"
+              isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }
-            aria-expanded={!isDesktopCollapsed}
+            aria-expanded={!isSidebarCollapsed}
           >
             {isDesktopCollapsed ? (
               <ChevronDoubleRightIcon className="h-6 w-6" />
@@ -310,7 +189,7 @@ export default function Sidebar({
             ))
           ) : (
             // Render authenticated sections
-            navSections.map((section, sectionIdx) => (
+            filteredSections.map((section, sectionIdx) => (
               <SidebarSection
                 key={section.title || `section-${sectionIdx}`}
                 title={section.title}

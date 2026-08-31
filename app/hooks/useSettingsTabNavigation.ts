@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-type SettingsTab = "profile" | "features" | "calendar";
+type SettingsTab = "profile" | "features" | "navigation" | "calendar";
 
 interface UseSettingsTabNavigationReturn {
   activeTab: SettingsTab;

@@ -27,6 +27,7 @@ export const usersTable = pgTable("users", {
   googleCalendarPreferences: json(), // User sync preferences: { syncCalendarColors: boolean, includeDescription: boolean, ... }
   dashboardPreferences: json(), // Dashboard preferences: { layout: string, visibleWidgets: string[], goals: {...}, refreshInterval: number, ... }
   featureOverrides: json(), // Per-user feature toggles: { "tasks": "disabled", ... } — wins over platform defaults
+  navigationPreferences: json(), // Per-user navigation prefs: { mobileTabIds: ["tasks", ...] } — pages pinned to the mobile bottom bar (max 4, see app/modules/navigation.ts)
   createdAt: timestamp().defaultNow().notNull(),
 });
 

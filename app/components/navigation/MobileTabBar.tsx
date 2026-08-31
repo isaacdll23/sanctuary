@@ -1,70 +1,28 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { NavLink, useLocation } from "react-router";
-import type { ComponentType, SVGProps } from "react";
+import { Link, useLocation } from "react-router";
 import {
-  BookOpenIcon,
-  CalendarIcon,
-  CheckCircleIcon,
-  Cog8ToothIcon,
-  CommandLineIcon,
-  CurrencyDollarIcon,
-  HomeIcon,
   Squares2X2Icon,
   XMarkIcon,
-  ArrowLeftEndOnRectangleIcon,
-  ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
+import {
+  adminNavItem,
+  isNavItemActive,
+  isPageAccessible,
+  logoutNavItem,
+  navItems,
+  resolvePinnedTabs,
+} from "~/components/navigation/navConfig";
+import { DEFAULT_MOBILE_TAB_IDS } from "~/modules/navigation";
 
 interface MobileTabBarProps {
   isAuthenticated: boolean;
   isAdmin?: boolean;
   accessiblePages?: string[];
-}
-
-type NavIcon = ComponentType<SVGProps<SVGSVGElement>>;
-
-type NavItem = {
-  to: string;
-  label: string;
-  icon: NavIcon;
-  pageId: string;
-};
-
-const coreTabs: NavItem[] = [
-  { to: "/dashboard", label: "Home", icon: HomeIcon, pageId: "dashboard" },
-  { to: "/tasks", label: "Tasks", icon: CheckCircleIcon, pageId: "tasks" },
-  { to: "/notes", label: "Notes", icon: BookOpenIcon, pageId: "notes" },
-  { to: "/day-planner", label: "Plan", icon: CalendarIcon, pageId: "day-planner" },
-];
-
-const baseMoreNavItems: NavItem[] = [
-  {
-    to: "/finance/expenses",
-    label: "Finance",
-    icon: CurrencyDollarIcon,
-    pageId: "finance",
-  },
-  {
-    to: "/utilities/commands",
-    label: "Commands",
-    icon: CommandLineIcon,
-    pageId: "utilities/commands",
-  },
-  { to: "/settings", label: "Settings", icon: Cog8ToothIcon, pageId: "settings" },
-  {
-    to: "/auth/logout",
-    label: "Logout",
-    icon: ArrowLeftEndOnRectangleIcon,
-    pageId: "logout",
-  },
-];
-
-function isPageAccessible(
-  pageId: string,
-  accessiblePages: Set<string>
-) {
-  if (pageId === "logout") return true;
-  return accessiblePages.has(pageId);
+  /**
+   * Ordered pinned tabs (page ids) from the user's navigation preferences.
+   * Always intersected with accessiblePages — preferences never grant access.
+   */
+  mobileTabIds?: readonly string[];
 }
 
 function getTabClasses(isActive: boolean) {
@@ -76,43 +34,52 @@ function getTabClasses(isActive: boolean) {
   ].join(" ");
 }
 
+function getSheetLinkClasses(isActive: boolean) {
+  return [
+    "flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+    isActive
+      ? "bg-cyan-500/10 text-cyan-400"
+      : "text-gray-300 hover:bg-gray-900 hover:text-gray-100",
+  ].join(" ");
+}
+
 export default function MobileTabBar({
   isAuthenticated,
   isAdmin = false,
   accessiblePages = [],
+  mobileTabIds = DEFAULT_MOBILE_TAB_IDS,
 }: MobileTabBarProps) {
   const location = useLocation();
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
+
   const accessiblePagesSet = useMemo(
     () => new Set(accessiblePages),
     [accessiblePages]
   );
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
-  const visibleCoreTabs = useMemo(
-    () =>
-      coreTabs.filter((item) =>
-        isPageAccessible(item.pageId, accessiblePagesSet)
-      ),
-    [accessiblePagesSet]
+  const pinnedTabs = useMemo(
+    () => resolvePinnedTabs(mobileTabIds, accessiblePagesSet),
+    [mobileTabIds, accessiblePagesSet]
   );
 
-  const visibleMoreLinks = useMemo(() => {
-    const dynamicItems = [...baseMoreNavItems];
-    if (isAdmin) {
-      dynamicItems.unshift({
-        to: "/admin",
-        label: "Admin",
-        icon: ShieldCheckIcon,
-        pageId: "admin",
-      });
-    }
-
-    return dynamicItems.filter((item) =>
-      isPageAccessible(item.pageId, accessiblePagesSet)
+  const moreLinks = useMemo(() => {
+    const pinnedIds = new Set(pinnedTabs.map((tab) => tab.pageId));
+    const candidates = isAdmin ? [adminNavItem, ...navItems] : [...navItems];
+    const unpinned = candidates.filter(
+      (item) =>
+        !pinnedIds.has(item.pageId) &&
+        isPageAccessible(item.pageId, accessiblePagesSet)
     );
-  }, [isAdmin, accessiblePagesSet]);
+    // Logout is reachable for every authenticated user and always lives in
+    // the More sheet.
+    return [...unpinned, logoutNavItem];
+  }, [isAdmin, pinnedTabs, accessiblePagesSet]);
+
+  const isMoreActive = moreLinks.some((item) =>
+    isNavItemActive(item, location.pathname)
+  );
 
   useEffect(() => {
     setIsMoreOpen(false);
@@ -200,28 +167,34 @@ export default function MobileTabBar({
         aria-label="Primary"
       >
         <div className="mx-auto flex max-w-screen-sm items-center gap-1.5">
-          {visibleCoreTabs.map((tab) => {
+          {pinnedTabs.map((tab) => {
             const Icon = tab.icon;
+            const isActive = isNavItemActive(tab, location.pathname);
             return (
-              <NavLink key={tab.to} to={tab.to} className={({ isActive }) => getTabClasses(isActive)}>
-                <Icon className="h-5 w-5" />
-                <span>{tab.label}</span>
-              </NavLink>
+              <Link
+                key={tab.pageId}
+                to={tab.to}
+                className={getTabClasses(isActive)}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <Icon className="h-5 w-5" aria-hidden="true" />
+                <span>{tab.shortLabel ?? tab.label}</span>
+              </Link>
             );
           })}
 
-          {visibleMoreLinks.length > 0 && (
+          {moreLinks.length > 0 && (
             <button
               type="button"
               ref={moreButtonRef}
               onClick={() => setIsMoreOpen(true)}
-              className={getTabClasses(isMoreOpen)}
+              className={getTabClasses(isMoreOpen || isMoreActive)}
               aria-controls="more-dialog"
               aria-haspopup="dialog"
               aria-expanded={isMoreOpen}
               aria-label="More options"
             >
-              <Squares2X2Icon className="h-5 w-5" />
+              <Squares2X2Icon className="h-5 w-5" aria-hidden="true" />
               <span>More</span>
             </button>
           )}
@@ -258,29 +231,24 @@ export default function MobileTabBar({
                 className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                 aria-label="Close more menu"
               >
-                <XMarkIcon className="h-5 w-5" />
+                <XMarkIcon className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
             <div className="space-y-2">
-              {visibleMoreLinks.map((item) => {
+              {moreLinks.map((item) => {
                 const Icon = item.icon;
+                const isActive = isNavItemActive(item, location.pathname);
                 return (
-                  <NavLink
+                  <Link
                     key={item.to}
                     to={item.to}
-                    className={({ isActive }) =>
-                      [
-                        "flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-cyan-500/10 text-cyan-400"
-                          : "text-gray-300 hover:bg-gray-900 hover:text-gray-100",
-                      ].join(" ")
-                    }
+                    className={getSheetLinkClasses(isActive)}
+                    aria-current={isActive ? "page" : undefined}
                   >
-                    <Icon className="h-5 w-5" />
+                    <Icon className="h-5 w-5" aria-hidden="true" />
                     <span>{item.label}</span>
-                  </NavLink>
+                  </Link>
                 );
               })}
             </div>

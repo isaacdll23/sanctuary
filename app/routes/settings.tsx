@@ -1,20 +1,32 @@
 import { useLoaderData } from "react-router";
 import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { getGoogleOAuthUrl, isGoogleOAuthConfigured } from "~/modules/auth.server";
+import { getUserAccessiblePages } from "~/modules/services/PageAccessService";
 import ProfileSettingsSection from "~/components/settings/ProfileSettingsSection";
 import CalendarSettingsSection from "~/components/settings/CalendarSettingsSection";
 import FeatureSettingsSection from "~/components/settings/FeatureSettingsSection";
 import TabNavigation from "~/components/settings/TabNavigation";
+import MobileNavigationSettingsSection from "~/components/settings/MobileNavigationSettingsSection";
 import { useSettingsTabNavigation } from "~/hooks/useSettingsTabNavigation";
 import type { FeatureSetting } from "~/modules/services/FeatureSettingsService";
 import {
   getFeatureSettingsForUser,
   handleFeatureSettingsAction,
 } from "~/modules/services/FeatureSettingsService";
+import { PINNABLE_PAGE_IDS } from "~/modules/navigation";
+import { adminNavItem, navItems } from "~/components/navigation/navConfig";
+import {
+  getNavigationPreferencesForUser,
+  handleNavigationPreferencesAction,
+} from "~/modules/services/NavigationPreferencesService";
 
-export function meta() {
+export const meta = () => {
   return [{ title: "Settings" }];
-}
+};
+
+const navItemLabelById = new Map(
+  [...navItems, adminNavItem].map((item) => [item.pageId, item.label])
+);
 
 export const loader = pageAccessLoader("settings", async (user, request) => {
   const { getGoogleCalendarAccount, getCalendarPreferences } = await import(
@@ -26,6 +38,17 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
   const googleOAuthEnabled = isGoogleOAuthConfigured();
   const oauthUrl = googleOAuthEnabled ? getGoogleOAuthUrl() : null;
 
+  const [accessiblePages, navigationPreferences] = await Promise.all([
+    getUserAccessiblePages(user.id),
+    getNavigationPreferencesForUser(user.id),
+  ]);
+
+  // Effective pinned tabs: stored order minus pages the user cannot access.
+  const accessiblePageSet = new Set(accessiblePages);
+  const mobileTabIds = navigationPreferences.mobileTabIds.filter((pageId) =>
+    accessiblePageSet.has(pageId)
+  );
+
   return {
     user,
     googleCalendarAccount,
@@ -33,6 +56,8 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
     oauthUrl,
     googleOAuthEnabled,
     featureSettings: getFeatureSettingsForUser(user),
+    accessiblePages,
+    mobileTabIds,
   };
 });
 
@@ -51,6 +76,10 @@ export const action = pageAccessAction("settings", async (_user, request) => {
 
   if (intent === "updateFeatureVisibility") {
     return handleFeatureSettingsAction(request);
+  }
+
+  if (intent === "updateMobileTabs") {
+    return handleNavigationPreferencesAction(request);
   } else if (intent.startsWith("calendar") || intent.startsWith("update") || intent.startsWith("disconnect") || intent.startsWith("manualSync") || intent === "resolveSyncConflict") {
     const isCalendarViewPreference = intent === "updateCalendarPreferences";
     if (!isCalendarViewPreference && !isGoogleOAuthConfigured()) {
@@ -100,11 +129,13 @@ type LoaderData = {
   oauthUrl: string | null;
   googleOAuthEnabled: boolean;
   featureSettings: FeatureSetting[];
+  accessiblePages: string[];
+  mobileTabIds: string[];
 };
 
 export default function Settings() {
   const loaderData = useLoaderData<LoaderData>();
-  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled, featureSettings } = loaderData;
+  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled, featureSettings, accessiblePages, mobileTabIds } = loaderData;
   const { activeTab, setActiveTab } = useSettingsTabNavigation();
 
   return (
@@ -121,6 +152,18 @@ export default function Settings() {
 
         {activeTab === "profile" && <ProfileSettingsSection user={user} />}
         {activeTab === "features" && <FeatureSettingsSection settings={featureSettings} />}
+        {activeTab === "navigation" && (
+          <MobileNavigationSettingsSection
+            key={mobileTabIds.join(",")}
+            options={PINNABLE_PAGE_IDS.filter((pageId) =>
+              accessiblePages.includes(pageId)
+            ).map((pageId) => ({
+              pageId,
+              label: navItemLabelById.get(pageId) ?? pageId,
+            }))}
+            initialTabIds={mobileTabIds}
+          />
+        )}
         {activeTab === "calendar" && (
           <CalendarSettingsSection
             googleCalendarAccount={googleCalendarAccount}
