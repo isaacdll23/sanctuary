@@ -9,6 +9,20 @@ Use the available `homelab-woodpecker-ci`, `homelab-ssh-servers`, and `homelab-c
 
 Do not expose `.env`, database credentials, registry credentials, or the Woodpecker token in tool output. Do not add AI attribution to commits.
 
+## Tooling (preferred)
+
+`scripts/release.sh` automates this runbook end to end and enforces its invariants mechanically:
+
+```bash
+scripts/release.sh preflight            # gates + git state (read-only)
+scripts/release.sh deploy [--receipt]   # push -> wait CI -> verify images -> backup -> deploy -> verify
+scripts/release.sh verify               # re-run post-deploy verification against hs1
+scripts/release.sh rollback --previous --yes
+scripts/release.sh status               # git, deployed tag, containers, backups, pipelines
+```
+
+The script hard-codes the release invariants below: it validates the `sha-` tag format, computes the tag once from HEAD, proves both images exist in the registry **before** touching `.env`, backs up `.env` first, waits only on known terminal pipeline statuses (empty/unknown statuses abort instead of sleeping), cross-checks the pipeline's commit sha, pg_dumps automatically when `app/db/schema.ts` or `migrations/` changed, refuses to report success unless post-deploy verification passes, and prints a rollback line. Prefer it over the manual steps; the manual procedures below remain the source of truth and the fallback when the tooling is unavailable.
+
 ## Release invariants
 
 - Releases originate from `main` in `isaacdll23/sanctuary`.
@@ -24,7 +38,7 @@ Do not expose `.env`, database credentials, registry credentials, or the Woodpec
 
 1. Read the repository `AGENTS.md` and the three homelab skills named above.
 2. Confirm the current branch, worktree contents, and `HEAD...origin/main` divergence. Preserve unrelated user changes.
-3. Run `npm test`, `npm run typecheck`, `npm run build`, and `git diff --check`.
+3. Run `npm test`, `npm run typecheck`, `npm run build`, and `git diff --check` (or `scripts/release.sh preflight`, which runs all of them).
 4. Inspect schema changes against the migrate image behavior in `Dockerfile`. Add compatible database defaults or a deliberate migration mechanism before pushing.
 5. Confirm Woodpecker credentials/CLI and passwordless SSH access to `hs1` without printing secrets.
 
