@@ -19,11 +19,14 @@ import {
   ArrowUpRightIcon,
   ArrowDownLeftIcon,
 } from "@heroicons/react/24/outline";
+import { platformAvailableFeatureIds, type FeatureId } from "~/modules/featureFlags";
 
 interface SidebarProps {
   isAuthenticated: boolean;
   isAdmin?: boolean;
   accessiblePages?: string[];
+  /** Effective per-user enabled feature IDs (from the root loader). */
+  enabledFeatures?: readonly string[];
 }
 
 interface NavItem {
@@ -31,6 +34,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   pageId: string;
+  featureId?: FeatureId; // Gated independently of pageId (e.g. Shared Budgets under finance)
   children?: NavItem[]; // Support for nested child items
 }
 
@@ -96,6 +100,7 @@ const navSectionsAuth: NavSection[] = [
             label: "Shared Budgets",
             icon: ClipboardDocumentListIcon,
             pageId: "finance",
+            featureId: "shared-budgets",
           },
         ],
       },
@@ -147,15 +152,26 @@ function isPageAccessible(pageId: string, accessiblePages: Set<string>) {
   return accessiblePages.has(pageId);
 }
 
+function isNavItemVisible(
+  item: NavItem,
+  accessiblePages: Set<string>,
+  enabledFeatures: ReadonlySet<string>
+) {
+  if (!isPageAccessible(item.pageId, accessiblePages)) return false;
+  if (item.featureId && !enabledFeatures.has(item.featureId)) return false;
+  return true;
+}
+
 function filterNavSectionsByAccess(
   navSections: readonly NavSection[],
-  accessiblePages: Set<string>
+  accessiblePages: Set<string>,
+  enabledFeatures: ReadonlySet<string>
 ) {
   return navSections
     .map((section) => ({
       ...section,
       items: section.items
-        .filter((item) => isPageAccessible(item.pageId, accessiblePages))
+        .filter((item) => isNavItemVisible(item, accessiblePages, enabledFeatures))
         .map((item) => {
           if (!item.children?.length) {
             return item;
@@ -164,11 +180,11 @@ function filterNavSectionsByAccess(
           return {
             ...item,
             children: item.children.filter((child) =>
-              isPageAccessible(child.pageId, accessiblePages)
+              isNavItemVisible(child, accessiblePages, enabledFeatures)
             ),
           };
         }),
-    }))
+      }))
     .filter((section) => section.items.length > 0);
 }
 
@@ -176,11 +192,16 @@ export default function Sidebar({
   isAuthenticated,
   isAdmin = false,
   accessiblePages = [],
+  enabledFeatures = platformAvailableFeatureIds(),
 }: SidebarProps) {
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
   const accessiblePagesSet = useMemo(
     () => new Set(accessiblePages),
     [accessiblePages]
+  );
+  const enabledFeaturesSet = useMemo(
+    () => new Set(enabledFeatures),
+    [enabledFeatures]
   );
   const isSidebarCollapsed = isDesktopCollapsed;
   const onNavItemClick = undefined;
@@ -221,9 +242,11 @@ export default function Sidebar({
 
   const navSections = useMemo(() => {
     if (!isAuthenticated) return [];
-    if (isAdmin) return navSectionsAdmin;
-    return filterNavSectionsByAccess(navSectionsAuth, accessiblePagesSet);
-  }, [isAuthenticated, isAdmin, accessiblePagesSet]);
+    // Feature flags apply to admins too: disabled pages are filtered out for
+    // everyone via accessiblePages (root loader data) and featureId gates.
+    const sections = isAdmin ? navSectionsAdmin : navSectionsAuth;
+    return filterNavSectionsByAccess(sections, accessiblePagesSet, enabledFeaturesSet);
+  }, [isAuthenticated, isAdmin, accessiblePagesSet, enabledFeaturesSet]);
 
   return (
     <>

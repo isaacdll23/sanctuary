@@ -5,18 +5,26 @@ import { useState, useEffect } from "react";
 import { useToast } from "~/hooks/useToast";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 
-export const loader = pageAccessLoader("finance", async (user, request) => {
-  return {};
-});
+export const loader = pageAccessLoader(
+  "finance",
+  async (user, request) => {
+    return {};
+  },
+  "shared-budgets"
+);
 
-export const action = pageAccessAction("finance", async (_user, request) => {
-  const result = await handleSharedBudgetAction(request);
-  if (result.success) {
-    // Redirect to shared budgets list after creation
-    throw redirect("/finance/budgets/shared");
-  }
-  return result;
-});
+export const action = pageAccessAction(
+  "finance",
+  async (_user, request) => {
+    const result = await handleSharedBudgetAction(request);
+    if (result.success) {
+      // Redirect to shared budgets list after creation
+      throw redirect("/finance/budgets/shared");
+    }
+    return result;
+  },
+  "shared-budgets"
+);
 
 export default function NewSharedBudget() {
   const fetcher = useFetcher();

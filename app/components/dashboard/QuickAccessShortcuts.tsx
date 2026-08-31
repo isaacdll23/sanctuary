@@ -8,6 +8,7 @@ import {
   ArrowRightIcon,
 } from "@heroicons/react/24/outline";
 import { getDashboardPanelClasses } from "./dashboardStyles";
+import { platformAvailableFeatureIds, type FeatureId } from "~/modules/featureFlags";
 
 interface QuickAccessShortcut {
   id: string;
@@ -17,6 +18,7 @@ interface QuickAccessShortcut {
   href: string;
   color: "indigo" | "emerald" | "blue" | "amber" | "purple";
   keyboardShortcut?: string;
+  featureId: FeatureId;
 }
 
 const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
@@ -28,6 +30,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     href: "/tasks?action=new",
     color: "indigo",
     keyboardShortcut: "⌘N",
+    featureId: "tasks",
   },
   {
     id: "plan-day",
@@ -37,6 +40,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     href: "/day-planner",
     color: "blue",
     keyboardShortcut: "⌘P",
+    featureId: "day-planner",
   },
   {
     id: "view-tasks",
@@ -45,6 +49,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     icon: <CheckCircleIcon className="w-5 h-5" />,
     href: "/tasks",
     color: "emerald",
+    featureId: "tasks",
   },
   {
     id: "budgets",
@@ -53,6 +58,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     icon: <CurrencyDollarIcon className="w-5 h-5" />,
     href: "/finance/budgets/shared",
     color: "amber",
+    featureId: "shared-budgets",
   },
   {
     id: "notes",
@@ -61,6 +67,7 @@ const QUICK_ACCESS_SHORTCUTS: QuickAccessShortcut[] = [
     icon: <PencilSquareIcon className="w-5 h-5" />,
     href: "/notes",
     color: "purple",
+    featureId: "notes",
   },
 ];
 
@@ -78,13 +85,19 @@ const colorClasses = {
 interface QuickAccessProps {
   maxShortcuts?: number;
   showKeyboardHints?: boolean;
+  /** Effective per-user enabled feature IDs (from the root loader). */
+  enabledFeatures?: readonly string[];
 }
 
 export default function QuickAccessShortcuts({
   maxShortcuts = 5,
   showKeyboardHints = true,
+  enabledFeatures,
 }: QuickAccessProps) {
-  const shortcuts = QUICK_ACCESS_SHORTCUTS.slice(0, maxShortcuts);
+  const enabled = new Set(enabledFeatures ?? platformAvailableFeatureIds());
+  const shortcuts = QUICK_ACCESS_SHORTCUTS.filter((shortcut) =>
+    enabled.has(shortcut.featureId)
+  ).slice(0, maxShortcuts);
   void showKeyboardHints;
 
   return (

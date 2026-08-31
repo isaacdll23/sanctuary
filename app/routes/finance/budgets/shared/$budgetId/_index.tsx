@@ -15,13 +15,21 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
-export const loader = pageAccessLoader("finance", async (user, request, params) => {
-  return await getBudgetDetails(params.budgetId!, user.id.toString());
-});
+export const loader = pageAccessLoader(
+  "finance",
+  async (user, request, params) => {
+    return await getBudgetDetails(params.budgetId!, user.id.toString());
+  },
+  "shared-budgets"
+);
 
-export const action = pageAccessAction("finance", async (_user, request) => {
-  return await handleSharedBudgetAction(request);
-});
+export const action = pageAccessAction(
+  "finance",
+  async (_user, request) => {
+    return await handleSharedBudgetAction(request);
+  },
+  "shared-budgets"
+);
 
 export default function SharedBudgetDetails() {
   const fetcher = useFetcher();

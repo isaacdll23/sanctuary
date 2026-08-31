@@ -15,6 +15,11 @@ import {
   isUserAdmin,
 } from "./modules/auth.server";
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
+import {
+  parseFeatureOverrides,
+  platformAvailableFeatureIds,
+  resolveFeatureEnabled,
+} from "./modules/featureFlags";
 import "@fontsource-variable/inter";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
@@ -36,6 +41,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     let isAuthenticated = await isSessionCreated(request);
     let isAdmin = false;
     let accessiblePages: string[] = [];
+    let enabledFeatures: string[] = [];
 
     if (isAuthenticated) {
       try {
@@ -44,16 +50,23 @@ export async function loader({ request }: Route.LoaderArgs) {
         // Get the user and their accessible pages
         const user = await getUserFromSession(request);
         accessiblePages = await getUserAccessiblePages(user.id);
+
+        // Effective per-user feature state: user overrides win over platform defaults
+        const overrides = parseFeatureOverrides(user.featureOverrides);
+        enabledFeatures = platformAvailableFeatureIds().filter((featureId) =>
+          resolveFeatureEnabled(featureId, overrides)
+        );
       } catch (error) {
         // If there's an error getting the user or their pages, fallback to defaults
         console.error("Error fetching user data:", error);
         isAuthenticated = false;
         isAdmin = false;
         accessiblePages = [];
+        enabledFeatures = [];
       }
     }
 
-    return { isAuthenticated, isAdmin, accessiblePages };
+    return { isAuthenticated, isAdmin, accessiblePages, enabledFeatures };
   } catch (error) {
     console.error("Error in root loader:", error);
     // Return default values to prevent the app from crashing
@@ -61,6 +74,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       isAuthenticated: false,
       isAdmin: false,
       accessiblePages: [],
+      enabledFeatures: [],
     };
   }
 }
@@ -70,6 +84,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     isAuthenticated: boolean;
     isAdmin: boolean;
     accessiblePages: string[];
+    enabledFeatures: string[];
   }>();
 
   // Provide fallback values if loader data is undefined
@@ -77,6 +92,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     isAuthenticated = false,
     isAdmin = false,
     accessiblePages = [],
+    enabledFeatures = [],
   } = loaderData || {};
 
   return (
@@ -116,6 +132,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             isAuthenticated={isAuthenticated}
             isAdmin={isAdmin}
             accessiblePages={accessiblePages}
+            enabledFeatures={enabledFeatures}
           />
           <div
             // pb-[84px] is an explicit px value on purpose: the compact

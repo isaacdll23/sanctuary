@@ -5,10 +5,14 @@ import SharedBudgetCard from "~/components/finance/SharedBudgetCard";
 import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
-export const loader = pageAccessLoader("finance", async (user, request) => {
-  const result = await getBudgetsForUser(user.id.toString());
-  return result;
-});
+export const loader = pageAccessLoader(
+  "finance",
+  async (user, request) => {
+    const result = await getBudgetsForUser(user.id.toString());
+    return result;
+  },
+  "shared-budgets"
+);
 
 export default function SharedBudgetsIndex() {
   const loaderData = useLoaderData<typeof loader>();

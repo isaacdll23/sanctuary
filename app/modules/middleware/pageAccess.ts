@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import { getUserFromSession, requireAuth } from "../auth.server";
 import { hasPageAccess } from "../services/PageAccessService";
+import { featureIdForPageId, parseFeatureOverrides, resolveFeatureEnabled, type FeatureId } from "../featureFlags";
 import { usersTable } from "~/db/schema";
 
 export type AuthenticatedUser = typeof usersTable.$inferSelect;
@@ -15,13 +16,25 @@ export type AuthenticatedUser = typeof usersTable.$inferSelect;
 export async function requirePageAccess(
   request: Request,
   pageId: string,
-  redirectPath: string = "/dashboard"
+  redirectPath: string = "/dashboard",
+  featureId?: FeatureId
 ) {
   // First ensure the user is authenticated
   await requireAuth(request);
 
   // Then get the user
   const user = await getUserFromSession(request);
+
+  // Disabled features are blocked for every role, including admins.
+  // The user's own overrides count too, so a user who hid a feature for
+  // themselves cannot reach it by URL.
+  const gatedFeature = featureId ?? featureIdForPageId(pageId);
+  if (
+    gatedFeature &&
+    !resolveFeatureEnabled(gatedFeature, parseFeatureOverrides(user.featureOverrides))
+  ) {
+    throw redirect(redirectPath);
+  }
 
   // Admin users always have access to all pages
   if (user.role === "admin") {
@@ -53,11 +66,12 @@ export function pageAccessLoader<LoaderData>(
     user: AuthenticatedUser,
     request: Request,
     params: Record<string, string | undefined>
-  ) => Promise<LoaderData> | LoaderData
+  ) => Promise<LoaderData> | LoaderData,
+  featureId?: FeatureId
 ) {
   return async ({ request, params }: { request: Request; params: Record<string, string | undefined> }) => {
     // Get user with page access or redirect
-    const user = await requirePageAccess(request, pageId);
+    const user = await requirePageAccess(request, pageId, "/dashboard", featureId);
 
     // Call the actual loader function with the user
     return loaderFn(user, request, params);
@@ -77,11 +91,12 @@ export function pageAccessAction<ActionData>(
     user: AuthenticatedUser,
     request: Request,
     params: Record<string, string | undefined>
-  ) => Promise<ActionData> | ActionData
+  ) => Promise<ActionData> | ActionData,
+  featureId?: FeatureId
 ) {
   return async ({ request, params }: { request: Request; params: Record<string, string | undefined> }) => {
     // Get user with page access or redirect
-    const user = await requirePageAccess(request, pageId);
+    const user = await requirePageAccess(request, pageId, "/dashboard", featureId);
 
     // Call the actual action function with the user
     return actionFn(user, request, params);

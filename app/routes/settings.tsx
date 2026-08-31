@@ -3,8 +3,14 @@ import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAcc
 import { getGoogleOAuthUrl, isGoogleOAuthConfigured } from "~/modules/auth.server";
 import ProfileSettingsSection from "~/components/settings/ProfileSettingsSection";
 import CalendarSettingsSection from "~/components/settings/CalendarSettingsSection";
+import FeatureSettingsSection from "~/components/settings/FeatureSettingsSection";
 import TabNavigation from "~/components/settings/TabNavigation";
 import { useSettingsTabNavigation } from "~/hooks/useSettingsTabNavigation";
+import type { FeatureSetting } from "~/modules/services/FeatureSettingsService";
+import {
+  getFeatureSettingsForUser,
+  handleFeatureSettingsAction,
+} from "~/modules/services/FeatureSettingsService";
 
 export function meta() {
   return [{ title: "Settings" }];
@@ -26,6 +32,7 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
     calendarPreferences,
     oauthUrl,
     googleOAuthEnabled,
+    featureSettings: getFeatureSettingsForUser(user),
   };
 });
 
@@ -40,6 +47,10 @@ export const action = pageAccessAction("settings", async (_user, request) => {
       "~/modules/services/ProfileService"
     );
     return handleProfileAction(request);
+  }
+
+  if (intent === "updateFeatureVisibility") {
+    return handleFeatureSettingsAction(request);
   } else if (intent.startsWith("calendar") || intent.startsWith("update") || intent.startsWith("disconnect") || intent.startsWith("manualSync") || intent === "resolveSyncConflict") {
     const isCalendarViewPreference = intent === "updateCalendarPreferences";
     if (!isCalendarViewPreference && !isGoogleOAuthConfigured()) {
@@ -88,11 +99,12 @@ type LoaderData = {
   calendarPreferences: CalendarPreferences | null;
   oauthUrl: string | null;
   googleOAuthEnabled: boolean;
+  featureSettings: FeatureSetting[];
 };
 
 export default function Settings() {
   const loaderData = useLoaderData<LoaderData>();
-  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled } = loaderData;
+  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled, featureSettings } = loaderData;
   const { activeTab, setActiveTab } = useSettingsTabNavigation();
 
   return (
@@ -108,6 +120,7 @@ export default function Settings() {
         <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
         {activeTab === "profile" && <ProfileSettingsSection user={user} />}
+        {activeTab === "features" && <FeatureSettingsSection settings={featureSettings} />}
         {activeTab === "calendar" && (
           <CalendarSettingsSection
             googleCalendarAccount={googleCalendarAccount}

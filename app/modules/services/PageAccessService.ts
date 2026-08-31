@@ -2,6 +2,12 @@ import { db } from "~/db";
 import { usersTable } from "~/db/schema";
 import { eq } from "drizzle-orm";
 import { getUserFromSession } from "~/modules/auth.server";
+import {
+  featureIdForPageId,
+  filterEnabledFeatures,
+  parseFeatureOverrides,
+  resolveFeatureEnabled,
+} from "../featureFlags";
 
 export type PageAccessAction = {
   userId: number;
@@ -102,6 +108,15 @@ export async function hasPageAccess(
 
   const user = users[0];
 
+  // Disabled features are inaccessible regardless of role or grants
+  const featureId = featureIdForPageId(pageId);
+  if (
+    featureId &&
+    !resolveFeatureEnabled(featureId, parseFeatureOverrides(user.featureOverrides))
+  ) {
+    return false;
+  }
+
   // Admins always have access to all pages
   if (user.role === "admin") {
     return true;
@@ -136,20 +151,24 @@ export async function getUserAccessiblePages(
   }
 
   const user = users[0];
+  const overrides = parseFeatureOverrides(user.featureOverrides);
 
   // Admins have access to all pages
   if (user.role === "admin") {
     // Return all possible page IDs (this should ideally be pulled from a central registry)
-    return [
-      "dashboard",
-      "finance",
-      "tasks",
-      "day-planner",
-      "notes", // Updated from principles to notes
-      "utilities/commands",
-      "admin",
-      "settings",
-    ];
+    return filterEnabledFeatures(
+      [
+        "dashboard",
+        "finance",
+        "tasks",
+        "day-planner",
+        "notes", // Updated from principles to notes
+        "utilities/commands",
+        "admin",
+        "settings",
+      ],
+      overrides
+    );
   }
 
   // Parse allowed pages
@@ -167,7 +186,7 @@ export async function getUserAccessiblePages(
     allowedPages.push("settings");
   }
 
-  return allowedPages;
+  return filterEnabledFeatures(allowedPages, overrides);
 }
 
 // Export the hasPageAccess function directly for convenience when working with client components

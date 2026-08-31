@@ -61,10 +61,8 @@ const baseMoreNavItems: NavItem[] = [
 
 function isPageAccessible(
   pageId: string,
-  isAdmin: boolean,
   accessiblePages: Set<string>
 ) {
-  if (isAdmin) return true;
   if (pageId === "logout") return true;
   return accessiblePages.has(pageId);
 }
@@ -95,9 +93,9 @@ export default function MobileTabBar({
   const visibleCoreTabs = useMemo(
     () =>
       coreTabs.filter((item) =>
-        isPageAccessible(item.pageId, isAdmin, accessiblePagesSet)
+        isPageAccessible(item.pageId, accessiblePagesSet)
       ),
-    [isAdmin, accessiblePagesSet]
+    [accessiblePagesSet]
   );
 
   const visibleMoreLinks = useMemo(() => {
@@ -112,7 +110,7 @@ export default function MobileTabBar({
     }
 
     return dynamicItems.filter((item) =>
-      isPageAccessible(item.pageId, isAdmin, accessiblePagesSet)
+      isPageAccessible(item.pageId, accessiblePagesSet)
     );
   }, [isAdmin, accessiblePagesSet]);
 

@@ -5,11 +5,17 @@ import {
 } from "~/modules/services/BudgetInviteService";
 import { getBudgetDetails } from "~/modules/services/SharedBudgetService";
 import { getUserFromSession, isSessionCreated } from "~/modules/auth.server";
+import { resolveFeatureEnabled } from "~/modules/featureFlags";
 import { formatMoney } from "~/utils/money";
 import type { Route } from "./+types/$token";
 
 export const loader = async ({ params, request }: Route.LoaderArgs) => {
   const { token } = params;
+
+  // Shared budgets are disabled; ignore invite tokens while the feature is off
+  if (!resolveFeatureEnabled("shared-budgets")) {
+    throw redirect("/dashboard");
+  }
 
   // Validate the token first
   const validation = validateInviteToken(token);

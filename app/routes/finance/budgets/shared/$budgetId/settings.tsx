@@ -12,31 +12,39 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 
-export const loader = pageAccessLoader("finance", async (user, request, params) => {
-  const budgetId = params.budgetId!;
-  const result = await getBudgetDetails(budgetId, user.id.toString());
+export const loader = pageAccessLoader(
+  "finance",
+  async (user, request, params) => {
+    const budgetId = params.budgetId!;
+    const result = await getBudgetDetails(budgetId, user.id.toString());
 
-  // Redirect non-owners away from settings
-  if (result.success && result.data?.currentUserRole !== "owner") {
-    throw redirect(`/finance/budgets/shared/${budgetId}`);
-  }
+    // Redirect non-owners away from settings
+    if (result.success && result.data?.currentUserRole !== "owner") {
+      throw redirect(`/finance/budgets/shared/${budgetId}`);
+    }
 
-  return result;
-});
+    return result;
+  },
+  "shared-budgets"
+);
 
-export const action = pageAccessAction("finance", async (_user, request) => {
-  const formData = await request.formData();
+export const action = pageAccessAction(
+  "finance",
+  async (_user, request) => {
+    const formData = await request.formData();
 
-  // Pass the already-parsed formData instead of the request
-  const result = await handleSharedBudgetAction(request, formData);
+    // Pass the already-parsed formData instead of the request
+    const result = await handleSharedBudgetAction(request, formData);
 
-  // Redirect to budget list if budget was deleted
-  if (result.success && result.message === "Budget deleted") {
-    throw redirect("/finance/budgets/shared");
-  }
+    // Redirect to budget list if budget was deleted
+    if (result.success && result.message === "Budget deleted") {
+      throw redirect("/finance/budgets/shared");
+    }
 
-  return result;
-});
+    return result;
+  },
+  "shared-budgets"
+);
 
 export default function SharedBudgetSettings() {
   const fetcher = useFetcher();
