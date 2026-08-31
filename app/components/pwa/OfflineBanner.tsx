@@ -27,7 +27,7 @@ export default function OfflineBanner() {
       className="fixed inset-x-0 z-40 bg-gray-800 text-gray-200 text-sm text-center py-1.5 px-3 border-b border-gray-700"
       style={{ top: "var(--safe-area-inset-top)" }}
     >
-      You're offline — showing cached content
+      You're offline — Sanctuary requires an internet connection
     </div>
   );
 }

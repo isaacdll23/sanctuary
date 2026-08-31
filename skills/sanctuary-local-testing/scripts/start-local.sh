@@ -10,9 +10,9 @@ local_app_port="4173"
 local_cred_file=".local-testing.env"
 
 if [[ "${1:-}" == "--background" || "${1:-}" == "-b" ]]; then
-  serve_in_background=true
+  serve_in_background=1
 else
-  serve_in_background=false
+  serve_in_background=0
 fi
 
 if [[ ! -f "$local_cred_file" ]]; then

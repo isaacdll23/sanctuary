@@ -156,17 +156,32 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       error.status === 404
         ? "The requested page could not be found."
         : error.statusText || details;
-  } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message;
-    stack = error.stack;
+  } else if (error && error instanceof Error) {
+    // Failed router data fetches (e.g. while offline) surface here as
+    // network errors — give them a clear, actionable message in all envs.
+    if (/failed to fetch|networkerror|load failed|network request failed/i.test(error.message)) {
+      message = "You're offline";
+      details =
+        "Sanctuary requires an internet connection. Reconnect and try again.";
+    } else if (import.meta.env.DEV) {
+      details = error.message;
+      stack = error.stack;
+    }
   }
 
   return (
     <main className="pt-12 p-3 container mx-auto bg-gray-950 text-gray-100">
       <h1 className="text-2xl font-bold mb-4">{message}</h1>
       <p className="mb-4">{details}</p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="rounded-md bg-gray-700 px-4 py-2 text-sm font-medium text-gray-100 hover:bg-gray-600"
+      >
+        Try again
+      </button>
       {stack && (
-        <pre className="w-full p-4 overflow-x-auto bg-gray-100 dark:bg-gray-800 rounded-lg">
+        <pre className="mt-4 w-full p-4 overflow-x-auto bg-gray-100 dark:bg-gray-800 rounded-lg">
           <code>{stack}</code>
         </pre>
       )}
