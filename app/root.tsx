@@ -15,23 +15,20 @@ import {
   isUserAdmin,
 } from "./modules/auth.server";
 import { getUserAccessiblePages } from "./modules/services/PageAccessService";
+import "@fontsource-variable/inter";
 import "./app.css";
 import Sidebar from "./components/sidebar/Sidebar";
 import { ToastProvider } from "~/context/ToastContext";
 import MobileTabBar from "./components/navigation/MobileTabBar";
+import OfflineBanner from "./components/pwa/OfflineBanner";
+import ServiceWorkerRegistrar from "./components/pwa/ServiceWorkerRegistrar";
+import { appleStartupImageLinks } from "./components/pwa/startupImages";
 
 export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-  },
-  { rel: "apple-touch-icon", href: "/sanctuary-logo-192.png" },
+  // Inter is self-hosted (bundled by Vite) so the app shell is fully
+  // self-contained and works offline in the installed PWA.
+  ...appleStartupImageLinks(),
+  { rel: "apple-touch-icon", href: "/apple-touch-icon.png", sizes: "180x180" },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -112,6 +109,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 bg-gray-800 text-gray-100 py-2 px-4 z-50">
           Skip to main content
         </a>
+        <OfflineBanner />
+        <ServiceWorkerRegistrar />
         <ToastProvider>
           <Sidebar
             isAuthenticated={isAuthenticated}

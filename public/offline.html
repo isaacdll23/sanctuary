@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Sanctuary — Offline</title>
+    <style>
+      :root { color-scheme: dark; }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100dvh;
+        background: #0a0c10;
+        color: #dde1e7;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        padding-top: calc(1.5rem + env(safe-area-inset-top, 0px));
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        text-align: center;
+        box-sizing: border-box;
+      }
+      img {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        margin: 0 auto 1.25rem;
+        display: block;
+      }
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 0.5rem;
+        font-weight: 600;
+      }
+      p {
+        margin: 0;
+        color: #9098a6;
+        line-height: 1.6;
+        max-width: 24rem;
+      }
+      button {
+        margin-top: 1.5rem;
+        background: #2d313d;
+        color: #f3f4f6;
+        border: 0;
+        border-radius: 0.5rem;
+        padding: 0.6rem 1.25rem;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      button:active { background: #424857; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/apple-touch-icon.png" alt="" width="72" height="72" />
+      <h1>You're offline</h1>
+      <p>
+        Sanctuary needs a connection for this page. Cached pages you visited
+        recently still work — try again once you're back online.
+      </p>
+      <button type="button" onclick="location.reload()">Retry</button>
+    </main>
+  </body>
+</html>

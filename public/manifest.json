@@ -1,12 +1,15 @@
 {
+  "id": "/",
   "name": "Sanctuary",
   "short_name": "Sanctuary",
+  "description": "Personal sanctuary for notes, tasks, day planning, and finances.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#000000",
-  "theme_color": "#000000",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/sanctuary-logo-192.png",
@@ -17,6 +20,18 @@
       "src": "/sanctuary-logo-512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/maskable-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
