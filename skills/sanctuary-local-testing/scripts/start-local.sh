@@ -9,6 +9,12 @@ local_db_port="5434"
 local_app_port="4173"
 local_cred_file=".local-testing.env"
 
+if [[ "${1:-}" == "--background" || "${1:-}" == "-b" ]]; then
+  serve_in_background=true
+else
+  serve_in_background=false
+fi
+
 if [[ ! -f "$local_cred_file" ]]; then
   local_db_password="$(openssl rand -hex 24)"
   print "LOCAL_DB_PASSWORD=$local_db_password" > "$local_cred_file"
@@ -59,8 +65,20 @@ npm run build
 
 print "Sanctuary local test app: http://127.0.0.1:${local_app_port}"
 print "Review login: test / test"
-exec env \
-  DATABASE_URL="$local_database_url" \
-  HOST=127.0.0.1 \
-  PORT="$local_app_port" \
-  npm run start
+
+if (( serve_in_background )); then
+  log_file="/tmp/sanctuary-local-server.log"
+  nohup env \
+    DATABASE_URL="$local_database_url" \
+    HOST=127.0.0.1 \
+    PORT="$local_app_port" \
+    npm run start > "$log_file" 2>&1 &
+  print "Server started in background (pid $!, log: $log_file)."
+  print "Stop it with: lsof -tiTCP:${local_app_port} -sTCP:LISTEN | xargs kill"
+else
+  exec env \
+    DATABASE_URL="$local_database_url" \
+    HOST=127.0.0.1 \
+    PORT="$local_app_port" \
+    npm run start
+fi

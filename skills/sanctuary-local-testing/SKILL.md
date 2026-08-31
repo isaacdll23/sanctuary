@@ -5,7 +5,7 @@ description: Start Sanctuary locally with its isolated Docker PostgreSQL databas
 
 # Sanctuary Local Testing
 
-Run `skills/sanctuary-local-testing/scripts/start-local.sh` from the repository root to build the app, start the local database, synchronize the schema, seed the review account, and serve Sanctuary at `http://127.0.0.1:4173`.
+Run `skills/sanctuary-local-testing/scripts/start-local.sh` from the repository root to build the app, start the local database, synchronize the schema, seed the review account, and serve Sanctuary at `http://127.0.0.1:4173`. Pass `--background` (or `-b`) to start the server with `nohup` and return instead of blocking the terminal; the server log lands in `/tmp/sanctuary-local-server.log`.
 
 The script is intentionally limited to this local environment:
 
