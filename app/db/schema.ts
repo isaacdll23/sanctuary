@@ -111,6 +111,25 @@ export const financePaymentAccountsTable = pgTable("finance_payment_accounts", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const financeAccountBalanceSnapshotsTable = pgTable(
+  "finance_account_balance_snapshots",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    userId: integer("user_id").notNull().references(() => usersTable.id),
+    accountId: integer("account_id")
+      .notNull()
+      .references(() => financePaymentAccountsTable.id, { onDelete: "cascade" }),
+    balanceDate: date("balance_date").notNull(),
+    balanceCents: integer("balance_cents").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("finance_account_balance_snapshots_account_date_unique").on(table.accountId, table.balanceDate),
+    index("finance_account_balance_snapshots_user_id_idx").on(table.userId),
+  ]
+);
+
 export const financeIncomeTable = pgTable("finance_income", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   userId: integer()

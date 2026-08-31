@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   normalizeExpenseCategory,
+  validateBalanceCheckIn,
   validateExpenseChargeForm,
   validateExpenseDelete,
   validateExpenseForm,
@@ -117,5 +118,36 @@ describe("expense charge ledger validation", () => {
       data: { expenseId: 5, chargeDate: "2026-09-01", amountCents: null },
     });
     assert.equal(validateExpenseChargeForm(chargeForm({ chargeDate: "not-a-date" }), "unmark").success, false);
+  });
+});
+
+describe("balance check-in validation", () => {
+  function balanceForm(values: Partial<Record<string, string>> = {}) {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({ accountId: "7", balanceDate: "2026-08-31", balance: "1250.50", ...values })) form.set(key, value);
+    return form;
+  }
+
+  it("parses a balance check-in with dollars converted to cents", () => {
+    assert.deepEqual(validateBalanceCheckIn(balanceForm()), {
+      success: true,
+      data: { accountId: 7, balanceDate: "2026-08-31", balanceCents: 125050 },
+    });
+  });
+
+  it("allows zero and negative balances (overdraft)", () => {
+    const zero = validateBalanceCheckIn(balanceForm({ balance: "0" }));
+    const overdraft = validateBalanceCheckIn(balanceForm({ balance: "-42.10" }));
+    assert.ok(zero.success && overdraft.success);
+    if (zero.success && overdraft.success) {
+      assert.equal(zero.data.balanceCents, 0);
+      assert.equal(overdraft.data.balanceCents, -4210);
+    }
+  });
+
+  it("rejects invalid accounts, dates, and malformed balances", () => {
+    for (const values of [{ accountId: "0" }, { accountId: "" }, { balanceDate: "2026-13-01" }, { balanceDate: "2026-02-30" }, { balance: "" }, { balance: "1,234.50" }, { balance: "12.345" }]) {
+      assert.equal(validateBalanceCheckIn(balanceForm(values)).success, false);
+    }
   });
 });

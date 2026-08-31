@@ -74,6 +74,27 @@ export function getReferenceDateKey(timeZone: string, now: Date = new Date()): s
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
 
+export function getMostRecentPayDate(schedule: PrimaryPaySchedule, referenceDate: Date): Date | null {
+  const reference = parseDateKey(referenceDate);
+  const candidates: Date[] = [];
+  for (let offset = 0; offset >= -1; offset--) {
+    const monthIndex = reference.getUTCMonth() + offset;
+    const year = reference.getUTCFullYear() + Math.floor(monthIndex / 12);
+    for (const date of getSemiMonthlyPayDatesForMonth(schedule, year, ((monthIndex % 12) + 12) % 12)) {
+      if (date <= reference) candidates.push(date);
+    }
+  }
+  return candidates.length ? candidates.sort((a, b) => a.getTime() - b.getTime())[candidates.length - 1] : null;
+}
+
+/** First payday strictly after the reference date; bills on a payday are funded by that paycheck, not prior balance. */
+export function getNextPaydayAfter(schedule: PrimaryPaySchedule, referenceDate: Date): Date | null {
+  const reference = parseDateKey(referenceDate);
+  const payDates = getPayDatesAfter(schedule, reference, 2);
+  if (!payDates.length) return null;
+  return payDates[0].getTime() === reference.getTime() ? payDates[1] ?? null : payDates[0];
+}
+
 /** Uses a configured net amount, or annual gross less taxes divided across 24 semi-monthly paychecks. */
 export function getExpectedPaycheckCents(schedule: PrimaryPaySchedule, annualGrossIncome: number | null | undefined, taxDeductionPercentage: number | null | undefined) {
   if (schedule.netPaycheckAmountCents != null) return { amountCents: schedule.netPaycheckAmountCents, isEstimate: false };

@@ -18,6 +18,9 @@ Preserve the Expenses feature as a recurring-commitments and cash-flow planner. 
 - Paused expenses remain visible and editable but are excluded from active totals and upcoming cash flow.
 - `finance_expense_charges` is the ledger of actual charge occurrences, unique per (expense, charge date). The projected amount in `monthlyCost` is never mutated when recording what was actually charged; write actual amounts to the ledger via `setExpenseChargeForUser`, which confirms expense ownership before the upsert. Expense deletion cascades to its charge records.
 - Headline financial summaries always cover all active expenses. Search, status, and category controls may change only the results list and clearly labeled filtered subtotals.
+- `finance_account_balance_snapshots` is a manual check-in ledger (no bank sync, by design), unique per (account, date); re-checking the same date overwrites. Latest snapshot per account is the current balance. Balances may be zero or negative (overdraft). Account deletion cascades to its snapshots.
+- Cadence is event-driven, never a deadline: show staleness as "checked N days ago" and prompt when a payday has passed since the last check-in (`getMostRecentPayDate`). Never gate UI on a required daily check-in.
+- Committed-vs-available (`BalanceSummary`): total current balance minus scheduled charges through the next payday (`getBillsBeforePayday`). Unassigned charges count against the total balance. If no pay schedule exists, show the balance without committed figures.
 
 ## Ownership and mutations
 
@@ -46,6 +49,9 @@ Make additive schema changes safe for existing production rows directly in `app/
 - `app/db/schema.ts`
 - `app/components/finance/ExpensesTable.tsx` — includes `ChargePaidControl` (mark-as-paid / undo)
 - `app/components/finance/PaycheckCashFlow.tsx` — per-bill paid badges from the charge ledger
+- `app/modules/finance/balances.ts` — pure helpers for balance summaries, staleness, and age labels
+- `app/components/finance/BalanceSummary.tsx` — committed-vs-available headline card
+- `app/components/finance/PaymentAccountsPanel.tsx` — per-account balance check-in
 
 When totals change, also inspect `app/modules/services/DashboardOverviewService.ts` and the dashboard labels.
 

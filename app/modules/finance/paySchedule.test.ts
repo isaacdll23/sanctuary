@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatDateKey } from "~/modules/finance/recurrence";
-import { getExpectedPaycheckCents, getPayDatesAfter, getScheduledBillsInPayPeriod, getSemiMonthlyPayDatesForMonth } from "./paySchedule";
+import { getExpectedPaycheckCents, getMostRecentPayDate, getNextPaydayAfter, getPayDatesAfter, getScheduledBillsInPayPeriod, getSemiMonthlyPayDatesForMonth } from "./paySchedule";
 
 const schedule = { scheduleType: "semi-monthly", firstNominalDay: 15, secondPaydayRule: "last-day", weekendAdjustment: "previous-friday" };
 
@@ -45,5 +45,28 @@ describe("semi-monthly pay schedules", () => {
     const secondPeriod = getScheduledBillsInPayPeriod(expenses, new Date(Date.UTC(2026, 0, 30)), new Date(Date.UTC(2026, 1, 13)));
     assert.deepEqual(firstPeriod, []);
     assert.deepEqual(secondPeriod.map((bill) => bill.name), ["Boundary bill"]);
+  });
+
+  it("finds the most recent payday on or before the reference date across month boundaries", () => {
+    const assertPayDate = (reference: Date, expected: string) => {
+      const payDate = getMostRecentPayDate(schedule, reference);
+      assert.ok(payDate);
+      if (payDate) assert.equal(formatDateKey(payDate), expected);
+    };
+    assertPayDate(new Date(Date.UTC(2026, 7, 30, 12)), "2026-08-14");
+    assertPayDate(new Date(Date.UTC(2026, 8, 1)), "2026-08-31");
+    assertPayDate(new Date(Date.UTC(2026, 0, 1)), "2025-12-31");
+    assertPayDate(new Date(Date.UTC(2026, 0, 14)), "2025-12-31");
+  });
+
+  it("bounds the current pay period so payday bills are funded by the new paycheck", () => {
+    // On a payday the window extends to the following payday; mid-period it ends before the next one.
+    const onPayday = getNextPaydayAfter(schedule, new Date(Date.UTC(2026, 7, 31)));
+    const midPeriod = getNextPaydayAfter(schedule, new Date(Date.UTC(2026, 8, 3)));
+    assert.ok(onPayday && midPeriod);
+    if (onPayday && midPeriod) {
+      assert.equal(formatDateKey(onPayday), "2026-09-15");
+      assert.equal(formatDateKey(midPeriod), "2026-09-15");
+    }
   });
 });

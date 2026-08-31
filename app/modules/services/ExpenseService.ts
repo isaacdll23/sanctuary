@@ -1,7 +1,7 @@
 import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "~/db";
-import { financeExpenseChargesTable, financeExpensesTable, financeIncomeTable, financePaymentAccountsTable, financePaySchedulesTable } from "~/db/schema";
+import { financeAccountBalanceSnapshotsTable, financeExpenseChargesTable, financeExpensesTable, financeIncomeTable, financePaymentAccountsTable, financePaySchedulesTable } from "~/db/schema";
 import type { ExpenseActionResult, ExpenseFormErrors } from "~/types/expense";
 
 const moneySchema = z
@@ -21,11 +21,22 @@ const idSchema = z
 const optionalAccountIdSchema = z.union([z.literal(""), z.string().trim().regex(/^\d+$/, "Invalid payment account.").transform(Number).pipe(z.number().int().positive("Invalid payment account."))])
   .transform((value) => value === "" ? null : value);
 
-const dateKeySchema = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, "Choose a valid billing date.").refine((value) => {
-  const [year, month, day] = value.split("-").map(Number);
-  const parsed = new Date(Date.UTC(year, month - 1, day));
-  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
-}, "Choose a valid billing date.");
+const dateKeySchema = makeDateKeySchema("Choose a valid billing date.");
+
+function makeDateKeySchema(message: string) {
+  return z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, message).refine((value) => {
+    const [year, month, day] = value.split("-").map(Number);
+    const parsed = new Date(Date.UTC(year, month - 1, day));
+    return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+  }, message);
+}
+
+/** Balances may be zero or negative (overdraft), unlike expense amounts. */
+const balanceAmountSchema = z
+  .string()
+  .trim()
+  .regex(/^-?\d+(?:\.\d{1,2})?$/, "Enter a valid balance with up to two decimal places.")
+  .transform((value) => Math.round(Number(value) * 100));
 
 export function normalizeExpenseCategory(value: string): string {
   return value
@@ -75,6 +86,12 @@ const paymentAccountSchema = z.object({
 
 const expenseChargeSchema = z.object({ expenseId: idSchema, chargeDate: dateKeySchema });
 const markChargePaidSchema = expenseChargeSchema.extend({ amount: moneySchema });
+
+const balanceCheckInSchema = z.object({
+  accountId: idSchema,
+  balanceDate: makeDateKeySchema("Choose a valid balance date."),
+  balance: balanceAmountSchema,
+});
 
 type ExpenseFields = z.infer<typeof expenseFieldsSchema>;
 
@@ -157,6 +174,19 @@ export function validatePaymentAccountForm(formData: FormData):
   | { success: false; result: ExpenseActionResult } {
   const parsed = paymentAccountSchema.safeParse({ name: formValue(formData, "name") });
   return parsed.success ? { success: true, data: parsed.data } : { success: false, result: formErrors(parsed.error) };
+}
+
+/** Validate a balance check-in for one payment account. */
+export function validateBalanceCheckIn(formData: FormData):
+  | { success: true; data: { accountId: number; balanceDate: string; balanceCents: number } }
+  | { success: false; result: ExpenseActionResult } {
+  const parsed = balanceCheckInSchema.safeParse({
+    accountId: formValue(formData, "accountId"),
+    balanceDate: formValue(formData, "balanceDate"),
+    balance: formValue(formData, "balance"),
+  });
+  if (!parsed.success) return { success: false, result: chargeFormErrors(parsed.error) };
+  return { success: true, data: { accountId: parsed.data.accountId, balanceDate: parsed.data.balanceDate, balanceCents: parsed.data.balance } };
 }
 
 /** Validate the charge-ledger payloads used by mark-as-paid and its undo. */
@@ -296,4 +326,29 @@ export async function deleteExpenseChargeForUser(userId: number, expenseId: numb
     .delete(financeExpenseChargesTable)
     .where(and(eq(financeExpenseChargesTable.userId, userId), eq(financeExpenseChargesTable.expenseId, expenseId), eq(financeExpenseChargesTable.chargeDate, chargeDate)))
     .returning({ id: financeExpenseChargesTable.id });
+}
+
+/** Balance snapshots from `sinceDate` onward, newest first, for staleness and current-balance lookups. */
+export async function getBalanceSnapshotsForUser(userId: number, sinceDate: string) {
+  return db
+    .select()
+    .from(financeAccountBalanceSnapshotsTable)
+    .where(and(eq(financeAccountBalanceSnapshotsTable.userId, userId), gte(financeAccountBalanceSnapshotsTable.balanceDate, sinceDate)))
+    .orderBy(desc(financeAccountBalanceSnapshotsTable.balanceDate), desc(financeAccountBalanceSnapshotsTable.id));
+}
+
+/** Records a balance check-in; ownership of the account is confirmed before the upsert. */
+export async function upsertBalanceSnapshotForUser(userId: number, accountId: number, balanceDate: string, balanceCents: number) {
+  return db.transaction(async (tx) => {
+    const [account] = await tx.select({ id: financePaymentAccountsTable.id, name: financePaymentAccountsTable.name }).from(financePaymentAccountsTable)
+      .where(and(eq(financePaymentAccountsTable.id, accountId), eq(financePaymentAccountsTable.userId, userId))).limit(1);
+    if (!account) return null;
+    await tx.insert(financeAccountBalanceSnapshotsTable)
+      .values({ userId, accountId, balanceDate, balanceCents })
+      .onConflictDoUpdate({
+        target: [financeAccountBalanceSnapshotsTable.accountId, financeAccountBalanceSnapshotsTable.balanceDate],
+        set: { balanceCents, updatedAt: new Date() },
+      });
+    return account;
+  });
 }

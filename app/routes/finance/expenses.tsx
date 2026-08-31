@@ -9,6 +9,7 @@ import {
   deleteExpenseChargeForUser,
   deleteExpenseForUser,
   deletePaymentAccountForUser,
+  getBalanceSnapshotsForUser,
   getExpenseChargesForUser,
   getExpensesForUser,
   getLatestIncomeForUser,
@@ -17,6 +18,8 @@ import {
   setExpenseActiveForUser,
   setExpenseChargeForUser,
   updateExpenseForUser,
+  upsertBalanceSnapshotForUser,
+  validateBalanceCheckIn,
   validateExpenseChargeForm,
   validateExpenseDelete,
   validateExpenseForm,
@@ -24,6 +27,7 @@ import {
   validatePaymentAccountForm,
 } from "~/modules/services/ExpenseService";
 import { AddExpenseModal, EditExpenseModal } from "~/components/finance/ExpenseFormModal";
+import BalanceSummary from "~/components/finance/BalanceSummary";
 import ExpenseSummaryCards from "~/components/finance/ExpenseSummaryCards";
 import ExpensesCategoryFilter from "~/components/finance/ExpensesCategoryFilter";
 import ExpensesTable from "~/components/finance/ExpensesTable";
@@ -32,7 +36,8 @@ import PaycheckCashFlow from "~/components/finance/PaycheckCashFlow";
 import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { useExpenseFiltering, type ExpenseSort, type ExpenseStatusFilter } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
-import { getReferenceDateKey } from "~/modules/finance/paySchedule";
+import { getDaysSince, summarizeBalances } from "~/modules/finance/balances";
+import { getBillsBeforePayday, getMostRecentPayDate, getNextPaydayAfter, getReferenceDateKey } from "~/modules/finance/paySchedule";
 import { formatDateKey, parseDateKey } from "~/modules/finance/recurrence";
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
@@ -46,17 +51,18 @@ export function meta({}: Route.MetaArgs) {
 
 export const loader = pageAccessLoader("finance", async (user) => {
   const asOfDate = getReferenceDateKey(user.timeZone);
-  // Charge records over the past year cover "last paid" lookups and any next occurrence
-  // the user marks paid early, including on a yearly schedule.
-  const chargesSinceDate = formatDateKey(new Date(parseDateKey(asOfDate).getTime() - 365 * 86_400_000));
-  const [userExpenses, userIncome, paymentAccounts, paySchedule, chargeRecords] = await Promise.all([
+  // One year of history covers paid-charge lookups, staleness display, and any
+  // next occurrence the user marks paid early, including on a yearly schedule.
+  const historySinceDate = formatDateKey(new Date(parseDateKey(asOfDate).getTime() - 365 * 86_400_000));
+  const [userExpenses, userIncome, paymentAccounts, paySchedule, chargeRecords, balanceSnapshots] = await Promise.all([
     getExpensesForUser(user.id),
     getLatestIncomeForUser(user.id),
     getPaymentAccountsForUser(user.id),
     db.select().from(financePaySchedulesTable).where(eq(financePaySchedulesTable.userId, user.id)).limit(1).then((rows) => rows[0] ?? null),
-    getExpenseChargesForUser(user.id, chargesSinceDate),
+    getExpenseChargesForUser(user.id, historySinceDate),
+    getBalanceSnapshotsForUser(user.id, historySinceDate),
   ]);
-  return { userExpenses, userIncome, paymentAccounts, paySchedule, asOfDate, chargeRecords };
+  return { userExpenses, userIncome, paymentAccounts, paySchedule, asOfDate, chargeRecords, balanceSnapshots };
 });
 
 export const action = pageAccessAction("finance", async (user, request): Promise<ExpenseActionResult> => {
@@ -114,6 +120,14 @@ export const action = pageAccessAction("finance", async (user, request): Promise
         ? { ok: true, action: "unmarkChargePaid", message: "Charge marked unpaid and removed from the ledger." }
         : { ok: false, error: "No recorded charge found for this expense and date." };
     }
+    case "logBalance": {
+      const parsed = validateBalanceCheckIn(formData);
+      if (!parsed.success) return parsed.result;
+      const account = await upsertBalanceSnapshotForUser(user.id, parsed.data.accountId, parsed.data.balanceDate, parsed.data.balanceCents);
+      return account
+        ? { ok: true, action: "logBalance", message: `Balance for ${account.name} logged for ${parsed.data.balanceDate}.` }
+        : { ok: false, error: "Payment account not found or permission denied." };
+    }
     case "addPaymentAccount": {
       const parsed = validatePaymentAccountForm(formData);
       if (!parsed.success) return parsed.result;
@@ -147,6 +161,20 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
     useExpenseFiltering(loaderData.userExpenses, filterCategories, setFilterCategories, searchQuery, statusFilter, sort, loaderData.asOfDate);
 
   const hasPaySchedule = Boolean(loaderData.paySchedule && loaderData.paySchedule.isEnabled !== 0);
+  const asOf = parseDateKey(loaderData.asOfDate);
+  const balance = summarizeBalances(loaderData.balanceSnapshots);
+  // Committed window: the remainder of the current pay period. Bills on the next payday are
+  // funded by that paycheck, so the boundary is the first payday strictly after today.
+  const nextPayday = hasPaySchedule ? getNextPaydayAfter(loaderData.paySchedule!, asOf) : null;
+  const billsBeforePaydayCents = nextPayday
+    ? getBillsBeforePayday(loaderData.userExpenses, asOf, nextPayday).reduce((sum, bill) => sum + bill.amountCents, 0)
+    : null;
+  const billsThroughKey = nextPayday ? formatDateKey(new Date(nextPayday.getTime() - 86_400_000)) : null;
+  const lastPayDate = hasPaySchedule ? getMostRecentPayDate(loaderData.paySchedule!, asOf) : null;
+  const lastPayDateKey = lastPayDate ? formatDateKey(lastPayDate) : null;
+  const paydaySinceLastCheck = Boolean(
+    balance.oldestBalanceDate && lastPayDateKey && lastPayDateKey > balance.oldestBalanceDate
+  );
   const annualGrossIncomeCents = (loaderData.userIncome?.annualGrossIncome ?? 0) * 100;
   const taxDeductionPercentage = loaderData.userIncome?.taxDeductionPercentage ?? 0;
   const { netRemainingYearly, netRemainingMonthly } = useIncomeCalculations(
@@ -206,11 +234,24 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
 
         <ExpenseSummaryCards totalMonthlyCost={totalMonthlyCost} totalYearlyCost={totalYearlyCost} annualGrossIncomeCents={annualGrossIncomeCents} taxDeductionPercentage={taxDeductionPercentage} netRemainingMonthly={netRemainingMonthly} netRemainingYearly={netRemainingYearly} />
 
+        {balance.totalBalanceCents !== 0 || balance.latestByAccount.size > 0 ? (
+          <BalanceSummary
+            totalBalanceCents={balance.totalBalanceCents}
+            accountCount={balance.latestByAccount.size}
+            daysSinceLastCheck={balance.oldestBalanceDate ? getDaysSince(balance.oldestBalanceDate, loaderData.asOfDate) : 0}
+            billsBeforePaydayCents={billsBeforePaydayCents}
+            billsThroughKey={billsThroughKey}
+            remainingAfterBillsCents={billsBeforePaydayCents == null ? null : balance.totalBalanceCents - billsBeforePaydayCents}
+            paydaySinceLastCheck={paydaySinceLastCheck}
+            lastPayDateKey={lastPayDateKey}
+          />
+        ) : null}
+
         {hasPaySchedule ? <PaycheckCashFlow schedule={loaderData.paySchedule!} annualGrossIncome={loaderData.userIncome?.annualGrossIncome} taxDeductionPercentage={loaderData.userIncome?.taxDeductionPercentage} expenses={loaderData.userExpenses} asOfDate={loaderData.asOfDate} paymentAccounts={loaderData.paymentAccounts} chargeRecords={loaderData.chargeRecords} /> : <div className="mb-4 flex flex-col justify-between gap-3 rounded-xl border border-gray-300 bg-gray-50 p-4 sm:flex-row sm:items-center dark:border-gray-700 dark:bg-gray-800/70"><p className="text-sm text-gray-700 dark:text-gray-300">Add a primary pay schedule to plan bills by paycheck.</p><Link to="/finance/income" className="inline-flex min-h-[40px] items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">Set up pay schedule</Link></div>}
 
         <ExpensesCategoryFilter distinctCategories={distinctCategories} filterCategories={filterCategories} onToggleCategory={toggleCategory} onClearFilters={clearFilters} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} status={statusFilter} onStatusChange={setStatusFilter} sort={sort} onSortChange={setSort} />
         <ExpensesTable filteredExpenses={filteredExpenses} totalExpenseCount={loaderData.userExpenses.length} totalMonthlyCost={totalMonthlyCost} filteredMonthlyCost={filteredMonthlyCost} filteredYearlyCost={filteredYearlyCost} filteredActiveCount={filteredActiveCount} hasActiveFilters={hasActiveFilters} onClearFilters={clearFilters} onAddExpense={openAddExpense} fetcher={fetcher} paymentAccounts={loaderData.paymentAccounts} asOfDate={loaderData.asOfDate} chargeRecords={loaderData.chargeRecords} onEditExpense={(expense) => { setEditingExpense(expense); setIsModalOpen(false); setModalSubmissionPending(false); }} />
-        <PaymentAccountsPanel accounts={loaderData.paymentAccounts} fetcher={fetcher} />
+        <PaymentAccountsPanel accounts={loaderData.paymentAccounts} fetcher={fetcher} asOfDate={loaderData.asOfDate} balanceSnapshots={loaderData.balanceSnapshots} />
       </div>
 
       <AddExpenseModal isOpen={isModalOpen} distinctCategories={distinctCategories} paymentAccounts={loaderData.paymentAccounts} onClose={closeModals} fetcher={fetcher} submissionAttempted={modalSubmissionPending} onSubmit={() => setModalSubmissionPending(true)} />

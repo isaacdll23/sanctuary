@@ -1,4 +1,4 @@
-import type { financeExpenseChargesTable } from "~/db/schema";
+import type { financeAccountBalanceSnapshotsTable, financeExpenseChargesTable } from "~/db/schema";
 
 export interface Expense {
   id: number;
@@ -21,10 +21,12 @@ export interface Expense {
 
 export type ExpenseCharge = typeof financeExpenseChargesTable.$inferSelect;
 
+export type AccountBalanceSnapshot = typeof financeAccountBalanceSnapshotsTable.$inferSelect;
+
 export type ExpenseFormErrors = Partial<
-  Record<"id" | "name" | "monthlyCost" | "chargeDay" | "category" | "recurrenceFrequency" | "recurrenceAnchor" | "accountId" | "necessity" | "costType" | "paymentMethod" | "expenseId" | "chargeDate" | "amount", string>
+  Record<"id" | "name" | "monthlyCost" | "chargeDay" | "category" | "recurrenceFrequency" | "recurrenceAnchor" | "accountId" | "necessity" | "costType" | "paymentMethod" | "expenseId" | "chargeDate" | "amount" | "balance" | "balanceDate", string>
 >;
 
 export type ExpenseActionResult =
-  | { ok: true; action: "add" | "update" | "delete" | "toggleStatus" | "addPaymentAccount" | "deletePaymentAccount" | "markChargePaid" | "unmarkChargePaid"; message: string }
+  | { ok: true; action: "add" | "update" | "delete" | "toggleStatus" | "addPaymentAccount" | "deletePaymentAccount" | "markChargePaid" | "unmarkChargePaid" | "logBalance"; message: string }
   | { ok: false; error: string; fieldErrors?: ExpenseFormErrors };
