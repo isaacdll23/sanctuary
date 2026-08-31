@@ -1,7 +1,7 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "~/db";
-import { financeExpensesTable, financeIncomeTable, financePaymentAccountsTable, financePaySchedulesTable } from "~/db/schema";
+import { financeExpenseChargesTable, financeExpensesTable, financeIncomeTable, financePaymentAccountsTable, financePaySchedulesTable } from "~/db/schema";
 import type { ExpenseActionResult, ExpenseFormErrors } from "~/types/expense";
 
 const moneySchema = z
@@ -72,6 +72,9 @@ const expenseStatusSchema = z.object({
 const paymentAccountSchema = z.object({
   name: z.string().trim().min(1, "Account name is required.").max(255, "Account name must be 255 characters or fewer."),
 });
+
+const expenseChargeSchema = z.object({ expenseId: idSchema, chargeDate: dateKeySchema });
+const markChargePaidSchema = expenseChargeSchema.extend({ amount: moneySchema });
 
 type ExpenseFields = z.infer<typeof expenseFieldsSchema>;
 
@@ -156,6 +159,38 @@ export function validatePaymentAccountForm(formData: FormData):
   return parsed.success ? { success: true, data: parsed.data } : { success: false, result: formErrors(parsed.error) };
 }
 
+/** Validate the charge-ledger payloads used by mark-as-paid and its undo. */
+export function validateExpenseChargeForm(
+  formData: FormData,
+  action: "mark" | "unmark"
+):
+  | { success: true; data: { expenseId: number; chargeDate: string; amountCents: number | null } }
+  | { success: false; result: ExpenseActionResult } {
+  const input = { expenseId: formValue(formData, "expenseId"), chargeDate: formValue(formData, "chargeDate") };
+
+  if (action === "mark") {
+    const parsed = markChargePaidSchema.safeParse({ ...input, amount: formValue(formData, "amount") });
+    if (!parsed.success) return { success: false, result: chargeFormErrors(parsed.error) };
+    return { success: true, data: { expenseId: parsed.data.expenseId, chargeDate: parsed.data.chargeDate, amountCents: parsed.data.amount } };
+  }
+
+  const parsed = expenseChargeSchema.safeParse(input);
+  if (!parsed.success) return { success: false, result: chargeFormErrors(parsed.error) };
+  return { success: true, data: { expenseId: parsed.data.expenseId, chargeDate: parsed.data.chargeDate, amountCents: null } };
+}
+
+/** The charge form renders inline, so surface the first concrete issue instead of a generic banner. */
+function chargeFormErrors(error: z.ZodError): ExpenseActionResult {
+  const fieldErrors: ExpenseFormErrors = {};
+  for (const issue of error.issues) {
+    const field = issue.path[0];
+    if (typeof field === "string" && !(field in fieldErrors)) {
+      fieldErrors[field as keyof ExpenseFormErrors] = issue.message;
+    }
+  }
+  return { ok: false, error: error.issues[0]?.message ?? "Please correct the highlighted fields.", fieldErrors };
+}
+
 export async function getExpensesForUser(userId: number) {
   return db
     .select()
@@ -229,4 +264,36 @@ export async function deleteExpenseForUser(userId: number, id: number) {
     .delete(financeExpensesTable)
     .where(and(eq(financeExpensesTable.id, id), eq(financeExpensesTable.userId, userId)))
     .returning({ id: financeExpensesTable.id });
+}
+
+/** Charge records from `sinceDate` onward, newest first, for paid-state lookups. */
+export async function getExpenseChargesForUser(userId: number, sinceDate: string) {
+  return db
+    .select()
+    .from(financeExpenseChargesTable)
+    .where(and(eq(financeExpenseChargesTable.userId, userId), gte(financeExpenseChargesTable.chargeDate, sinceDate)))
+    .orderBy(desc(financeExpenseChargesTable.chargeDate));
+}
+
+/** Records an actual charge occurrence; ownership of the expense is confirmed before the upsert. */
+export async function setExpenseChargeForUser(userId: number, expenseId: number, chargeDate: string, amountCents: number) {
+  return db.transaction(async (tx) => {
+    const [expense] = await tx.select({ id: financeExpensesTable.id, name: financeExpensesTable.name }).from(financeExpensesTable)
+      .where(and(eq(financeExpensesTable.id, expenseId), eq(financeExpensesTable.userId, userId))).limit(1);
+    if (!expense) return null;
+    await tx.insert(financeExpenseChargesTable)
+      .values({ userId, expenseId, chargeDate, amountCents })
+      .onConflictDoUpdate({
+        target: [financeExpenseChargesTable.expenseId, financeExpenseChargesTable.chargeDate],
+        set: { amountCents, updatedAt: new Date() },
+      });
+    return expense;
+  });
+}
+
+export async function deleteExpenseChargeForUser(userId: number, expenseId: number, chargeDate: string) {
+  return db
+    .delete(financeExpenseChargesTable)
+    .where(and(eq(financeExpenseChargesTable.userId, userId), eq(financeExpenseChargesTable.expenseId, expenseId), eq(financeExpenseChargesTable.chargeDate, chargeDate)))
+    .returning({ id: financeExpenseChargesTable.id });
 }

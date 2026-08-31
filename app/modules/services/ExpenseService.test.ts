@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   normalizeExpenseCategory,
+  validateExpenseChargeForm,
   validateExpenseDelete,
   validateExpenseForm,
   validateExpenseStatus,
@@ -87,5 +88,34 @@ describe("expense form validation", () => {
       assert.equal(result.data.accountId, 12);
     }
     assert.equal(validateExpenseForm(expenseForm({ accountId: "12oops" }), "add").success, false);
+  });
+});
+
+describe("expense charge ledger validation", () => {
+  function chargeForm(values: Partial<Record<string, string>> = {}) {
+    const form = new FormData();
+    for (const [key, value] of Object.entries({ expenseId: "5", chargeDate: "2026-09-01", amount: "84.20", ...values })) form.set(key, value);
+    return form;
+  }
+
+  it("parses mark-as-paid with dollars converted to cents", () => {
+    assert.deepEqual(validateExpenseChargeForm(chargeForm(), "mark"), {
+      success: true,
+      data: { expenseId: 5, chargeDate: "2026-09-01", amountCents: 8420 },
+    });
+  });
+
+  it("rejects invalid ids, dates, and non-positive amounts when marking paid", () => {
+    for (const values of [{ expenseId: "0" }, { expenseId: "junk" }, { chargeDate: "2026-13-01" }, { chargeDate: "2026-02-30" }, { amount: "" }, { amount: "0" }, { amount: "-4" }, { amount: "1.999" }]) {
+      assert.equal(validateExpenseChargeForm(chargeForm(values), "mark").success, false);
+    }
+  });
+
+  it("validates undo without requiring an amount", () => {
+    assert.deepEqual(validateExpenseChargeForm(chargeForm({ amount: "" }), "unmark"), {
+      success: true,
+      data: { expenseId: 5, chargeDate: "2026-09-01", amountCents: null },
+    });
+    assert.equal(validateExpenseChargeForm(chargeForm({ chargeDate: "not-a-date" }), "unmark").success, false);
   });
 });

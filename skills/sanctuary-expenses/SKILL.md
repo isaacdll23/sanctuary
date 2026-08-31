@@ -16,6 +16,7 @@ Preserve the Expenses feature as a recurring-commitments and cash-flow planner. 
 - Honor `lastDayOfMonth` for month-based schedules. Numbered days that do not exist in a shorter month clamp to that month's last day.
 - Upcoming cash-flow cards represent actual charge occurrences and per-charge amounts. Do not assign an entire normalized monthly amount to a single upcoming date.
 - Paused expenses remain visible and editable but are excluded from active totals and upcoming cash flow.
+- `finance_expense_charges` is the ledger of actual charge occurrences, unique per (expense, charge date). The projected amount in `monthlyCost` is never mutated when recording what was actually charged; write actual amounts to the ledger via `setExpenseChargeForUser`, which confirms expense ownership before the upsert. Expense deletion cascades to its charge records.
 - Headline financial summaries always cover all active expenses. Search, status, and category controls may change only the results list and clearly labeled filtered subtotals.
 
 ## Ownership and mutations
@@ -43,6 +44,8 @@ Make additive schema changes safe for existing production rows directly in `app/
 - `app/components/finance/ExpensesTable.tsx`
 - `app/components/finance/PaymentAccountsPanel.tsx`
 - `app/db/schema.ts`
+- `app/components/finance/ExpensesTable.tsx` — includes `ChargePaidControl` (mark-as-paid / undo)
+- `app/components/finance/PaycheckCashFlow.tsx` — per-bill paid badges from the charge ledger
 
 When totals change, also inspect `app/modules/services/DashboardOverviewService.ts` and the dashboard labels.
 

@@ -1,7 +1,9 @@
 import {
+  index,
   integer,
   pgTable,
   timestamp,
+  unique,
   varchar,
   text,
   json,
@@ -81,6 +83,26 @@ export const financeExpensesTable = pgTable("finance_expenses", {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+/** Ledger of actual charge occurrences; one record per expense per scheduled charge date. */
+export const financeExpenseChargesTable = pgTable(
+  "finance_expense_charges",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    userId: integer("user_id").notNull().references(() => usersTable.id),
+    expenseId: integer("expense_id")
+      .notNull()
+      .references(() => financeExpensesTable.id, { onDelete: "cascade" }),
+    chargeDate: date("charge_date").notNull(),
+    amountCents: integer("amount_cents").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("finance_expense_charges_expense_date_unique").on(table.expenseId, table.chargeDate),
+    index("finance_expense_charges_user_id_idx").on(table.userId),
+  ]
+);
 
 export const financePaymentAccountsTable = pgTable("finance_payment_accounts", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),

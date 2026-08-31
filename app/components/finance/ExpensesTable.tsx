@@ -1,6 +1,6 @@
-import { PauseIcon, PencilIcon, PlayIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, PauseIcon, PencilIcon, PlayIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import type { FetcherWithComponents } from "react-router";
-import type { Expense, ExpenseActionResult } from "~/types/expense";
+import type { Expense, ExpenseActionResult, ExpenseCharge } from "~/types/expense";
 import type { PaymentAccountOption } from "~/components/finance/PaymentAccountsPanel";
 import { formatDateKey, getNextChargeDate, getNormalizedMonthlyCostCents, getRecurrenceDescription, parseDateKey } from "~/modules/finance/recurrence";
 import { formatMoney } from "~/utils/money";
@@ -19,10 +19,12 @@ interface ExpensesTableProps {
   fetcher: FetcherWithComponents<ExpenseActionResult>;
   paymentAccounts: PaymentAccountOption[];
   asOfDate: string;
+  chargeRecords: ExpenseCharge[];
 }
 
-export default function ExpensesTable({ filteredExpenses, totalExpenseCount, totalMonthlyCost, filteredMonthlyCost, filteredYearlyCost, filteredActiveCount, hasActiveFilters, onClearFilters, onAddExpense, onEditExpense, fetcher, paymentAccounts, asOfDate }: ExpensesTableProps) {
+export default function ExpensesTable({ filteredExpenses, totalExpenseCount, totalMonthlyCost, filteredMonthlyCost, filteredYearlyCost, filteredActiveCount, hasActiveFilters, onClearFilters, onAddExpense, onEditExpense, fetcher, paymentAccounts, asOfDate, chargeRecords }: ExpensesTableProps) {
   const asOf = parseDateKey(asOfDate);
+  const paidChargeKeys = new Set(chargeRecords.map((charge) => `${charge.expenseId}:${charge.chargeDate}`));
   const getShareOfTotal = (expense: Expense) =>
     !totalMonthlyCost || expense.isActive === 0
       ? "—"
@@ -30,6 +32,7 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
   const isSubmitting = fetcher.state !== "idle";
   const isEmpty = totalExpenseCount === 0;
   const emptyState = <EmptyState isEmpty={isEmpty} onAddExpense={onAddExpense} onClearFilters={onClearFilters} />;
+  const isNextChargePaid = (expense: Expense) => paidChargeKeys.has(`${expense.id}:${formatDateKey(getNextChargeDate(expense, asOf))}`);
 
   return (
     <section aria-label="Expense results" className="mb-8">
@@ -71,7 +74,7 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
                     <span className="text-xs text-gray-600 dark:text-gray-400">{expense.isActive === 0 ? "Paused" : `${getShareOfTotal(expense)}% of active total`}</span>
                   </div>
                   <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">{getRecurrenceDescription(expense)} · {expense.necessity} · {expense.costType} · {expense.paymentMethod}{expense.accountId ? ` · ${paymentAccounts.find((account) => account.id === expense.accountId)?.name ?? "Unassigned"}` : ""}</p>
-                  <ExpenseActions expense={expense} fetcher={fetcher} isSubmitting={isSubmitting} onEditExpense={onEditExpense} />
+                  <ExpenseActions expense={expense} fetcher={fetcher} isSubmitting={isSubmitting} onEditExpense={onEditExpense} asOf={asOf} isPaid={isNextChargePaid(expense)} />
                 </article>
               ))}
         </div>
@@ -103,10 +106,10 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
                       {getNormalizedMonthlyCostCents(expense) !== expense.monthlyCost && <div className="text-xs text-gray-600 dark:text-gray-400">${formatMoney(getNormalizedMonthlyCostCents(expense))}/month</div>}
                       <div className="text-xs text-gray-600 dark:text-gray-400">{expense.isActive === 0 ? "Paused" : `${getShareOfTotal(expense)}% of active total`}</div>
                     </td>
-                    <td className="px-4 py-4 text-sm"><div className="font-medium text-gray-900 dark:text-gray-100">{getRecurrenceDescription(expense)}</div><div className="text-xs text-gray-600 dark:text-gray-400">Next {formatDateKey(getNextChargeDate(expense, asOf))}</div></td>
+                    <td className="px-4 py-4 text-sm"><div className="font-medium text-gray-900 dark:text-gray-100">{getRecurrenceDescription(expense)}</div><div className="text-xs text-gray-600 dark:text-gray-400">Next {formatDateKey(getNextChargeDate(expense, asOf))}{isNextChargePaid(expense) && <span className="ml-2 inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">Paid</span>}</div></td>
                     <td className="px-4 py-4 text-sm"><span className="inline-flex items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-800 dark:bg-gray-700 dark:text-gray-200">{expense.category}</span></td>
                     <td className="px-4 py-4 text-xs text-gray-600 dark:text-gray-400"><div className="capitalize">{expense.necessity} · {expense.costType}</div><div className="capitalize">{expense.paymentMethod}{expense.accountId ? ` · ${paymentAccounts.find((account) => account.id === expense.accountId)?.name ?? "Unassigned"}` : ""}</div></td>
-                    <td className="px-4 py-4 text-right text-sm"><ExpenseActions expense={expense} fetcher={fetcher} isSubmitting={isSubmitting} onEditExpense={onEditExpense} /></td>
+                    <td className="px-4 py-4 text-right text-sm"><ExpenseActions expense={expense} fetcher={fetcher} isSubmitting={isSubmitting} onEditExpense={onEditExpense} asOf={asOf} isPaid={isNextChargePaid(expense)} /></td>
                   </tr>
                 ))
               )}
@@ -118,12 +121,14 @@ export default function ExpensesTable({ filteredExpenses, totalExpenseCount, tot
   );
 }
 
-function ExpenseActions({ expense, fetcher, isSubmitting, onEditExpense }: { expense: Expense; fetcher: FetcherWithComponents<ExpenseActionResult>; isSubmitting: boolean; onEditExpense: (expense: Expense) => void }) {
+function ExpenseActions({ expense, fetcher, isSubmitting, onEditExpense, asOf, isPaid }: { expense: Expense; fetcher: FetcherWithComponents<ExpenseActionResult>; isSubmitting: boolean; onEditExpense: (expense: Expense) => void; asOf: Date; isPaid: boolean }) {
   const buttonClass = "inline-flex min-h-[44px] items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600 dark:focus:ring-gray-600";
   const deleteButtonClass = "inline-flex min-h-[44px] items-center rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-800 shadow-sm transition-colors hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200 dark:hover:bg-red-950/60 dark:focus:ring-red-600";
   const statusLabel = expense.isActive === 0 ? "Resume" : "Pause";
+  const nextChargeKey = formatDateKey(getNextChargeDate(expense, asOf));
   return (
     <div className="mt-3 flex flex-wrap justify-end gap-2 md:mt-0">
+      <ChargePaidControl expense={expense} chargeDateKey={nextChargeKey} isPaid={isPaid} fetcher={fetcher} isSubmitting={isSubmitting} buttonClass={buttonClass} />
       <fetcher.Form method="post">
         <input type="hidden" name="_action" value="toggleStatus" />
         <input type="hidden" name="id" value={expense.id} />
@@ -144,6 +149,32 @@ function ExpenseActions({ expense, fetcher, isSubmitting, onEditExpense }: { exp
         </button>
       </fetcher.Form>
     </div>
+  );
+}
+
+/** Marks the expense's next scheduled charge as paid, or undoes it; the amount is editable for variable bills. */
+function ChargePaidControl({ expense, chargeDateKey, isPaid, fetcher, isSubmitting, buttonClass }: { expense: Expense; chargeDateKey: string; isPaid: boolean; fetcher: FetcherWithComponents<ExpenseActionResult>; isSubmitting: boolean; buttonClass: string }) {
+  const inputClass = "w-24 min-h-[44px] rounded-md border border-gray-300 bg-white px-2 py-2 text-xs text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:focus:ring-gray-600";
+  if (isPaid) {
+    return (
+      <fetcher.Form method="post" className="inline-flex">
+        <input type="hidden" name="_action" value="unmarkChargePaid" />
+        <input type="hidden" name="expenseId" value={expense.id} />
+        <input type="hidden" name="chargeDate" value={chargeDateKey} />
+        <button type="submit" disabled={isSubmitting} className={buttonClass} aria-label={`Mark ${expense.name} unpaid for ${chargeDateKey}`}>
+          <CheckCircleIcon className="mr-1 h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />Undo paid
+        </button>
+      </fetcher.Form>
+    );
+  }
+  return (
+    <fetcher.Form method="post" className="inline-flex items-center gap-1">
+      <input type="hidden" name="_action" value="markChargePaid" />
+      <input type="hidden" name="expenseId" value={expense.id} />
+      <input type="hidden" name="chargeDate" value={chargeDateKey} />
+      <input type="number" name="amount" step="0.01" min="0.01" defaultValue={(expense.monthlyCost / 100).toFixed(2)} required disabled={isSubmitting} className={inputClass} aria-label={`Amount charged for ${expense.name} on ${chargeDateKey}`} />
+      <button type="submit" disabled={isSubmitting} className={buttonClass} aria-label={`Mark ${expense.name} paid for ${chargeDateKey}`}>Mark paid</button>
+    </fetcher.Form>
   );
 }
 
