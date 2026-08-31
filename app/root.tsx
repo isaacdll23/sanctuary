@@ -118,8 +118,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             accessiblePages={accessiblePages}
           />
           <div
+            // pb-[84px] is an explicit px value on purpose: the compact
+            // --spacing scale (0.22rem) makes pb-20 only ~62px, which does not
+            // clear the ~70px fixed mobile tab bar. 84px clears it with room
+            // to spare so the deepest page content never tucks under the bar.
             className={`flex-1 flex flex-col overflow-hidden ${
-              isAuthenticated ? "pb-20 md:pb-0" : ""
+              isAuthenticated ? "pb-[84px] md:pb-0" : ""
             }`}
           >
             {children}

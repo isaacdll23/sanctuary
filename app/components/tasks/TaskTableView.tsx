@@ -198,7 +198,7 @@ export default function TaskTableView({
                   />
                   <button
                     type="submit"
-                    className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                     title={task.completedAt ? "Mark as Incomplete" : "Mark as Complete"}
                     aria-label={task.completedAt ? "Mark as Incomplete" : "Mark as Complete"}
                   >
@@ -213,7 +213,7 @@ export default function TaskTableView({
                 <button
                   type="button"
                   onClick={() => setExpandedTaskId(isExpanded ? null : task.id)}
-                  className="inline-flex min-h-[40px] items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-gray-300 bg-gray-100 px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Details
                   <ChevronDownIcon
@@ -232,7 +232,7 @@ export default function TaskTableView({
                         e.preventDefault();
                       }
                     }}
-                    className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-gray-300 bg-gray-100 text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
                     title="Delete Task"
                     aria-label="Delete Task"
                   >
@@ -431,7 +431,7 @@ export default function TaskTableView({
                             />
                             <button
                               type="submit"
-                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
                               title={
                                 task.completedAt
                                   ? "Mark as Incomplete"
@@ -462,7 +462,7 @@ export default function TaskTableView({
                                   e.preventDefault();
                                 }
                               }}
-                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center"
+                              className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center"
                               title="Delete Task"
                             >
                               <TrashIcon className="w-4 h-4" />
@@ -474,7 +474,7 @@ export default function TaskTableView({
                               e.stopPropagation();
                               setExpandedTaskId(isExpanded ? null : task.id);
                             }}
-                            className={`p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-[40px] min-w-[40px] flex items-center justify-center ${
+                            className={`p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-150 min-h-[44px] min-w-[44px] flex items-center justify-center ${
                               isExpanded ? "rotate-180" : ""
                             }`}
                             title="View details"

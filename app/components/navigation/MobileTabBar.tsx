@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { NavLink, useLocation } from "react-router";
 import type { ComponentType, SVGProps } from "react";
 import {
@@ -90,6 +90,7 @@ export default function MobileTabBar({
     [accessiblePages]
   );
   const dialogRef = useRef<HTMLDivElement>(null);
+  const moreButtonRef = useRef<HTMLButtonElement>(null);
 
   const visibleCoreTabs = useMemo(
     () =>
@@ -119,6 +120,34 @@ export default function MobileTabBar({
     setIsMoreOpen(false);
   }, [location.pathname]);
 
+  // Stable so the focus-trap effect can depend on it without resubscribing.
+  const closeMore = useCallback(() => {
+    setIsMoreOpen(false);
+    // Return focus to the tab-bar trigger so keyboard users keep context.
+    moreButtonRef.current?.focus();
+  }, []);
+
+  // Lock background scrolling while the sheet is open. The app scrolls the
+  // window, so block wheel and touch gestures at the document level instead
+  // of toggling body overflow (which would snap the page back to the top).
+  // Gestures inside the sheet are left alone so the sheet itself can scroll.
+  useEffect(() => {
+    if (!isMoreOpen) return;
+    const preventScroll = (event: Event) => {
+      const dialog = dialogRef.current;
+      if (dialog && event.target instanceof Node && dialog.contains(event.target)) {
+        return;
+      }
+      event.preventDefault();
+    };
+    document.addEventListener("wheel", preventScroll, { passive: false });
+    document.addEventListener("touchmove", preventScroll, { passive: false });
+    return () => {
+      document.removeEventListener("wheel", preventScroll);
+      document.removeEventListener("touchmove", preventScroll);
+    };
+  }, [isMoreOpen]);
+
   // Focus trap for the “More” dialog
   useEffect(() => {
     if (isMoreOpen && dialogRef.current) {
@@ -132,6 +161,11 @@ export default function MobileTabBar({
       first?.focus();
 
       const handleKey = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeMore();
+          return;
+        }
         if (e.key === "Tab") {
           if (!focusable.length) return;
           if (e.shiftKey) {
@@ -152,7 +186,7 @@ export default function MobileTabBar({
         document.removeEventListener("keydown", handleKey);
       };
     }
-  }, [isMoreOpen]);
+  }, [isMoreOpen, closeMore]);
 
   if (!isAuthenticated) return null;
 
@@ -181,6 +215,7 @@ export default function MobileTabBar({
           {visibleMoreLinks.length > 0 && (
             <button
               type="button"
+              ref={moreButtonRef}
               onClick={() => setIsMoreOpen(true)}
               className={getTabClasses(isMoreOpen)}
               aria-controls="more-dialog"
@@ -200,7 +235,7 @@ export default function MobileTabBar({
           <button
             type="button"
             className="absolute inset-0 bg-black/50"
-            onClick={() => setIsMoreOpen(false)}
+            onClick={closeMore}
             aria-label="Close menu overlay"
           />
 
@@ -210,7 +245,7 @@ export default function MobileTabBar({
             id="more-dialog"
             aria-labelledby="more-dialog-title"
             ref={dialogRef}
-            className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-gray-800 bg-gray-950 p-4 shadow-xl"
+            className="absolute inset-x-0 bottom-0 max-h-[75dvh] overflow-y-auto overscroll-contain rounded-t-2xl border border-gray-800 bg-gray-950 p-4 shadow-xl"
             style={{
               paddingBottom: "max(1rem, var(--safe-area-inset-bottom))",
               paddingLeft: "max(1rem, var(--safe-area-inset-left))",
@@ -221,7 +256,7 @@ export default function MobileTabBar({
               <h2 id="more-dialog-title" className="text-sm font-semibold text-gray-100">More</h2>
               <button
                 type="button"
-                onClick={() => setIsMoreOpen(false)}
+                onClick={closeMore}
                 className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-gray-200"
                 aria-label="Close more menu"
               >

@@ -108,10 +108,11 @@ export default function NotesPage() {
   const [editingFolderId, setEditingFolderId] = useState<number | null>(null);
   const [editingFolderName, setEditingFolderName] = useState("");
 
-  const [isMobileViewport, setIsMobileViewport] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(max-width: 1023px)").matches;
-  });
+  // Initialize deterministically (desktop) so SSR and the hydration render
+  // match; the effect below syncs the real viewport after mount. Reading
+  // matchMedia during initial state caused a React #418 hydration mismatch
+  // at mobile widths because the server always renders the desktop layout.
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
   const [mobilePane, setMobilePane] = useState<MobilePane>("navigator");
   const pendingNavToastRef = useRef<string | null>(null);
 
