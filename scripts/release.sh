@@ -609,7 +609,13 @@ cmd_wait() {
   if [ -z "$pipeline" ]; then
     [ -n "$sha" ] || sha=$(git rev-parse HEAD)
     log "auto-detecting pipeline for ${sha:0:7}"
-    pipeline=$(wp_pipeline_for_sha "$sha")
+    local tries
+    for tries in $(seq 1 12); do
+      pipeline=$(wp_pipeline_for_sha "$sha") || pipeline=""
+      [ -n "$pipeline" ] && break
+      [ "$tries" = "1" ] && log "pipeline not created yet; polling for up to 96s"
+      sleep 8
+    done
     [ -n "$pipeline" ] || die "no pipeline found for ${sha:0:7} — check Woodpecker (webhook may not have fired)"
   fi
   wait_pipeline "$pipeline" "${sha:-}"
