@@ -37,7 +37,7 @@ import FinanceSubnav from "~/components/finance/FinanceSubnav";
 import { useExpenseFiltering, type ExpenseSort, type ExpenseStatusFilter } from "~/hooks/useExpenseFiltering";
 import { useIncomeCalculations } from "~/hooks/useIncomeCalculations";
 import { getDaysSince, summarizeBalances } from "~/modules/finance/balances";
-import { getBillsBeforePayday, getMostRecentPayDate, getNextPaydayAfter, getReferenceDateKey } from "~/modules/finance/paySchedule";
+import { buildPaidChargeKeys, getBillsBeforePayday, getMostRecentPayDate, getNextPaydayAfter, getReferenceDateKey } from "~/modules/finance/paySchedule";
 import { formatDateKey, parseDateKey } from "~/modules/finance/recurrence";
 import { eq } from "drizzle-orm";
 import { db } from "~/db";
@@ -162,12 +162,13 @@ export default function Expenses({ loaderData }: Route.ComponentProps) {
 
   const hasPaySchedule = Boolean(loaderData.paySchedule && loaderData.paySchedule.isEnabled !== 0);
   const asOf = parseDateKey(loaderData.asOfDate);
+  const paidChargeKeys = buildPaidChargeKeys(loaderData.chargeRecords);
   const balance = summarizeBalances(loaderData.balanceSnapshots);
   // Committed window: the remainder of the current pay period. Bills on the next payday are
   // funded by that paycheck, so the boundary is the first payday strictly after today.
   const nextPayday = hasPaySchedule ? getNextPaydayAfter(loaderData.paySchedule!, asOf) : null;
   const billsBeforePaydayCents = nextPayday
-    ? getBillsBeforePayday(loaderData.userExpenses, asOf, nextPayday).reduce((sum, bill) => sum + bill.amountCents, 0)
+    ? getBillsBeforePayday(loaderData.userExpenses, asOf, nextPayday, paidChargeKeys).reduce((sum, bill) => sum + bill.amountCents, 0)
     : null;
   const billsThroughKey = nextPayday ? formatDateKey(new Date(nextPayday.getTime() - 86_400_000)) : null;
   const lastPayDate = hasPaySchedule ? getMostRecentPayDate(loaderData.paySchedule!, asOf) : null;

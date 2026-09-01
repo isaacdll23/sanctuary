@@ -3,6 +3,7 @@ import type { FetcherWithComponents } from "react-router";
 import type { Expense, ExpenseActionResult, ExpenseCharge } from "~/types/expense";
 import type { PaymentAccountOption } from "~/components/finance/PaymentAccountsPanel";
 import { formatDateKey, getNextChargeDate, getNormalizedMonthlyCostCents, getRecurrenceDescription, parseDateKey } from "~/modules/finance/recurrence";
+import { buildPaidChargeKeys } from "~/modules/finance/paySchedule";
 import { formatMoney } from "~/utils/money";
 
 interface ExpensesTableProps {
@@ -24,7 +25,7 @@ interface ExpensesTableProps {
 
 export default function ExpensesTable({ filteredExpenses, totalExpenseCount, totalMonthlyCost, filteredMonthlyCost, filteredYearlyCost, filteredActiveCount, hasActiveFilters, onClearFilters, onAddExpense, onEditExpense, fetcher, paymentAccounts, asOfDate, chargeRecords }: ExpensesTableProps) {
   const asOf = parseDateKey(asOfDate);
-  const paidChargeKeys = new Set(chargeRecords.map((charge) => `${charge.expenseId}:${charge.chargeDate}`));
+  const paidChargeKeys = buildPaidChargeKeys(chargeRecords);
   const getShareOfTotal = (expense: Expense) =>
     !totalMonthlyCost || expense.isActive === 0
       ? "—"

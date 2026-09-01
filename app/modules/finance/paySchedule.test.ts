@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { formatDateKey } from "~/modules/finance/recurrence";
-import { getExpectedPaycheckCents, getMostRecentPayDate, getNextPaydayAfter, getPayDatesAfter, getScheduledBillsInPayPeriod, getSemiMonthlyPayDatesForMonth } from "./paySchedule";
+import { buildPaidChargeKeys, getExpectedPaycheckCents, getMostRecentPayDate, getNextPaydayAfter, getPayDatesAfter, getScheduledBillsInPayPeriod, getSemiMonthlyPayDatesForMonth } from "./paySchedule";
 
 const schedule = { scheduleType: "semi-monthly", firstNominalDay: 15, secondPaydayRule: "last-day", weekendAdjustment: "previous-friday" };
 
@@ -45,6 +45,17 @@ describe("semi-monthly pay schedules", () => {
     const secondPeriod = getScheduledBillsInPayPeriod(expenses, new Date(Date.UTC(2026, 0, 30)), new Date(Date.UTC(2026, 1, 13)));
     assert.deepEqual(firstPeriod, []);
     assert.deepEqual(secondPeriod.map((bill) => bill.name), ["Boundary bill"]);
+  });
+
+  it("excludes charges already marked paid from the committed-bill total", () => {
+    const expenses = [
+      { id: 1, name: "Rent", monthlyCost: 10_000, isActive: 1, recurrenceFrequency: "monthly", recurrenceAnchor: "2000-01-15", chargeDay: 15, lastDayOfMonth: 0 },
+      { id: 2, name: "Internet", monthlyCost: 2_000, isActive: 1, recurrenceFrequency: "monthly", recurrenceAnchor: "2000-01-20", chargeDay: 20, lastDayOfMonth: 0 },
+    ];
+    const paidChargeKeys = buildPaidChargeKeys([{ expenseId: 1, chargeDate: "2026-02-15" }]);
+    const bills = getScheduledBillsInPayPeriod(expenses, new Date(Date.UTC(2026, 1, 1)), new Date(Date.UTC(2026, 1, 28)), paidChargeKeys);
+    assert.deepEqual(bills.map((bill) => bill.name), ["Internet"]);
+    assert.equal(bills.reduce((sum, bill) => sum + bill.amountCents, 0), 2_000);
   });
 
   it("finds the most recent payday on or before the reference date across month boundaries", () => {

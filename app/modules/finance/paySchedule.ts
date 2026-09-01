@@ -32,6 +32,11 @@ export interface ScheduledBill {
   amountCents: number;
 }
 
+/** Set of `expenseId:chargeDate` keys for charges already marked paid, so committed-bill totals can skip them. */
+export function buildPaidChargeKeys(charges: ReadonlyArray<{ expenseId: number; chargeDate: string }>): Set<string> {
+  return new Set(charges.map((charge) => `${charge.expenseId}:${charge.chargeDate}`));
+}
+
 const DAY_MS = 86_400_000;
 
 function daysInMonth(year: number, month: number) {
@@ -104,11 +109,13 @@ export function getExpectedPaycheckCents(schedule: PrimaryPaySchedule, annualGro
 }
 
 /** Half-open pay-period allocation: bills on the payday are funded by that paycheck. */
-export function getScheduledBillsInPayPeriod(expenses: CashFlowExpense[], payDate: Date, nextPayDate: Date): ScheduledBill[] {
+export function getScheduledBillsInPayPeriod(expenses: CashFlowExpense[], payDate: Date, nextPayDate: Date, paidChargeKeys?: Set<string>): ScheduledBill[] {
   const through = new Date(nextPayDate.getTime() - DAY_MS);
-  return expenses.flatMap((expense) => expense.isActive === 0 ? [] : getChargeDatesInRange(expense, payDate, through).map((chargeDate) => ({ expenseId: expense.id, name: expense.name, chargeDate: formatDateKey(chargeDate), amountCents: expense.monthlyCost }))).sort((a, b) => a.chargeDate.localeCompare(b.chargeDate) || a.name.localeCompare(b.name));
+  return expenses.flatMap((expense) => expense.isActive === 0 ? [] : getChargeDatesInRange(expense, payDate, through).map((chargeDate) => ({ expenseId: expense.id, name: expense.name, chargeDate: formatDateKey(chargeDate), amountCents: expense.monthlyCost })))
+    .filter((bill) => !paidChargeKeys?.has(`${bill.expenseId}:${bill.chargeDate}`))
+    .sort((a, b) => a.chargeDate.localeCompare(b.chargeDate) || a.name.localeCompare(b.name));
 }
 
-export function getBillsBeforePayday(expenses: CashFlowExpense[], referenceDate: Date, nextPayDate: Date) {
-  return getScheduledBillsInPayPeriod(expenses, referenceDate, nextPayDate);
+export function getBillsBeforePayday(expenses: CashFlowExpense[], referenceDate: Date, nextPayDate: Date, paidChargeKeys?: Set<string>) {
+  return getScheduledBillsInPayPeriod(expenses, referenceDate, nextPayDate, paidChargeKeys);
 }
