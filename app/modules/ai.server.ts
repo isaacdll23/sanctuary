@@ -2,12 +2,13 @@ import { generateObject } from "ai";
 import { z } from "zod";
 
 /** AI-backed features. Each maps to an optional per-feature model override. */
-export type AiFeature = "note-title";
+export type AiFeature = "note-title" | "assistant";
 
 const DEFAULT_MODEL = "gpt-6-luna";
 
 const FEATURE_MODEL_ENV: Readonly<Record<AiFeature, string>> = {
   "note-title": "OPENAI_MODEL_NOTE_TITLE",
+  assistant: "OPENAI_MODEL_ASSISTANT",
 };
 
 /**
@@ -33,7 +34,11 @@ export function resolveModel(
   );
 }
 
-async function getModel(feature: AiFeature) {
+/**
+ * Builds a language model for a feature from the configured OpenAI-compatible
+ * provider. Server-only: the provider import is dynamic and reads secrets.
+ */
+export async function getLanguageModel(feature: AiFeature) {
   // The Vercel AI SDK's OpenAI provider throws while loading when
   // OPENAI_BASE_URL is present but blank. Treat a blank value as unset so an
   // empty optional env var cannot crash the server at boot.
@@ -72,7 +77,7 @@ export async function generateNoteTitle(content: string): Promise<string> {
 
   try {
     const { object } = await generateObject({
-      model: await getModel("note-title"),
+      model: await getLanguageModel("note-title"),
       schema: noteTitleSchema,
       system:
         "You are a helpful assistant that generates concise titles for notes. Generate a title that is 2-8 words long, capturing the essence of the note.",

@@ -34,6 +34,17 @@ describe("AI configuration", () => {
       "gpt-6-luna"
     );
   });
+
+  it("resolves the assistant feature override independently", () => {
+    assert.equal(resolveModel("assistant", {}), "gpt-6-luna");
+    assert.equal(
+      resolveModel("assistant", {
+        OPENAI_MODEL: "gpt-5",
+        OPENAI_MODEL_ASSISTANT: "gpt-5-mini",
+      }),
+      "gpt-5-mini"
+    );
+  });
 });
 
 describe("generateNoteTitle", () => {
