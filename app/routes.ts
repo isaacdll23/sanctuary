@@ -26,6 +26,7 @@ export default [
   route("notes", "routes/notes/notes.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
   route("assistant", "routes/assistant/assistant.tsx"),
+  route("assistant/chat", "routes/assistant/chat.ts"),
   route("admin", "routes/admin/admin.tsx"),
   route("settings", "routes/settings.tsx"),
   route("auth/login", "routes/auth/login.tsx"),
