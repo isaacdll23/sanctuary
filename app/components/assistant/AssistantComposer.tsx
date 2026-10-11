@@ -4,7 +4,7 @@ import {
   StopIcon,
 } from "@heroicons/react/24/outline";
 import type { ReasoningEffort } from "~/modules/assistant/conversation";
-import { AssistantReasoningSelect } from "./AssistantReasoningSelect";
+import { AssistantReasoningPicker } from "./AssistantReasoningPicker";
 
 interface AssistantComposerProps {
   onSend: (text: string) => void;
@@ -54,7 +54,7 @@ export function AssistantComposer({
         submit();
       }}
     >
-      <div className="flex items-end gap-3 rounded-2xl border border-white/[0.07] bg-zinc-900/60 p-3 backdrop-blur-md">
+      <div className="flex items-end gap-3 rounded-2xl border border-white/[0.08] bg-gray-900/60 p-3 shadow-lg shadow-black/20 backdrop-blur-md transition-colors focus-within:border-indigo-400/40 focus-within:ring-1 focus-within:ring-indigo-500/40">
         <label htmlFor="assistant-message" className="sr-only">
           Message
         </label>
@@ -80,13 +80,13 @@ export function AssistantComposer({
           placeholder={
             disabled ? "Chat is unavailable…" : "Ask about your finances…"
           }
-          className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-gray-200 placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed"
+          className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed"
         />
         {isBusy ? (
           <button
             type="button"
             onClick={onStop}
-            className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/[0.12] px-4 text-sm font-medium text-gray-200 transition-colors hover:bg-white/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
+            className="inline-flex h-11 items-center gap-2 rounded-xl border border-white/[0.14] bg-gray-800/60 px-4 text-sm font-medium text-gray-100 transition-colors hover:border-white/25 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950"
           >
             <StopIcon className="h-4 w-4" aria-hidden="true" />
             Stop
@@ -95,19 +95,22 @@ export function AssistantComposer({
           <button
             type="submit"
             disabled={!canSend}
-            className="inline-flex h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white transition-colors hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm shadow-indigo-950/50 transition-colors hover:bg-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:cursor-not-allowed disabled:bg-gray-800 disabled:text-gray-500 disabled:shadow-none"
           >
             <PaperAirplaneIcon className="h-4 w-4" aria-hidden="true" />
             Send
           </button>
         )}
       </div>
-      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-2">
-        <p id="assistant-composer-hint" className="text-xs text-gray-500">
+      <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-2">
+        <p
+          id="assistant-composer-hint"
+          className="max-w-md text-xs leading-relaxed text-gray-500"
+        >
           {disabledReason ??
             "The assistant can read your finance data. Press Enter to send, Shift+Enter for a new line."}
         </p>
-        <AssistantReasoningSelect
+        <AssistantReasoningPicker
           value={reasoningEffort}
           onChange={onReasoningEffortChange}
           disabled={disabled}

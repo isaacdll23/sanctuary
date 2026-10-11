@@ -29,11 +29,11 @@ const icons: Record<ToastType, React.ElementType> = {
 
 const toastStyles: Record<ToastType, string> = {
   success:
-    "bg-emerald-500/15 border-emerald-500/35 text-emerald-100 backdrop-blur-sm",
-  error: "bg-red-500/15 border-red-500/35 text-red-100 backdrop-blur-sm",
+    "bg-emerald-500/15 border-emerald-400/35 text-emerald-900 backdrop-blur-sm",
+  error: "bg-red-500/15 border-red-400/35 text-red-900 backdrop-blur-sm",
   info: "bg-gray-700/55 border-gray-600 text-gray-100 backdrop-blur-sm",
   warning:
-    "bg-amber-500/15 border-amber-500/35 text-amber-100 backdrop-blur-sm",
+    "bg-amber-500/15 border-amber-400/35 text-amber-900 backdrop-blur-sm",
 };
 
 const ToastItem: React.FC<ToastItemProps> = ({

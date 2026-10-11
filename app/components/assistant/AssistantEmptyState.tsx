@@ -1,10 +1,27 @@
-import { SparklesIcon } from "@heroicons/react/24/outline";
+import {
+  BanknotesIcon,
+  ChartPieIcon,
+  SparklesIcon,
+  TagIcon,
+} from "@heroicons/react/24/outline";
 
 /** Starter questions that map onto the assistant's finance tools. */
 const EXAMPLE_REQUESTS = [
-  "How much do I spend each month?",
-  "What's my biggest expense category?",
-  "When is my next payday, and what's left after bills?",
+  {
+    text: "How much do I spend each month?",
+    Icon: ChartPieIcon,
+    tint: "text-indigo-300 group-hover:border-indigo-400/40",
+  },
+  {
+    text: "What's my biggest expense category?",
+    Icon: TagIcon,
+    tint: "text-emerald-300 group-hover:border-emerald-400/40",
+  },
+  {
+    text: "When is my next payday, and what's left after bills?",
+    Icon: BanknotesIcon,
+    tint: "text-violet-300 group-hover:border-violet-400/40",
+  },
 ] as const;
 
 interface AssistantEmptyStateProps {
@@ -18,8 +35,8 @@ export function AssistantEmptyState({
 }: AssistantEmptyStateProps) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-      <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/[0.08] bg-zinc-900/70">
-        <SparklesIcon className="h-7 w-7 text-indigo-400" aria-hidden="true" />
+      <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/[0.08] bg-gradient-to-br from-indigo-500/20 to-violet-500/20">
+        <SparklesIcon className="h-7 w-7 text-indigo-300" aria-hidden="true" />
       </div>
       <h2 className="text-lg font-medium text-gray-100">
         Ask about your finances
@@ -33,16 +50,20 @@ export function AssistantEmptyState({
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
           Try asking
         </p>
-        <ul className="mt-2 flex flex-wrap justify-center gap-2">
-          {EXAMPLE_REQUESTS.map((request) => (
-            <li key={request}>
+        <ul className="mt-3 flex max-w-xl flex-wrap justify-center gap-2">
+          {EXAMPLE_REQUESTS.map(({ text, Icon, tint }) => (
+            <li key={text}>
               <button
                 type="button"
                 disabled={disabled}
-                onClick={() => onSelect(request)}
-                className="rounded-full border border-white/[0.07] bg-zinc-900/60 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:border-indigo-500/40 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => onSelect(text)}
+                className={`group inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-gray-900/60 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-gray-800/60 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 disabled:cursor-not-allowed disabled:opacity-50 ${tint}`}
               >
-                {request}
+                <Icon
+                  className="h-3.5 w-3.5 shrink-0"
+                  aria-hidden="true"
+                />
+                {text}
               </button>
             </li>
           ))}

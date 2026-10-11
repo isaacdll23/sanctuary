@@ -49,7 +49,7 @@ export function AssistantSidebar({
           <Link
             to="/assistant"
             onClick={onClose}
-            className="inline-flex flex-1 items-center gap-2 rounded-lg border border-white/[0.08] bg-zinc-900/70 px-3 py-2 text-sm font-medium text-gray-200 transition-colors hover:border-indigo-500/40 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="inline-flex flex-1 items-center gap-2 rounded-lg border border-white/[0.08] bg-gray-900/70 px-3 py-2 text-sm font-medium text-gray-200 transition-colors hover:border-indigo-400/40 hover:bg-gray-800/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           >
             <PlusIcon className="h-4 w-4" aria-hidden="true" />
             New chat
@@ -110,7 +110,7 @@ function ConversationListItem({
           method="post"
           action="/assistant"
           onSubmit={() => setEditing(false)}
-          className="flex items-center gap-1 rounded-lg bg-zinc-900/70 p-1"
+          className="flex items-center gap-1 rounded-lg bg-gray-900/70 p-1"
         >
           <input type="hidden" name="intent" value="rename" />
           <input type="hidden" name="conversationId" value={conversation.id} />
@@ -149,7 +149,7 @@ function ConversationListItem({
           [
             "block truncate rounded-lg py-2 pl-3 pr-16 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
             isActive || active
-              ? "bg-white/[0.08] text-white"
+              ? "bg-indigo-500/10 text-white shadow-[inset_2px_0_0_var(--color-indigo-400)]"
               : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100",
           ].join(" ")
         }

@@ -31,7 +31,9 @@
 
 ## UI Conventions
 
-- Tailwind CSS v4 styling, neutral zinc/gray palette + dark mode support.
+- Tailwind CSS v4 styling, dark-only neutral gray palette with cyan (primary)
+  and violet (secondary) accents. Palette roles and the assistant chat theming
+  are documented in `docs/assistant-ui.md`.
 - Reuse shared component/style helpers when possible (avoid class duplication).
 - Prefer keyboard-accessible controls (`button`, `a`) over clickable `div`s.
 - Sanity-check responsive behavior across mobile and desktop breakpoints.
@@ -42,6 +44,7 @@
 - **Tasks:** `app/routes/tasks/tasks.tsx` and `app/modules/services/TaskService.ts`.
 - **Day Planner:** `app/routes/day-planner.tsx` with components in `app/components/day-planner/` and logic in `app/modules/services/DayPlannerService.ts`.
 - **Finance & Expenses:** `app/routes/finance/**` with `ExpenseService.ts`, `IncomeService.ts`, and `SharedBudgetService.ts`.
+- **Assistant:** `app/routes/assistant/**` with components in `app/components/assistant/`, agent/tools in `app/modules/assistant/`, and UI design notes in `docs/assistant-ui.md`.
 
 ## Before Finishing Changes
 

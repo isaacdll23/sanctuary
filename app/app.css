@@ -45,8 +45,15 @@
   --color-gray-900: #11141a;
   --color-gray-950: #0a0c10;
 
-  /* Single restrained primary accent: cyan (used for active nav, primary
-     CTAs, focus rings, and primary progress bars only). */
+  /* Accent palette. Two cool accents carry interaction, everything else is
+     neutral or semantic. Hues stay desaturated relative to their light-mode
+     equivalents so they read as accents on the near-black canvas.
+       - cyan   (indigo tokens) — primary: CTAs, active nav, focus rings, links
+       - violet — secondary: assistant identity and "deep thinking" states
+       - emerald — success / completed
+       - amber   — warning
+       - red     — danger
+     Prefer these over reintroducing Tailwind's default colorful scales. */
   --color-indigo-50: #f0f9ff;
   --color-indigo-100: #e0f2fe;
   --color-indigo-200: #bae6fd;
@@ -58,6 +65,19 @@
   --color-indigo-800: #075985;
   --color-indigo-900: #0c4a6e;
   --color-indigo-950: #082f49;
+
+  /* Secondary accent: violet. Dark-tuned ramp (50 lightest → 950 darkest). */
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+  --color-violet-950: #2e1065;
 
   --color-blue-50: #f3f4f6;
   --color-blue-100: #dde1e7;
@@ -218,6 +238,58 @@ textarea {
 
 hr {
   border-color: rgb(45 49 61);
+}
+
+/* Assistant markdown. Overrides the typography plugin's invert tokens so prose
+   matches the app's custom dark scale (neutral gray, cyan links, violet-tinted
+   emphasis) instead of Tailwind's default grays. */
+.assistant-prose {
+  --tw-prose-invert-body: var(--color-gray-200);
+  --tw-prose-invert-headings: var(--color-gray-50);
+  --tw-prose-invert-lead: var(--color-gray-300);
+  --tw-prose-invert-links: var(--color-indigo-300);
+  --tw-prose-invert-bold: var(--color-gray-50);
+  --tw-prose-invert-counters: var(--color-gray-400);
+  --tw-prose-invert-bullets: var(--color-gray-500);
+  --tw-prose-invert-hr: var(--color-gray-700);
+  --tw-prose-invert-quotes: var(--color-gray-200);
+  --tw-prose-invert-quote-borders: var(--color-violet-500);
+  --tw-prose-invert-captions: var(--color-gray-500);
+  --tw-prose-invert-code: var(--color-indigo-200);
+  --tw-prose-invert-pre-code: var(--color-gray-200);
+  --tw-prose-invert-pre-bg: rgb(17 20 26 / 0.85);
+  --tw-prose-invert-th-borders: var(--color-gray-700);
+  --tw-prose-invert-td-borders: var(--color-gray-800);
+}
+
+/* Blinking caret shown at the end of the assistant's reply while streaming. */
+@keyframes assistant-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0.15;
+  }
+}
+
+.assistant-prose--streaming > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 1em;
+  margin-left: 0.15rem;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  background-color: var(--color-indigo-400);
+  animation: assistant-caret 1s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-prose--streaming > :last-child::after {
+    animation: none;
+  }
 }
 
 /* Custom Animations */

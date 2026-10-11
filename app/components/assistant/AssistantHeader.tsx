@@ -13,7 +13,7 @@ interface AssistantHeaderProps {
  */
 export function AssistantHeader({ title, onOpenSidebar }: AssistantHeaderProps) {
   return (
-    <header className="border-b border-white/[0.07] px-4 py-4 md:px-8">
+    <header className="border-b border-white/[0.07] bg-gray-950/40 px-4 py-4 backdrop-blur-sm md:px-8">
       <div className="mx-auto flex w-full max-w-4xl items-center gap-3">
         {onOpenSidebar && (
           <button
@@ -25,15 +25,15 @@ export function AssistantHeader({ title, onOpenSidebar }: AssistantHeaderProps) 
             <Bars3Icon className="h-5 w-5" aria-hidden="true" />
           </button>
         )}
-        <div className="inline-flex rounded-xl border border-white/[0.08] bg-zinc-900/70 p-2 backdrop-blur-md">
-          <SparklesIcon className="h-5 w-5 text-indigo-400" aria-hidden="true" />
+        <div className="inline-flex rounded-xl border border-white/[0.08] bg-gradient-to-br from-indigo-500/20 to-violet-500/20 p-2">
+          <SparklesIcon className="h-5 w-5 text-indigo-300" aria-hidden="true" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <h1 className="truncate text-lg font-semibold text-gray-50">
               {title}
             </h1>
-            <span className="shrink-0 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-300">
+            <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-200">
               Preview
             </span>
           </div>

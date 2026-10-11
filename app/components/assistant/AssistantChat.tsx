@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, generateId, type UIMessage } from "ai";
 import { useNavigate, useRevalidator } from "react-router";
-import type { ReasoningEffort } from "~/modules/assistant/conversation";
+import {
+  DEFAULT_REASONING_EFFORT,
+  type ReasoningEffort,
+} from "~/modules/assistant/conversation";
 import {
   loadReasoningEffort,
   saveReasoningEffort,
@@ -37,9 +40,16 @@ export function AssistantChat({
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [chatId] = useState(() => conversationId ?? generateId());
-  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() =>
-    loadReasoningEffort()
+  // Start from the default so the server-rendered control matches the first
+  // client render, then adopt the stored preference after mount. Reading
+  // localStorage during render would make hydration text diverge from SSR.
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(
+    DEFAULT_REASONING_EFFORT
   );
+
+  useEffect(() => {
+    setReasoningEffort(loadReasoningEffort());
+  }, []);
 
   const transport = useMemo(
     () =>
@@ -96,13 +106,13 @@ export function AssistantChat({
         {error && (
           <div
             role="alert"
-            className="mt-4 flex items-start justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200"
+            className="mt-4 flex items-start justify-between gap-3 rounded-xl border border-red-400/35 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-900"
           >
             <p>{error.message || "Something went wrong. Please try again."}</p>
             <button
               type="button"
               onClick={clearError}
-              className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-red-200 hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-red-900/90 hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
             >
               Dismiss
             </button>
