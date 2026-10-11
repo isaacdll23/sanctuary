@@ -4,21 +4,11 @@ import { PlusIcon } from "@heroicons/react/24/outline";
 import type { Route } from "./+types/expenses";
 import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import {
-  createExpenseForUser,
-  createPaymentAccountForUser,
-  deleteExpenseChargeForUser,
-  deleteExpenseForUser,
-  deletePaymentAccountForUser,
   getBalanceSnapshotsForUser,
   getExpenseChargesForUser,
   getExpensesForUser,
   getLatestIncomeForUser,
   getPaymentAccountsForUser,
-  isPaymentAccountOwnedByUser,
-  setExpenseActiveForUser,
-  setExpenseChargeForUser,
-  updateExpenseForUser,
-  upsertBalanceSnapshotForUser,
   validateBalanceCheckIn,
   validateExpenseChargeForm,
   validateExpenseDelete,
@@ -26,6 +16,17 @@ import {
   validateExpenseStatus,
   validatePaymentAccountForm,
 } from "~/modules/services/ExpenseService";
+import {
+  createExpense,
+  createPaymentAccount,
+  deleteExpense,
+  deletePaymentAccount,
+  logAccountBalance,
+  recordExpenseCharge,
+  removeExpenseCharge,
+  setExpenseActive,
+  updateExpense,
+} from "~/modules/services/FinanceCommandService";
 import { AddExpenseModal, EditExpenseModal } from "~/components/finance/ExpenseFormModal";
 import BalanceSummary from "~/components/finance/BalanceSummary";
 import ExpenseSummaryCards from "~/components/finance/ExpenseSummaryCards";
@@ -73,72 +74,49 @@ export const action = pageAccessAction("finance", async (user, request): Promise
     case "add": {
       const parsed = validateExpenseForm(formData, "add");
       if (!parsed.success) return parsed.result;
-      if (!await isPaymentAccountOwnedByUser(user.id, parsed.data.accountId)) return { ok: false, error: "Select one of your payment accounts." };
-      await createExpenseForUser(user.id, parsed.data);
-      return { ok: true, action: "add", message: "Expense added." };
+      return createExpense(user.id, parsed.data);
     }
     case "update": {
       const parsed = validateExpenseForm(formData, "update");
       if (!parsed.success) return parsed.result;
       const { id, ...values } = parsed.data;
-      if (!await isPaymentAccountOwnedByUser(user.id, values.accountId)) return { ok: false, error: "Select one of your payment accounts." };
-      const updated = await updateExpenseForUser(user.id, id!, values);
-      return updated.length
-        ? { ok: true, action: "update", message: "Expense updated." }
-        : { ok: false, error: "Expense not found or permission denied." };
+      return updateExpense(user.id, id, values);
     }
     case "delete": {
       const parsed = validateExpenseDelete(formData);
       if (!parsed.success) return parsed.result;
-      const deleted = await deleteExpenseForUser(user.id, parsed.id);
-      return deleted.length
-        ? { ok: true, action: "delete", message: "Expense deleted." }
-        : { ok: false, error: "Expense not found or permission denied." };
+      return deleteExpense(user.id, parsed.id);
     }
     case "toggleStatus": {
       const parsed = validateExpenseStatus(formData);
       if (!parsed.success) return parsed.result;
-      const updated = await setExpenseActiveForUser(user.id, parsed.id, parsed.isActive);
-      return updated.length
-        ? { ok: true, action: "toggleStatus", message: parsed.isActive ? "Expense resumed and included in totals." : "Expense paused and excluded from totals." }
-        : { ok: false, error: "Expense not found or permission denied." };
+      return setExpenseActive(user.id, parsed.id, parsed.isActive);
     }
     case "markChargePaid": {
       const parsed = validateExpenseChargeForm(formData, "mark");
       if (!parsed.success) return parsed.result;
       if (parsed.data.amountCents == null) return { ok: false, error: "Enter the amount that was charged." };
-      const expense = await setExpenseChargeForUser(user.id, parsed.data.expenseId, parsed.data.chargeDate, parsed.data.amountCents);
-      return expense
-        ? { ok: true, action: "markChargePaid", message: `${expense.name} marked paid for ${parsed.data.chargeDate}.` }
-        : { ok: false, error: "Expense not found or permission denied." };
+      return recordExpenseCharge(user.id, parsed.data.expenseId, parsed.data.chargeDate, parsed.data.amountCents);
     }
     case "unmarkChargePaid": {
       const parsed = validateExpenseChargeForm(formData, "unmark");
       if (!parsed.success) return parsed.result;
-      const removed = await deleteExpenseChargeForUser(user.id, parsed.data.expenseId, parsed.data.chargeDate);
-      return removed.length
-        ? { ok: true, action: "unmarkChargePaid", message: "Charge marked unpaid and removed from the ledger." }
-        : { ok: false, error: "No recorded charge found for this expense and date." };
+      return removeExpenseCharge(user.id, parsed.data.expenseId, parsed.data.chargeDate);
     }
     case "logBalance": {
       const parsed = validateBalanceCheckIn(formData);
       if (!parsed.success) return parsed.result;
-      const account = await upsertBalanceSnapshotForUser(user.id, parsed.data.accountId, parsed.data.balanceDate, parsed.data.balanceCents);
-      return account
-        ? { ok: true, action: "logBalance", message: `Balance for ${account.name} logged for ${parsed.data.balanceDate}.` }
-        : { ok: false, error: "Payment account not found or permission denied." };
+      return logAccountBalance(user.id, parsed.data.accountId, parsed.data.balanceDate, parsed.data.balanceCents);
     }
     case "addPaymentAccount": {
       const parsed = validatePaymentAccountForm(formData);
       if (!parsed.success) return parsed.result;
-      await createPaymentAccountForUser(user.id, parsed.data.name);
-      return { ok: true, action: "addPaymentAccount", message: "Payment account added." };
+      return createPaymentAccount(user.id, parsed.data.name);
     }
     case "deletePaymentAccount": {
       const parsed = validateExpenseDelete(formData);
       if (!parsed.success) return parsed.result;
-      const deleted = await deletePaymentAccountForUser(user.id, parsed.id);
-      return deleted.length ? { ok: true, action: "deletePaymentAccount", message: "Payment account removed. Linked expenses are now unassigned." } : { ok: false, error: "Payment account not found or permission denied." };
+      return deletePaymentAccount(user.id, parsed.id);
     }
     default:
       return { ok: false, error: "Unsupported expense action." };

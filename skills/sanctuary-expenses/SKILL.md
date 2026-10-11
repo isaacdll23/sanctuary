@@ -25,6 +25,8 @@ Preserve the Expenses feature as a recurring-commitments and cash-flow planner. 
 ## Ownership and mutations
 
 - Keep form parsing and database writes in `app/modules/services/ExpenseService.ts`.
+- Route actions and assistant tools both call `app/modules/services/FinanceCommandService.ts` for writes, so ownership checks, persistence, and result messages stay in one place.
+- The assistant's write tools (`create_expense`, `update_expense`, `set_expense_active`, `delete_expense`, `record_expense_charge`, `remove_expense_charge`, `log_account_balance`, `create_payment_account`, `delete_payment_account`, `update_income`) resolve records by id or name through `app/modules/finance/referenceResolution.ts` and then call the same commands. An ambiguous name returns disambiguation candidates instead of acting; never delete on a fuzzy match. `update_income` merges a partial update onto the current income and pay schedule via `incomeWriteToFields`.
 - Update, delete, and status predicates must include both expense ID and current user ID.
 - Treat a submitted payment-account ID as untrusted. Confirm that it belongs to the current user before assigning it.
 - Payment-account deletion unassigns that user's linked expenses; it must not delete expenses or change another user's rows.
@@ -40,7 +42,11 @@ Make additive schema changes safe for existing production rows directly in `app/
 
 - `app/routes/finance/expenses.tsx`
 - `app/modules/services/ExpenseService.ts`
+- `app/modules/services/FinanceCommandService.ts` — application commands (ownership checks, persistence, result messages) shared by route actions and assistant tools
 - `app/modules/finance/recurrence.ts`
+- `app/modules/finance/expenseFiltering.ts` — pure category/text/status/sort logic shared by the UI hook and the assistant `list_expenses` tool
+- `app/modules/finance/referenceResolution.ts` — exact-then-substring name/id resolution shared by the assistant write tools
+- `app/modules/assistant/financeTools.server.ts` — assistant read and write tool definitions
 - `app/hooks/useExpenseFiltering.ts`
 - `app/hooks/useIncomeCalculations.ts`
 - `app/components/finance/ExpenseFormModal.tsx`

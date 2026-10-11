@@ -1,47 +1,15 @@
 import { useMemo } from "react";
 import type { Expense } from "~/types/expense";
-import { getNextChargeDate, getNormalizedMonthlyCostCents, getNormalizedYearlyCostCents, parseDateKey } from "~/modules/finance/recurrence";
+import { getNormalizedMonthlyCostCents, getNormalizedYearlyCostCents } from "~/modules/finance/recurrence";
+import {
+  filterAndSortExpenses,
+  type ExpenseListFilters,
+  type ExpenseSort,
+  type ExpenseStatusFilter,
+} from "~/modules/finance/expenseFiltering";
 
-export type ExpenseStatusFilter = "all" | "active" | "paused";
-export type ExpenseSort = "nextCharge" | "name" | "monthlyCost";
-
-export interface ExpenseListFilters {
-  categories: string[];
-  searchQuery: string;
-  status: ExpenseStatusFilter;
-  sort: ExpenseSort;
-  asOfDate: string;
-}
-
-/** Applies client-side list controls without changing the account-wide summaries. */
-export function filterAndSortExpenses(expenses: Expense[], filters: ExpenseListFilters): Expense[] {
-  const query = filters.searchQuery.trim().toLocaleLowerCase();
-
-  return expenses
-    .filter((expense) => {
-      const matchesCategory = !filters.categories.length || filters.categories.includes(expense.category);
-      const matchesStatus = filters.status === "all"
-        || (filters.status === "active" && expense.isActive !== 0)
-        || (filters.status === "paused" && expense.isActive === 0);
-      const matchesSearch = !query
-        || expense.name.toLocaleLowerCase().includes(query)
-        || expense.category.toLocaleLowerCase().includes(query);
-      return matchesCategory && matchesStatus && matchesSearch;
-    })
-    .sort((a, b) => {
-      switch (filters.sort) {
-        case "name":
-          return a.name.localeCompare(b.name) || a.chargeDay - b.chargeDay;
-        case "monthlyCost":
-          return getNormalizedMonthlyCostCents(b) - getNormalizedMonthlyCostCents(a) || a.name.localeCompare(b.name);
-        case "nextCharge":
-        default:
-          return getNextChargeDate(a, parseDateKey(filters.asOfDate)).getTime()
-            - getNextChargeDate(b, parseDateKey(filters.asOfDate)).getTime()
-            || a.name.localeCompare(b.name);
-      }
-    });
-}
+export { filterAndSortExpenses };
+export type { ExpenseListFilters, ExpenseSort, ExpenseStatusFilter };
 
 interface UseExpenseFilteringReturn {
   distinctCategories: string[];

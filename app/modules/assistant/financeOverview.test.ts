@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { Expense } from "~/types/expense";
+import type { AccountBalanceSnapshot, Expense, ExpenseCharge } from "~/types/expense";
 import {
+  buildBalanceSummary,
   buildExpenseSummary,
   buildIncomeOverview,
+  buildPaymentAccountsView,
+  buildUpcomingCashFlow,
   summarizeExpenses,
   toExpenseView,
 } from "./financeOverview";
@@ -153,5 +156,179 @@ describe("buildExpenseSummary", () => {
     assert.equal(summary.yearlyRecurringUsd, 18_000);
     assert.equal(summary.income.netRemainingMonthlyUsd, 6_000);
     assert.equal(summary.income.netRemainingYearlyUsd, 72_000);
+  });
+});
+
+function snapshot(overrides: Partial<AccountBalanceSnapshot>): AccountBalanceSnapshot {
+  return {
+    id: 1,
+    userId: 1,
+    accountId: 7,
+    balanceDate: "2026-10-01",
+    balanceCents: 125_050,
+    createdAt: new Date("2026-10-01T00:00:00Z"),
+    updatedAt: new Date("2026-10-01T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+function charge(overrides: Partial<ExpenseCharge>): ExpenseCharge {
+  return {
+    id: 1,
+    userId: 1,
+    expenseId: 1,
+    chargeDate: "2026-10-14",
+    amountCents: 5_000,
+    createdAt: new Date("2026-10-14T00:00:00Z"),
+    updatedAt: new Date("2026-10-14T00:00:00Z"),
+    ...overrides,
+  };
+}
+
+// Mirrors the semi-monthly schedule used on the Income page.
+const schedule = {
+  isEnabled: 1,
+  scheduleType: "semi-monthly",
+  firstNominalDay: 15,
+  secondPaydayRule: "last-day",
+  weekendAdjustment: "previous-friday",
+  netPaycheckAmountCents: null,
+  depositAccountId: null,
+};
+
+const phone = expense({
+  id: 9,
+  name: "Phone",
+  monthlyCost: 5_000,
+  chargeDay: 14,
+  category: "Utilities",
+});
+
+const water = expense({
+  id: 10,
+  name: "Water",
+  monthlyCost: 3_000,
+  chargeDay: 5,
+  category: "Utilities",
+});
+
+describe("buildPaymentAccountsView", () => {
+  it("uses the newest snapshot per account and reports staleness", () => {
+    const view = buildPaymentAccountsView(
+      [
+        { id: 7, name: "Checking" },
+        { id: 8, name: "Credit" },
+      ],
+      [
+        snapshot({ id: 1, accountId: 7, balanceDate: "2026-10-01", balanceCents: 125_050 }),
+        snapshot({ id: 2, accountId: 7, balanceDate: "2026-09-01", balanceCents: 100_000 }),
+        snapshot({ id: 3, accountId: 8, balanceDate: "2026-09-20", balanceCents: -4_210 }),
+      ],
+      "2026-10-11"
+    );
+
+    assert.equal(view.accountCount, 2);
+    assert.equal(view.totalBalanceUsd, 1_208.4);
+    assert.deepEqual(
+      view.accounts.map((account) => [account.name, account.currentBalanceUsd]),
+      [
+        ["Checking", 1_250.5],
+        ["Credit", -42.1],
+      ]
+    );
+    assert.equal(view.accounts[0].balanceCheckedDaysAgo, 10);
+    assert.equal(view.accounts[0].balanceAgeLabel, "checked 10 days ago");
+  });
+
+  it("reports null balances when an account has no check-in", () => {
+    const view = buildPaymentAccountsView(
+      [{ id: 7, name: "Checking" }],
+      [],
+      "2026-10-11"
+    );
+
+    assert.equal(view.accounts[0].currentBalanceUsd, null);
+    assert.equal(view.totalBalanceUsd, 0);
+  });
+});
+
+describe("buildBalanceSummary", () => {
+  it("subtracts unpaid bills through the next payday from total balance", () => {
+    const view = buildBalanceSummary(
+      [rent, phone],
+      [],
+      [snapshot({ accountId: 7, balanceDate: "2026-10-01", balanceCents: 125_050 })],
+      schedule,
+      "2026-10-11"
+    );
+
+    assert.equal(view.totalBalanceUsd, 1_250.5);
+    assert.equal(view.nextPayday, "2026-10-15");
+    assert.equal(view.billsThroughDate, "2026-10-14");
+    assert.equal(view.committedBillsUsd, 50);
+    assert.equal(view.remainingAfterBillsUsd, 1_200.5);
+    assert.equal(view.daysSinceLastCheck, 10);
+    assert.equal(view.paydaySinceLastCheck, false);
+  });
+
+  it("skips bills already marked paid and flags a payday missed since the last check-in", () => {
+    const view = buildBalanceSummary(
+      [rent, phone],
+      [charge({ expenseId: 9, chargeDate: "2026-10-14", amountCents: 5_000 })],
+      [snapshot({ accountId: 7, balanceDate: "2026-09-01", balanceCents: 125_050 })],
+      schedule,
+      "2026-10-11"
+    );
+
+    assert.equal(view.committedBillsUsd, 0);
+    assert.equal(view.remainingAfterBillsUsd, 1_250.5);
+    assert.equal(view.paydaySinceLastCheck, true);
+  });
+
+  it("omits committed figures without a pay schedule", () => {
+    const view = buildBalanceSummary(
+      [rent, phone],
+      [],
+      [snapshot({ accountId: 7 })],
+      null,
+      "2026-10-11"
+    );
+
+    assert.equal(view.payScheduleEnabled, false);
+    assert.equal(view.nextPayday, null);
+    assert.equal(view.committedBillsUsd, null);
+    assert.equal(view.remainingAfterBillsUsd, null);
+  });
+});
+
+describe("buildUpcomingCashFlow", () => {
+  it("groups bills into pay periods with paid status and remaining paycheck", () => {
+    const view = buildUpcomingCashFlow(
+      schedule,
+      { amountCents: 375_000, isEstimate: true },
+      [rent, phone, water],
+      [charge({ expenseId: 10, chargeDate: "2026-11-05", amountCents: 3_000 })],
+      "2026-10-11",
+      2
+    );
+
+    assert.equal(view.payScheduleEnabled, true);
+    assert.equal(view.nextPayday, "2026-10-15");
+    assert.equal(view.billsBeforeNextPaydayUsd, 50);
+    assert.deepEqual(view.periods.map((period) => period.payday), [
+      "2026-10-15",
+      "2026-10-30",
+    ]);
+
+    const second = view.periods[1];
+    assert.equal(second.periodEnd, "2026-11-12");
+    assert.deepEqual(second.bills.map((bill) => [bill.name, bill.paid]), [
+      ["Rent", false],
+      ["Water", true],
+    ]);
+    assert.equal(second.scheduledBillsUsd, 1_530);
+    assert.equal(second.paidBillsUsd, 30);
+    assert.equal(second.unpaidBillsUsd, 1_500);
+    assert.equal(second.remainingUsd, 2_250);
   });
 });

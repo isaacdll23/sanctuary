@@ -21,7 +21,7 @@ const idSchema = z
 const optionalAccountIdSchema = z.union([z.literal(""), z.string().trim().regex(/^\d+$/, "Invalid payment account.").transform(Number).pipe(z.number().int().positive("Invalid payment account."))])
   .transform((value) => value === "" ? null : value);
 
-const dateKeySchema = makeDateKeySchema("Choose a valid billing date.");
+export const dateKeySchema = makeDateKeySchema("Choose a valid billing date.");
 
 function makeDateKeySchema(message: string) {
   return z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, message).refine((value) => {
@@ -73,6 +73,119 @@ const expenseFieldsSchema = z.object({
   isActive: z.boolean(),
 });
 
+const recurrenceFrequencySchema = z.enum(["monthly", "weekly", "biweekly", "quarterly", "yearly"]);
+
+/**
+ * Structured expense input for non-form callers, notably the assistant. The web
+ * form posts strings through `expenseFieldsSchema`; this mirrors the same fields
+ * with native types so both boundaries normalize to one `ExpenseFields` shape.
+ */
+export const expenseWriteSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Expense name is required.")
+    .max(255, "Expense name must be 255 characters or fewer.")
+    .describe("Expense name, e.g. 'Netflix' or 'Rent'."),
+  amount: z
+    .number()
+    .finite()
+    .positive("Amount per charge must be greater than zero.")
+    .describe("Amount per charge in US dollars, e.g. 15.99."),
+  chargeDay: z
+    .number()
+    .int()
+    .min(1, "Charge day must be between 1 and 31.")
+    .max(31, "Charge day must be between 1 and 31.")
+    .describe("Day of month the charge occurs (1–31), for monthly bills."),
+  category: z
+    .string()
+    .trim()
+    .min(1, "Category is required.")
+    .max(255, "Category must be 255 characters or fewer.")
+    .describe("Category label, e.g. 'Housing' or 'Entertainment'."),
+  recurrenceFrequency: recurrenceFrequencySchema
+    .optional()
+    .describe("How often the bill recurs; defaults to monthly."),
+  recurrenceAnchor: dateKeySchema
+    .optional()
+    .describe(
+      "A known charge date (YYYY-MM-DD) that anchors a non-monthly schedule; ignored for monthly bills."
+    ),
+  lastDayOfMonth: z
+    .boolean()
+    .optional()
+    .describe("True to charge on the month's last day instead of chargeDay."),
+  necessity: z
+    .enum(["essential", "discretionary"])
+    .optional()
+    .describe("Whether the expense is essential; defaults to essential."),
+  costType: z
+    .enum(["fixed", "variable"])
+    .optional()
+    .describe("Whether the cost is fixed or variable; defaults to fixed."),
+  paymentMethod: z
+    .enum(["autopay", "manual"])
+    .optional()
+    .describe("How it is paid; defaults to autopay."),
+  accountId: z
+    .number()
+    .int()
+    .positive("Invalid payment account.")
+    .nullable()
+    .optional()
+    .describe("Id of a payment account to assign, or null for unassigned."),
+  isActive: z
+    .boolean()
+    .optional()
+    .describe("Whether the expense is included in totals; defaults to true."),
+});
+
+export type ExpenseWriteInput = z.infer<typeof expenseWriteSchema>;
+
+/**
+ * Applies the form's recurrence convention: monthly bills store a day-of-month
+ * anchor, while other cadences store a real anchor and derive the display day.
+ * Generic so callers retain extra fields (such as an update id).
+ */
+export function normalizeExpenseRecurrence<
+  T extends {
+    recurrenceFrequency: string;
+    chargeDay: number;
+    recurrenceAnchor: string;
+  },
+>(fields: T): T {
+  return fields.recurrenceFrequency === "monthly"
+    ? {
+        ...fields,
+        recurrenceAnchor: `2000-01-${String(fields.chargeDay).padStart(2, "0")}`,
+      }
+    : { ...fields, chargeDay: Number(fields.recurrenceAnchor.slice(-2)) };
+}
+
+/** Builds normalized `ExpenseFields` from the assistant's structured input. */
+export function expenseWriteToFields(input: ExpenseWriteInput): ExpenseFields {
+  const anchorDefault = `2000-01-${String(input.chargeDay).padStart(2, "0")}`;
+  const usesMonthly =
+    input.recurrenceFrequency == null || input.recurrenceFrequency === "monthly";
+  return normalizeExpenseRecurrence({
+    name: input.name,
+    monthlyCost: Math.round(input.amount * 100),
+    chargeDay: input.chargeDay,
+    category: normalizeExpenseCategory(input.category),
+    recurrenceFrequency: input.recurrenceFrequency ?? "monthly",
+    recurrenceAnchor: usesMonthly
+      ? anchorDefault
+      : input.recurrenceAnchor ?? anchorDefault,
+    lastDayOfMonth: input.lastDayOfMonth ?? false,
+    necessity: input.necessity ?? "essential",
+    costType: input.costType ?? "fixed",
+    paymentMethod: input.paymentMethod ?? "autopay",
+    accountId: input.accountId ?? null,
+    isActive: input.isActive ?? true,
+  });
+}
+
 const addExpenseSchema = expenseFieldsSchema;
 const updateExpenseSchema = expenseFieldsSchema.extend({ id: idSchema });
 const deleteExpenseSchema = z.object({ id: idSchema });
@@ -93,7 +206,8 @@ const balanceCheckInSchema = z.object({
   balance: balanceAmountSchema,
 });
 
-type ExpenseFields = z.infer<typeof expenseFieldsSchema>;
+/** Validated, normalized expense values shared by route forms and the assistant. */
+export type ExpenseFields = z.infer<typeof expenseFieldsSchema>;
 
 function formValue(formData: FormData, name: string): string {
   const value = formData.get(name);
@@ -131,18 +245,29 @@ function expenseFormInput(formData: FormData) {
 /** Parse an expense form without touching the database. */
 export function validateExpenseForm(
   formData: FormData,
+  action: "add"
+):
+  | { success: true; data: ExpenseFields }
+  | { success: false; result: ExpenseActionResult };
+export function validateExpenseForm(
+  formData: FormData,
+  action: "update"
+):
+  | { success: true; data: ExpenseFields & { id: number } }
+  | { success: false; result: ExpenseActionResult };
+export function validateExpenseForm(
+  formData: FormData,
   action: "add" | "update"
-): { success: true; data: ExpenseFields & { id?: number } } | { success: false; result: ExpenseActionResult } {
+):
+  | { success: true; data: ExpenseFields & { id?: number } }
+  | { success: false; result: ExpenseActionResult } {
   const input = expenseFormInput(formData);
   const parsed = action === "update"
     ? updateExpenseSchema.safeParse({ ...input, id: formValue(formData, "id") })
     : addExpenseSchema.safeParse(input);
 
   if (parsed.success) {
-    const data = parsed.data.recurrenceFrequency === "monthly"
-      ? { ...parsed.data, recurrenceAnchor: `2000-01-${String(parsed.data.chargeDay).padStart(2, "0")}` }
-      : { ...parsed.data, chargeDay: Number(parsed.data.recurrenceAnchor.slice(-2)) };
-    return { success: true, data };
+    return { success: true, data: normalizeExpenseRecurrence(parsed.data) };
   }
   return { success: false, result: formErrors(parsed.error) };
 }

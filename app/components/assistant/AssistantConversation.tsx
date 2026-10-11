@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+} from "@heroicons/react/24/outline";
+import {
   getToolName,
   isToolUIPart,
   type ChatStatus,
@@ -12,7 +16,77 @@ const TOOL_LABELS: Record<string, string> = {
   get_income_overview: "Reading your income",
   list_expenses: "Reading your expenses",
   get_expense_summary: "Summarizing your expenses",
+  list_payment_accounts: "Reading your accounts",
+  get_balance_summary: "Checking your balance",
+  get_upcoming_cash_flow: "Reviewing upcoming bills",
+  create_expense: "Adding an expense",
+  update_expense: "Updating an expense",
+  set_expense_active: "Updating an expense",
+  delete_expense: "Deleting an expense",
+  record_expense_charge: "Recording a payment",
+  remove_expense_charge: "Undoing a payment",
+  log_account_balance: "Logging a balance",
+  create_payment_account: "Adding an account",
+  delete_payment_account: "Deleting an account",
+  update_income: "Updating your income",
 };
+
+/** Tools that change data and therefore render a confirmation receipt. */
+const WRITE_TOOLS = new Set([
+  "create_expense",
+  "update_expense",
+  "set_expense_active",
+  "delete_expense",
+  "record_expense_charge",
+  "remove_expense_charge",
+  "log_account_balance",
+  "create_payment_account",
+  "delete_payment_account",
+  "update_income",
+]);
+
+interface WriteSuccessReceipt {
+  ok: true;
+  label: string;
+  detail?: string;
+  message: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** Reads the write-tool result envelope from a streamed tool part. */
+function readWriteReceipt(
+  output: unknown
+): WriteSuccessReceipt | { ok: false; error: string } | null {
+  if (!isRecord(output) || typeof output.ok !== "boolean") return null;
+  if (!output.ok) {
+    return {
+      ok: false,
+      error:
+        typeof output.error === "string"
+          ? output.error
+          : "The change could not be completed.",
+    };
+  }
+
+  const entity = isRecord(output.entity) ? output.entity : null;
+  if (
+    !entity ||
+    typeof entity.label !== "string" ||
+    typeof output.message !== "string"
+  ) {
+    return null;
+  }
+
+  return {
+    ok: true,
+    label: entity.label,
+    detail: typeof entity.detail === "string" ? entity.detail : undefined,
+    message: output.message,
+  };
+}
 
 interface AssistantConversationProps {
   messages: UIMessage[];
@@ -75,9 +149,58 @@ export function AssistantConversation({
               }
 
               if (isToolUIPart(part)) {
-                const label = toolLabel(getToolName(part));
+                const toolName = getToolName(part);
+                const label = toolLabel(toolName);
                 const failed = part.state === "output-error";
                 const done = part.state === "output-available";
+                const receipt =
+                  part.state === "output-available" &&
+                  WRITE_TOOLS.has(toolName)
+                    ? readWriteReceipt(part.output)
+                    : null;
+
+                if (receipt) {
+                  if (receipt.ok) {
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-start gap-2.5 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] px-3 py-2 text-xs"
+                      >
+                        <CheckCircleIcon
+                          aria-hidden="true"
+                          className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400"
+                        />
+                        <div className="min-w-0">
+                          <p className="font-medium text-emerald-100">
+                            {receipt.label}
+                          </p>
+                          {receipt.detail && (
+                            <p className="text-emerald-100/70">
+                              {receipt.detail}
+                            </p>
+                          )}
+                          <p className="mt-0.5 text-emerald-100/60">
+                            {receipt.message}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div
+                      key={key}
+                      role="alert"
+                      className="flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs"
+                    >
+                      <ExclamationTriangleIcon
+                        aria-hidden="true"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-red-300"
+                      />
+                      <p className="text-red-100">{receipt.error}</p>
+                    </div>
+                  );
+                }
+
                 return (
                   <p
                     key={key}

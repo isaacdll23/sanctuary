@@ -5,7 +5,8 @@ import type { Route } from "./+types/income";
 import { pageAccessAction, pageAccessLoader } from "~/modules/middleware/pageAccess";
 import { getExpectedPaycheckCents, getPayDatesAfter, getReferenceDateKey } from "~/modules/finance/paySchedule";
 import { formatDateKey, parseDateKey } from "~/modules/finance/recurrence";
-import { getIncomeOverviewForUser, saveIncomeOverviewForUser, validateIncomeForm } from "~/modules/services/IncomeService";
+import { getIncomeOverviewForUser, validateIncomeForm } from "~/modules/services/IncomeService";
+import { saveIncome } from "~/modules/services/FinanceCommandService";
 import type { IncomeActionResult, IncomeFormErrors } from "~/types/income";
 import FinanceSubnav from "~/components/finance/FinanceSubnav";
 
@@ -21,8 +22,7 @@ export const loader = pageAccessLoader("finance", async (user) => ({
 export const action = pageAccessAction("finance", async (user, request): Promise<IncomeActionResult> => {
   const parsed = validateIncomeForm(await request.formData());
   if (!parsed.success) return parsed.result;
-  const saved = await saveIncomeOverviewForUser(user.id, parsed.data);
-  return saved.ok ? { ok: true, message: "Income and pay schedule saved." } : saved;
+  return saveIncome(user.id, parsed.data);
 });
 
 export default function Income({ loaderData }: Route.ComponentProps) {

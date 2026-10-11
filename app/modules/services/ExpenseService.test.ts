@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  expenseWriteSchema,
+  expenseWriteToFields,
   normalizeExpenseCategory,
   validateBalanceCheckIn,
   validateExpenseChargeForm,
@@ -89,6 +91,79 @@ describe("expense form validation", () => {
       assert.equal(result.data.accountId, 12);
     }
     assert.equal(validateExpenseForm(expenseForm({ accountId: "12oops" }), "add").success, false);
+  });
+});
+
+describe("structured expense write input", () => {
+  const base = {
+    name: " Netflix ",
+    amount: 15.99,
+    chargeDay: 12,
+    category: " streaming   services ",
+  };
+
+  it("normalizes a monthly expense and applies defaults", () => {
+    const fields = expenseWriteToFields(expenseWriteSchema.parse(base));
+    assert.deepEqual(fields, {
+      name: "Netflix",
+      monthlyCost: 1599,
+      chargeDay: 12,
+      category: "Streaming Services",
+      recurrenceFrequency: "monthly",
+      recurrenceAnchor: "2000-01-12",
+      lastDayOfMonth: false,
+      necessity: "essential",
+      costType: "fixed",
+      paymentMethod: "autopay",
+      accountId: null,
+      isActive: true,
+    });
+  });
+
+  it("derives the charge day from a real anchor for non-monthly schedules", () => {
+    const fields = expenseWriteToFields(
+      expenseWriteSchema.parse({
+        ...base,
+        recurrenceFrequency: "biweekly",
+        recurrenceAnchor: "2026-08-24",
+        lastDayOfMonth: true,
+        necessity: "discretionary",
+        costType: "variable",
+        paymentMethod: "manual",
+        accountId: 12,
+        isActive: false,
+      })
+    );
+    assert.equal(fields.chargeDay, 24);
+    assert.equal(fields.recurrenceAnchor, "2026-08-24");
+    assert.equal(fields.accountId, 12);
+    assert.equal(fields.isActive, false);
+    assert.equal(fields.necessity, "discretionary");
+    assert.equal(fields.costType, "variable");
+    assert.equal(fields.paymentMethod, "manual");
+  });
+
+  it("falls back to the numbered day when a non-monthly schedule has no anchor", () => {
+    const fields = expenseWriteToFields(
+      expenseWriteSchema.parse({ ...base, recurrenceFrequency: "weekly" })
+    );
+    assert.equal(fields.recurrenceAnchor, "2000-01-12");
+    assert.equal(fields.chargeDay, 12);
+  });
+
+  it("rejects malformed structured values", () => {
+    for (const values of [
+      { ...base, amount: 0 },
+      { ...base, amount: -4 },
+      { ...base, chargeDay: 0 },
+      { ...base, chargeDay: 32 },
+      { ...base, name: "   " },
+      { ...base, category: "" },
+      { ...base, recurrenceAnchor: "2026-02-30" },
+      { ...base, accountId: 0 },
+    ]) {
+      assert.equal(expenseWriteSchema.safeParse(values).success, false);
+    }
   });
 });
 

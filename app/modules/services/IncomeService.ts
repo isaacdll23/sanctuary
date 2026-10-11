@@ -20,6 +20,113 @@ const incomeFormSchema = z.object({
   depositAccountId: optionalAccountSchema,
 });
 
+/** Validated income and pay-schedule values shared by the route form and the assistant. */
+export type IncomeFields = z.infer<typeof incomeFormSchema>;
+
+/**
+ * Structured income input for non-form callers, notably the assistant. The web
+ * form posts strings through `incomeFormSchema`; this mirrors the same fields
+ * with native types so both boundaries normalize to one `IncomeFields` shape.
+ */
+export const incomeWriteSchema = z.object({
+  annualGrossIncome: z
+    .number()
+    .int()
+    .nonnegative()
+    .optional()
+    .describe("Annual gross income in whole US dollars."),
+  taxDeductionPercentage: z
+    .number()
+    .int()
+    .min(0)
+    .max(100)
+    .optional()
+    .describe("Tax deduction percentage, 0–100."),
+  scheduleEnabled: z
+    .boolean()
+    .optional()
+    .describe("Whether to use a primary semi-monthly pay schedule."),
+  firstNominalDay: z
+    .number()
+    .int()
+    .min(1)
+    .max(27)
+    .optional()
+    .describe("First nominal payday day of month (1–27)."),
+  weekendAdjustment: z
+    .enum(["previous-friday", "none"])
+    .optional()
+    .describe("Whether a weekend payday moves to the previous Friday."),
+  netPaycheck: z
+    .number()
+    .finite()
+    .nonnegative()
+    .nullable()
+    .optional()
+    .describe(
+      "Actual net pay per paycheck in US dollars, or null to estimate it from annual income."
+    ),
+  depositAccountId: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .optional()
+    .describe("Payment account id for deposits, or null for unassigned."),
+});
+
+export type IncomeWriteInput = z.infer<typeof incomeWriteSchema>;
+
+/** The subset of current income and pay-schedule values a merge needs. */
+export interface CurrentIncomeSnapshot {
+  income: {
+    annualGrossIncome: number;
+    taxDeductionPercentage: number;
+  } | null;
+  paySchedule: {
+    isEnabled: number;
+    firstNominalDay: number;
+    weekendAdjustment: string;
+    netPaycheckAmountCents: number | null;
+    depositAccountId: number | null;
+  } | null;
+}
+
+/**
+ * Merges a partial income update onto the user's current income and pay
+ * schedule, matching the income form's schedule conventions. Missing values
+ * fall back to existing rows, then to the form's defaults.
+ */
+export function incomeWriteToFields(
+  input: IncomeWriteInput,
+  current: CurrentIncomeSnapshot
+): IncomeFields {
+  const { income, paySchedule } = current;
+  return {
+    annualGrossIncome: input.annualGrossIncome ?? income?.annualGrossIncome ?? 0,
+    taxDeductionPercentage:
+      input.taxDeductionPercentage ?? income?.taxDeductionPercentage ?? 0,
+    scheduleEnabled:
+      input.scheduleEnabled ?? (paySchedule?.isEnabled ?? 0) !== 0,
+    scheduleType: "semi-monthly",
+    firstNominalDay: input.firstNominalDay ?? paySchedule?.firstNominalDay ?? 15,
+    secondPaydayRule: "last-day",
+    weekendAdjustment:
+      input.weekendAdjustment ??
+      (paySchedule?.weekendAdjustment === "none" ? "none" : "previous-friday"),
+    netPaycheckAmount:
+      input.netPaycheck !== undefined
+        ? input.netPaycheck == null
+          ? null
+          : Math.round(input.netPaycheck * 100)
+        : paySchedule?.netPaycheckAmountCents ?? null,
+    depositAccountId:
+      input.depositAccountId !== undefined
+        ? input.depositAccountId
+        : paySchedule?.depositAccountId ?? null,
+  };
+}
+
 function value(formData: FormData, field: string) { const raw = formData.get(field); return typeof raw === "string" ? raw : ""; }
 
 function errors(error: z.ZodError): IncomeActionResult {
@@ -28,7 +135,7 @@ function errors(error: z.ZodError): IncomeActionResult {
   return { ok: false, error: "Please correct the highlighted fields.", fieldErrors };
 }
 
-export function validateIncomeForm(formData: FormData): { success: true; data: z.infer<typeof incomeFormSchema> } | { success: false; result: IncomeActionResult } {
+export function validateIncomeForm(formData: FormData): { success: true; data: IncomeFields } | { success: false; result: IncomeActionResult } {
   const parsed = incomeFormSchema.safeParse({ annualGrossIncome: value(formData, "annualGrossIncome"), taxDeductionPercentage: value(formData, "taxDeductionPercentage"), scheduleEnabled: formData.get("scheduleEnabled") === "1", scheduleType: value(formData, "scheduleType"), firstNominalDay: value(formData, "firstNominalDay"), secondPaydayRule: value(formData, "secondPaydayRule"), weekendAdjustment: value(formData, "weekendAdjustment"), netPaycheckAmount: value(formData, "netPaycheckAmount"), depositAccountId: value(formData, "depositAccountId") });
   return parsed.success ? { success: true, data: parsed.data } : { success: false, result: errors(parsed.error) };
 }
@@ -42,7 +149,7 @@ export async function getIncomeOverviewForUser(userId: number) {
   return { income, paySchedule, paymentAccounts };
 }
 
-export async function saveIncomeOverviewForUser(userId: number, data: z.infer<typeof incomeFormSchema>) {
+export async function saveIncomeOverviewForUser(userId: number, data: IncomeFields) {
   const [account] = data.depositAccountId == null ? [true] : await db.select({ id: financePaymentAccountsTable.id }).from(financePaymentAccountsTable).where(and(eq(financePaymentAccountsTable.userId, userId), eq(financePaymentAccountsTable.id, data.depositAccountId))).limit(1);
   if (!account) return { ok: false as const, error: "Select one of your payment accounts." };
   await db.transaction(async (tx) => {
