@@ -164,6 +164,7 @@ export async function getUserAccessiblePages(
         "day-planner",
         "notes", // Updated from principles to notes
         "utilities/commands",
+        "assistant",
         "admin",
         "settings",
       ],

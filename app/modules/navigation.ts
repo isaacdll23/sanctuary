@@ -19,6 +19,7 @@ export type NavPageId =
   | "notes"
   | "finance"
   | "utilities/commands"
+  | "assistant"
   | "settings"
   | "admin"
   | "logout";
@@ -34,6 +35,7 @@ export const PINNABLE_PAGE_IDS: readonly NavPageId[] = [
   "notes",
   "finance",
   "utilities/commands",
+  "assistant",
   "settings",
   "admin",
 ];

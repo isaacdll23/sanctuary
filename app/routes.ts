@@ -25,6 +25,7 @@ export default [
   route("day-planner", "routes/day-planner/day-planner.tsx"),
   route("notes", "routes/notes/notes.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
+  route("assistant", "routes/assistant/assistant.tsx"),
   route("admin", "routes/admin/admin.tsx"),
   route("settings", "routes/settings.tsx"),
   route("auth/login", "routes/auth/login.tsx"),

@@ -26,7 +26,8 @@ export type FeatureId =
   | "tasks"
   | "day-planner"
   | "shared-budgets"
-  | "utilities/commands";
+  | "utilities/commands"
+  | "assistant";
 
 export type FeatureOverride = "enabled" | "disabled";
 
@@ -72,6 +73,11 @@ export const USER_TOGGLEABLE_FEATURES: readonly ToggleableFeature[] = [
     description: "Encrypted notes with folders and markdown editing",
   },
   {
+    id: "assistant",
+    title: "Assistant",
+    description: "AI chat agent with read access to your Sanctuary data",
+  },
+  {
     id: "shared-budgets",
     title: "Shared Budgets",
     description: "Collaborative budgets shared with other members",
@@ -93,6 +99,7 @@ const ALL_FEATURE_IDS: readonly FeatureId[] = [
   "day-planner",
   "shared-budgets",
   "utilities/commands",
+  "assistant",
 ];
 
 const FEATURE_ID_SET: ReadonlySet<string> = new Set(ALL_FEATURE_IDS);
@@ -153,6 +160,7 @@ const PAGE_ID_TO_FEATURE: Record<string, FeatureId> = {
   finance: "finance",
   tasks: "tasks",
   "day-planner": "day-planner",
+  assistant: "assistant",
   commands: "utilities/commands",
   "utilities/commands": "utilities/commands",
 };
