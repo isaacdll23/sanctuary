@@ -1,4 +1,3 @@
-import { createOpenAI } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
 
@@ -34,7 +33,16 @@ export function resolveModel(
   );
 }
 
-function getModel(feature: AiFeature) {
+async function getModel(feature: AiFeature) {
+  // The Vercel AI SDK's OpenAI provider throws while loading when
+  // OPENAI_BASE_URL is present but blank. Treat a blank value as unset so an
+  // empty optional env var cannot crash the server at boot.
+  if (process.env.OPENAI_BASE_URL?.trim() === "") {
+    delete process.env.OPENAI_BASE_URL;
+  }
+
+  // Imported lazily so a malformed optional env var cannot break startup.
+  const { createOpenAI } = await import("@ai-sdk/openai");
   const baseURL = process.env.OPENAI_BASE_URL?.trim();
   const provider = createOpenAI({
     apiKey: process.env.OPENAI_API_KEY?.trim() || "",
@@ -64,7 +72,7 @@ export async function generateNoteTitle(content: string): Promise<string> {
 
   try {
     const { object } = await generateObject({
-      model: getModel("note-title"),
+      model: await getModel("note-title"),
       schema: noteTitleSchema,
       system:
         "You are a helpful assistant that generates concise titles for notes. Generate a title that is 2-8 words long, capturing the essence of the note.",
