@@ -1,73 +1,96 @@
-import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { useState } from "react";
+import { Outlet, redirect, useMatch } from "react-router";
 import type { Route } from "./+types/assistant";
-import { pageAccessLoader } from "~/modules/middleware/pageAccess";
+import {
+  pageAccessAction,
+  pageAccessLoader,
+} from "~/modules/middleware/pageAccess";
 import { isAiConfigured } from "~/modules/ai.server";
-import { AssistantHeader } from "~/components/assistant/AssistantHeader";
-import { AssistantEmptyState } from "~/components/assistant/AssistantEmptyState";
-import { AssistantConversation } from "~/components/assistant/AssistantConversation";
-import { AssistantComposer } from "~/components/assistant/AssistantComposer";
+import {
+  deleteConversation,
+  listConversations,
+  renameConversation,
+} from "~/modules/services/AssistantConversationService";
+import { AssistantSidebar } from "~/components/assistant/AssistantSidebar";
+import { MAX_CONVERSATION_TITLE_LENGTH } from "~/modules/assistant/conversation";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "Assistant" }];
 }
 
-export const loader = pageAccessLoader("assistant", async () => ({
+export const loader = pageAccessLoader("assistant", async (user) => ({
   aiConfigured: isAiConfigured(),
+  conversations: await listConversations(user.id),
 }));
 
-/** Stateless transport config; safe to share across renders. */
-const transport = new DefaultChatTransport({ api: "/assistant/chat" });
+/**
+ * The sidebar orders by recent activity, which changes as messages are sent, so
+ * refresh it whenever the assistant section navigates (e.g. adopting a new
+ * chat's URL) rather than showing a stale list.
+ */
+export function shouldRevalidate() {
+  return true;
+}
 
-export default function Assistant({ loaderData }: Route.ComponentProps) {
-  const { messages, sendMessage, status, error, stop, clearError } = useChat({
-    transport,
-  });
-  const isBusy = status === "submitted" || status === "streaming";
-  const hasConversation = messages.length > 0;
+export type AssistantActionData =
+  | { ok: true }
+  | { ok: false; error: string };
+
+export const action = pageAccessAction(
+  "assistant",
+  async (user, request): Promise<AssistantActionData | Response> => {
+    const formData = await request.formData();
+    const intent = formData.get("intent");
+    const conversationId = String(formData.get("conversationId") ?? "").trim();
+
+    if (intent === "rename") {
+      const title = String(formData.get("title") ?? "").trim();
+      if (!conversationId || !title) {
+        return { ok: false, error: "A title is required." };
+      }
+      const renamed = await renameConversation(
+        user.id,
+        conversationId,
+        title.slice(0, MAX_CONVERSATION_TITLE_LENGTH)
+      );
+      if (!renamed) return { ok: false, error: "Conversation not found." };
+      return { ok: true };
+    }
+
+    if (intent === "delete") {
+      await deleteConversation(user.id, conversationId);
+      // Deleting the open chat should not leave the user on a dead URL.
+      if (formData.get("isActive") === "true") return redirect("/assistant");
+      return { ok: true };
+    }
+
+    return { ok: false, error: "Unknown action." };
+  }
+);
+
+export interface AssistantOutletContext {
+  aiConfigured: boolean;
+  onOpenSidebar: () => void;
+}
+
+export default function AssistantLayout({ loaderData }: Route.ComponentProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const match = useMatch("/assistant/:conversationId");
 
   return (
-    <div className="flex h-full flex-col bg-transparent text-gray-100">
-      <AssistantHeader />
-
-      <div className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col px-4 py-6 md:px-8">
-        {hasConversation ? (
-          <AssistantConversation messages={messages} status={status} />
-        ) : (
-          <AssistantEmptyState
-            onSelect={(text) => sendMessage({ text })}
-            disabled={!loaderData.aiConfigured || isBusy}
-          />
-        )}
-
-        {error && (
-          <div
-            role="alert"
-            className="mt-4 flex items-start justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200"
-          >
-            <p>
-              {error.message || "Something went wrong. Please try again."}
-            </p>
-            <button
-              type="button"
-              onClick={clearError}
-              className="shrink-0 rounded-md px-2 py-0.5 text-xs font-medium text-red-200 hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        <AssistantComposer
-          onSend={(text) => sendMessage({ text })}
-          onStop={stop}
-          isBusy={isBusy}
-          disabled={!loaderData.aiConfigured}
-          disabledReason={
-            loaderData.aiConfigured
-              ? undefined
-              : "The assistant is not configured. Set OPENAI_API_KEY to enable it."
-          }
+    <div className="flex h-full min-h-0 bg-transparent text-gray-100">
+      <AssistantSidebar
+        conversations={loaderData.conversations}
+        activeConversationId={match?.params.conversationId ?? null}
+        mobileOpen={mobileSidebarOpen}
+        onClose={() => setMobileSidebarOpen(false)}
+      />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <Outlet
+          context={{
+            aiConfigured: loaderData.aiConfigured,
+            onOpenSidebar: () => setMobileSidebarOpen(true),
+          } satisfies AssistantOutletContext}
         />
       </div>
     </div>
