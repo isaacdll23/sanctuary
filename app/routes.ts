@@ -25,6 +25,11 @@ export default [
   route("day-planner", "routes/day-planner/day-planner.tsx"),
   route("notes", "routes/notes/notes.tsx"),
   route("utilities/commands", "routes/utilities/commands.tsx"),
+  route("assistant/chat", "routes/assistant/chat.ts"),
+  route("assistant", "routes/assistant/assistant.tsx", [
+    index("routes/assistant/_index.tsx"),
+    route(":conversationId", "routes/assistant/$conversationId.tsx"),
+  ]),
   route("admin", "routes/admin/admin.tsx"),
   route("settings", "routes/settings.tsx"),
   route("auth/login", "routes/auth/login.tsx"),

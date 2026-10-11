@@ -1,4 +1,4 @@
-# Sanctuary — OpenRouter AI Rewrite + Day Planner → AI "Today List"
+# Sanctuary — AI SDK Migration + Day Planner → AI "Today List"
 
 **Dispatch target:** `build-fast` agent (global opencode agent routing through the fast CoreWeave OpenRouter provider).
 **Repo:** `/Users/idelalama/workspaces/sanctuary` · Stack: React Router 8, React 19, TypeScript strict, Tailwind v4, Drizzle ORM, PostgreSQL.
@@ -6,50 +6,49 @@
 
 ## Background & decisions (settled — do not re-litigate)
 
-The Day Planner forces time-blocking (every task requires start time + duration, behind a "create plan" gate), which the user found too much friction. Goal: **replace the calendar with an AI-assisted "Today List"** — a free-form dump of the day's items that AI organizes into a **rough sequence** (Morning / Midday / Afternoon / Evening / Any) with **no exact clock times**. AI also powers saved reusable **routine templates**. The existing Azure-based AI integration must be **rewritten to use OpenRouter**.
+The Day Planner forces time-blocking (every task requires start time + duration, behind a "create plan" gate), which the user found too much friction. Goal: **replace the calendar with an AI-assisted "Today List"** — a free-form dump of the day's items that AI organizes into a **rough sequence** (Morning / Midday / Afternoon / Evening / Any) with **no exact clock times**. AI also powers saved reusable **routine templates**. The existing Azure-based AI integration has been **rewritten to use the Vercel AI SDK** (`ai` + `@ai-sdk/openai`). The app targets the **OpenAI platform today**, with **OpenRouter as the planned future provider**.
 
 Locked decisions:
-- **OpenRouter fully replaces Azure** (no fallback).
+- **Vercel AI SDK is the AI layer**; providers are swapped behind it rather than called directly.
+- **OpenAI platform first, OpenRouter later** via `@openrouter/ai-sdk-provider`; no fallback to Azure.
 - **Configurable default + per-feature model** via env vars.
-- **Prompt-for-JSON + strict zod validation** for structured AI output (no reliance on `response_format` support).
+- **`generateObject` + strict zod schemas** for structured AI output (provider-agnostic; no manual prompt-for-JSON parsing).
 - **Config lives in env vars**, not the DB.
 - **New lightweight tables** for the today-list; old calendar tables stay dormant (not deleted).
 - **Google Calendar sync deferred** (left dormant; no new push logic).
 - **Remove the legacy calendar UI components** (tables/data stay).
 - **Keep the `/day-planner` route and URL**, swap its content.
-- The `openai` SDK (already a dependency, `^4.100.0`) supports OpenRouter via `baseURL` — **no new package**.
 
 ## Key files / current state (for context)
 
-- `app/modules/ai.server.ts` — the only AI module. Uses `AzureOpenAI` (gpt-5-mini) + zod `json_object`; exports `isAiConfigured()`, `generateNoteTitle(content)`.
+- `app/modules/ai.server.ts` — the only AI module. Uses the Vercel AI SDK (`createOpenAI` + `generateObject`, gpt-6-luna) with a zod schema; exports `isAiConfigured(env?)`, `resolveModel(feature, env?)`, `generateNoteTitle(content)`.
 - AI consumers: `app/modules/services/NoteService.ts` (`generateNoteTitle` intent), `app/routes/notes/notes.tsx` (`aiEnabled: isAiConfigured()`), `app/components/notes/NoteEditor.tsx`.
 - Day Planner: `app/routes/day-planner/day-planner.tsx`, `app/modules/services/DayPlannerService.ts`, `app/modules/services/GoogleCalendarService.ts` (dormant after this work), components in `app/components/day-planner/`, state util `app/utils/dayPlannerStateManagement.ts`.
-- Schema: `app/db/schema.ts` (day planner tables ~lines 236–325). Migrations in `migrations/`. No `.env.example` exists yet.
+- Schema: `app/db/schema.ts` (day planner tables ~lines 236–325). Migrations in `migrations/`. `.env.example` now documents the env contract.
 - Test convention: `node:test` + `node:assert/strict`, colocated `*.test.ts`. Service tests isolate external systems and never use production data.
 
 ---
 
-## Session 1 — OpenRouter AI rewrite (self-contained; do first)
+## Session 1 — Vercel AI SDK migration (DONE)
 
-**Objective:** Rewrite `app/modules/ai.server.ts` to use OpenRouter via the standard `OpenAI` client, with configurable per-feature models and a reusable zod-validated JSON helper. Keep the existing notes consumer working.
+**Objective:** Replace the Azure OpenAI client with the Vercel AI SDK while keeping the notes consumer working.
 
-**Tasks:**
-1. Rewrite `app/modules/ai.server.ts`:
-   - Replace `AzureOpenAI` with `OpenAI` from the `openai` package.
-   - `baseURL = process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1"`, `apiKey = process.env.OPENROUTER_API_KEY`.
-   - Per-feature model selection with fallback chain: `OPENROUTER_MODEL_<FEATURE>` → `OPENROUTER_MODEL` → sensible default.
-   - `isAiConfigured()` returns true when `OPENROUTER_API_KEY` is set.
-   - Private generic `callJson({ feature, model, system, user, schema })`: builds messages, requests JSON, **strictly validates with `schema.parse`** (zod), throws a typed user-safe error on failure (never leak raw provider responses), supports per-feature `temperature`/`max_tokens`.
-   - Refactor `generateNoteTitle` through `callJson`; preserve its exported signature and behavior.
-   - Add `suggestDayRoutine(items, template?)` and `adaptRoutineTemplate(...)` (AI backbone for Sessions 2/3) — define the day-routine zod schema here (period union `"morning" | "midday" | "afternoon" | "evening" | "any"` and ordered item arrays), even if unused until Session 2.
-2. Create `.env.example` documenting: `OPENROUTER_API_KEY`, `OPENROUTER_BASE_URL`, `OPENROUTER_MODEL`, `OPENROUTER_MODEL_NOTE_TITLE`, `OPENROUTER_MODEL_DAY_ROUTINE`. Note these must also be set in the deployment environment.
-3. Update consumers if any signature changed (note-title flow should need no UI change).
+**Completed:**
+1. `app/modules/ai.server.ts` now uses `createOpenAI` (`@ai-sdk/openai`) + `generateObject` (`ai`) with a zod schema.
+   - `isAiConfigured(env?)` returns true when `OPENAI_API_KEY` is set.
+   - Model selection fallback: `OPENAI_MODEL_<FEATURE>` → `OPENAI_MODEL` → `gpt-6-luna`.
+   - `OPENAI_BASE_URL` is optional and defaults to the OpenAI platform; it is the seam for the future OpenRouter move.
+   - `generateNoteTitle(content)` preserves its exported signature; provider errors are logged server-side and replaced with a user-safe message.
+2. Added `.env.example` documenting all app env vars, including the `OPENAI_*` AI contract.
+3. Consumers (`NoteService`, `notes.tsx`, `NoteEditor`) are unchanged.
+
+**Deferred to the OpenRouter move:** swap `createOpenAI` for `@openrouter/ai-sdk-provider` and add `OPENROUTER_*` env vars. Add `suggestDayRoutine` / `adaptRoutineTemplate` here when Session 2 begins.
 
 **Standards to respect:** no `any`; typed domain results for expected failures; throw only for unexpected conditions; `import type` for type-only imports; `~/*` alias.
 
 **Acceptance (Session 1):**
-- `npm test` and `npm run typecheck` pass.
-- Unit tests cover: the JSON-parse + zod-validation helper (mocked OpenAI client), `isAiConfigured`, model-selection fallback, and the note-title schema.
+- `npm test`, `npm run typecheck`, and `npm run build` pass.
+- Unit tests cover `isAiConfigured`, model-selection fallback, and the `generateNoteTitle` guard paths.
 - No Azure code remains in the AI module; no secrets/credentials in code or commits.
 
 ---

@@ -10,6 +10,7 @@ const APP_PAGES = [
   { id: "day-planner", label: "Day Planner" },
   { id: "notes", label: "Notes" },
   { id: "utilities/commands", label: "Utilities Commands" },
+  { id: "assistant", label: "Assistant" },
   { id: "settings", label: "Settings" },
 ];
 

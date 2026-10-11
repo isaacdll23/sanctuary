@@ -1,80 +1,93 @@
-import { AzureOpenAI } from "openai";
+import { generateObject } from "ai";
 import { z } from "zod";
 
-const endpoint = process.env.OPENAI_ENDPOINT || "";
-const modelName = "gpt-5-mini";
-const deployment = "gpt-5-mini";
+/** AI-backed features. Each maps to an optional per-feature model override. */
+export type AiFeature = "note-title" | "assistant";
 
-const apiKey = process.env.OPENAI_API_KEY || "";
-const apiVersion = "2024-04-01-preview";
+const DEFAULT_MODEL = "gpt-6-luna";
 
-function getClient() {
-  return new AzureOpenAI({ endpoint, apiKey, deployment, apiVersion });
+const FEATURE_MODEL_ENV: Readonly<Record<AiFeature, string>> = {
+  "note-title": "OPENAI_MODEL_NOTE_TITLE",
+  assistant: "OPENAI_MODEL_ASSISTANT",
+};
+
+/**
+ * Returns true when an OpenAI API key is configured. Read at call time so it
+ * reflects the process environment and is easy to exercise in tests.
+ */
+export function isAiConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.OPENAI_API_KEY?.trim());
 }
 
-export function isAiConfigured() {
-  return Boolean(endpoint && apiKey);
+/**
+ * Resolves the model for a feature: `OPENAI_MODEL_<FEATURE>` →
+ * `OPENAI_MODEL` → the built-in default.
+ */
+export function resolveModel(
+  feature: AiFeature,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  return (
+    env[FEATURE_MODEL_ENV[feature]]?.trim() ||
+    env.OPENAI_MODEL?.trim() ||
+    DEFAULT_MODEL
+  );
 }
 
-// Schema to validate AI response
-const titleResponseSchema = z.object({
-  title: z.string(),
+/**
+ * Builds a language model for a feature from the configured OpenAI-compatible
+ * provider. Server-only: the provider import is dynamic and reads secrets.
+ */
+export async function getLanguageModel(feature: AiFeature) {
+  // The Vercel AI SDK's OpenAI provider throws while loading when
+  // OPENAI_BASE_URL is present but blank. Treat a blank value as unset so an
+  // empty optional env var cannot crash the server at boot.
+  if (process.env.OPENAI_BASE_URL?.trim() === "") {
+    delete process.env.OPENAI_BASE_URL;
+  }
+
+  // Imported lazily so a malformed optional env var cannot break startup.
+  const { createOpenAI } = await import("@ai-sdk/openai");
+  const baseURL = process.env.OPENAI_BASE_URL?.trim();
+  const provider = createOpenAI({
+    apiKey: process.env.OPENAI_API_KEY?.trim() || "",
+    ...(baseURL ? { baseURL } : {}),
+  });
+  return provider(resolveModel(feature));
+}
+
+// Schema to validate AI response.
+const noteTitleSchema = z.object({
+  title: z.string().min(1).describe("A concise title for the note, 2-8 words."),
 });
 
 /**
- * Generates a concise title for a note based on its content
+ * Generates a concise title for a note based on its content.
  * @param content - The content of the note
  * @returns Promise<string> - A generated title (2-8 words)
  */
 export async function generateNoteTitle(content: string): Promise<string> {
+  if (!content.trim()) {
+    throw new Error("Note content is empty");
+  }
+
+  if (!isAiConfigured()) {
+    throw new Error("AI title generation is not configured");
+  }
+
   try {
-    if (!content.trim()) {
-      throw new Error("Note content is empty");
-    }
-
-    if (!isAiConfigured()) {
-      throw new Error("AI title generation is not configured");
-    }
-
-    console.log("Calling OpenAI to generate note title...");
-    console.log("Content length:", content.length);
-
-    const client = getClient();
-    const completion = await client.chat.completions.create({
-      model: modelName,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a helpful assistant that generates concise titles for notes. Generate a title that is 2-8 words long, capturing the essence of the note. Respond with a JSON object that has a 'title' field containing your title.",
-        },
-        {
-          role: "user",
-          content: `Generate a concise title (2-8 words) for the following note content and return it as a JSON object with a 'title' field:\n\n${content}`,
-        },
-      ],
-      temperature: 0.7,
-      response_format: { type: "json_object" },
+    const { object } = await generateObject({
+      model: await getLanguageModel("note-title"),
+      schema: noteTitleSchema,
+      system:
+        "You are a helpful assistant that generates concise titles for notes. Generate a title that is 2-8 words long, capturing the essence of the note.",
+      prompt: `Generate a concise title (2-8 words) for the following note content:\n\n${content}`,
     });
 
-    const responseContent = completion.choices[0].message.content;
-
-    if (!responseContent) {
-      throw new Error("Empty response from OpenAI");
-    }
-
-    // Parse and validate the response
-    const parsedResponse = JSON.parse(responseContent);
-    const validatedResponse = titleResponseSchema.parse(parsedResponse);
-
-    console.log("Response from OpenAI:", validatedResponse);
-
-    return validatedResponse.title;
+    return object.title;
   } catch (error) {
+    // Log provider details server-side, but return a user-safe message.
     console.error("Error generating note title:", error);
-    throw new Error(
-      "Failed to generate title: " +
-        (error instanceof Error ? error.message : "Unknown error")
-    );
+    throw new Error("Failed to generate title.");
   }
 }

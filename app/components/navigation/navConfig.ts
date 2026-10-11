@@ -12,6 +12,7 @@ import {
   CurrencyDollarIcon,
   HomeIcon,
   ShieldCheckIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import type { FeatureId } from "~/modules/featureFlags";
 import {
@@ -126,6 +127,14 @@ const commandsNavItem: NavItemDef = {
   icon: CommandLineIcon,
 };
 
+const assistantNavItem: NavItemDef = {
+  pageId: "assistant",
+  to: "/assistant",
+  label: "Assistant",
+  shortLabel: "AI",
+  icon: SparklesIcon,
+};
+
 const settingsNavItem: NavItemDef = {
   pageId: "settings",
   to: "/settings",
@@ -145,6 +154,7 @@ export const navItems: readonly NavItemDef[] = [
   notesNavItem,
   financeNavItem,
   commandsNavItem,
+  assistantNavItem,
   settingsNavItem,
 ];
 
@@ -166,7 +176,7 @@ export const navSections: readonly NavSectionDef[] = [
   },
   {
     title: "Tools",
-    items: [commandsNavItem],
+    items: [commandsNavItem, assistantNavItem],
   },
   {
     title: "Account",
