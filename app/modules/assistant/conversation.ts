@@ -26,21 +26,28 @@ export const chatRequestSchema = z.object({
 export type ChatRequest = z.infer<typeof chatRequestSchema>;
 
 /**
- * Derives a stable, human-readable title from a conversation's first user
- * message. Deterministic (no extra model call): ChatGPT-style titles are a
- * nicety, but the first prompt is a predictable fallback and never blocks the
- * response.
+ * Extracts the normalized text of a conversation's first user message, or an
+ * empty string when there is none. Shared by the deterministic fallback title
+ * and the AI title prompt.
  */
-export function deriveConversationTitle(messages: UIMessage[]): string {
+export function firstUserMessageText(messages: UIMessage[]): string {
   const firstUser = messages.find((message) => message.role === "user");
-  if (!firstUser) return "New chat";
+  if (!firstUser) return "";
 
-  const text = firstUser.parts
+  return firstUser.parts
     .flatMap((part) => (part.type === "text" ? [part.text] : []))
     .join(" ")
     .replace(/\s+/g, " ")
     .trim();
+}
 
+/**
+ * Derives a stable, human-readable fallback title from a conversation's first
+ * user message. Deterministic (no model call): used until the AI-drafted title
+ * lands, and kept whenever drafting fails.
+ */
+export function deriveConversationTitle(messages: UIMessage[]): string {
+  const text = firstUserMessageText(messages);
   if (!text) return "New chat";
   if (text.length <= TITLE_PREVIEW_LENGTH) return text;
 

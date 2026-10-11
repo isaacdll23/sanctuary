@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
-import { generateNoteTitle, isAiConfigured, resolveModel } from "./ai.server";
+import {
+  generateConversationTitle,
+  generateNoteTitle,
+  isAiConfigured,
+  resolveModel,
+} from "./ai.server";
 
 const originalApiKey = process.env.OPENAI_API_KEY;
 
@@ -45,6 +50,17 @@ describe("AI configuration", () => {
       "gpt-5-mini"
     );
   });
+
+  it("resolves the conversation-title feature override independently", () => {
+    assert.equal(resolveModel("conversation-title", {}), "gpt-6-luna");
+    assert.equal(
+      resolveModel("conversation-title", {
+        OPENAI_MODEL: "gpt-5",
+        OPENAI_MODEL_CONVERSATION_TITLE: "gpt-5-mini",
+      }),
+      "gpt-5-mini"
+    );
+  });
 });
 
 describe("generateNoteTitle", () => {
@@ -56,6 +72,20 @@ describe("generateNoteTitle", () => {
     delete process.env.OPENAI_API_KEY;
     await assert.rejects(
       () => generateNoteTitle("Some note content"),
+      /not configured/
+    );
+  });
+});
+
+describe("generateConversationTitle", () => {
+  it("rejects an empty prompt before reaching the provider", async () => {
+    await assert.rejects(() => generateConversationTitle("   "), /empty/);
+  });
+
+  it("rejects when AI is not configured", async () => {
+    delete process.env.OPENAI_API_KEY;
+    await assert.rejects(
+      () => generateConversationTitle("How much do I spend?"),
       /not configured/
     );
   });

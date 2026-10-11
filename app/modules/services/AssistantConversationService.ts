@@ -5,7 +5,12 @@ import {
   assistantConversationsTable,
   assistantMessagesTable,
 } from "~/db/schema";
-import { deriveConversationTitle } from "~/modules/assistant/conversation";
+import {
+  deriveConversationTitle,
+  firstUserMessageText,
+  MAX_CONVERSATION_TITLE_LENGTH,
+} from "~/modules/assistant/conversation";
+import { generateConversationTitle } from "~/modules/ai.server";
 
 export interface AssistantConversationSummary {
   id: string;
@@ -107,12 +112,13 @@ export async function recordUserTurn(
   if (existing) {
     if (existing.userId !== userId) return { ok: false, reason: "forbidden" };
   } else {
+    const fallbackTitle = deriveConversationTitle(messages);
     await db
       .insert(assistantConversationsTable)
       .values({
         id: conversationId,
         userId,
-        title: deriveConversationTitle(messages),
+        title: fallbackTitle,
       })
       .onConflictDoNothing({ target: assistantConversationsTable.id });
 
@@ -125,6 +131,10 @@ export async function recordUserTurn(
     if (!claimed || claimed.userId !== userId) {
       return { ok: false, reason: "forbidden" };
     }
+
+    // Draft the title with the model in the background so the assistant's first
+    // reply is never delayed; the deterministic title stays if drafting fails.
+    void draftConversationTitle(conversationId, messages, fallbackTitle);
   }
 
   await upsertMessages(conversationId, messages);
@@ -216,4 +226,38 @@ async function touchConversation(conversationId: string): Promise<void> {
     .update(assistantConversationsTable)
     .set({ updatedAt: new Date() })
     .where(eq(assistantConversationsTable.id, conversationId));
+}
+
+/**
+ * Drafts an AI title for a newly created conversation and persists it without
+ * blocking the assistant's reply. The update only applies while the fallback
+ * title is still in place, so a manual rename made in the meantime wins. Any
+ * failure leaves the fallback title untouched.
+ */
+async function draftConversationTitle(
+  conversationId: string,
+  messages: UIMessage[],
+  fallbackTitle: string
+): Promise<void> {
+  const prompt = firstUserMessageText(messages);
+  if (!prompt) return;
+
+  try {
+    const title = (await generateConversationTitle(prompt)).slice(
+      0,
+      MAX_CONVERSATION_TITLE_LENGTH
+    );
+
+    await db
+      .update(assistantConversationsTable)
+      .set({ title, updatedAt: new Date() })
+      .where(
+        and(
+          eq(assistantConversationsTable.id, conversationId),
+          eq(assistantConversationsTable.title, fallbackTitle)
+        )
+      );
+  } catch (error) {
+    console.error("Failed to draft conversation title:", error);
+  }
 }

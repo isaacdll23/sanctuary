@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { UIMessage } from "ai";
-import { chatRequestSchema, deriveConversationTitle } from "./conversation";
+import {
+  chatRequestSchema,
+  deriveConversationTitle,
+  firstUserMessageText,
+} from "./conversation";
 
 function message(role: UIMessage["role"], text: string): UIMessage {
   return {
@@ -37,6 +41,24 @@ describe("deriveConversationTitle", () => {
     assert.ok(title.length <= 61, `expected <= 61 chars, got ${title.length}`);
     assert.ok(title.endsWith("…"));
     assert.ok(!title.includes("  "));
+  });
+});
+
+describe("firstUserMessageText", () => {
+  it("returns the normalized text of the first user message", () => {
+    assert.equal(
+      firstUserMessageText([
+        message("assistant", "hi"),
+        message("user", "  Plan   my month\n"),
+      ]),
+      "Plan my month"
+    );
+  });
+
+  it("returns an empty string when there is no user text", () => {
+    assert.equal(firstUserMessageText([]), "");
+    assert.equal(firstUserMessageText([message("assistant", "hi")]), "");
+    assert.equal(firstUserMessageText([message("user", "")]), "");
   });
 });
 

@@ -1,14 +1,15 @@
-import { generateObject } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 
 /** AI-backed features. Each maps to an optional per-feature model override. */
-export type AiFeature = "note-title" | "assistant";
+export type AiFeature = "note-title" | "assistant" | "conversation-title";
 
 const DEFAULT_MODEL = "gpt-6-luna";
 
 const FEATURE_MODEL_ENV: Readonly<Record<AiFeature, string>> = {
   "note-title": "OPENAI_MODEL_NOTE_TITLE",
   assistant: "OPENAI_MODEL_ASSISTANT",
+  "conversation-title": "OPENAI_MODEL_CONVERSATION_TITLE",
 };
 
 /**
@@ -76,18 +77,61 @@ export async function generateNoteTitle(content: string): Promise<string> {
   }
 
   try {
-    const { object } = await generateObject({
+    const { output } = await generateText({
       model: await getLanguageModel("note-title"),
-      schema: noteTitleSchema,
+      output: Output.object({ schema: noteTitleSchema }),
       system:
         "You are a helpful assistant that generates concise titles for notes. Generate a title that is 2-8 words long, capturing the essence of the note.",
       prompt: `Generate a concise title (2-8 words) for the following note content:\n\n${content}`,
     });
 
-    return object.title;
+    return output.title;
   } catch (error) {
     // Log provider details server-side, but return a user-safe message.
     console.error("Error generating note title:", error);
     throw new Error("Failed to generate title.");
+  }
+}
+
+// Schema to validate the AI-generated chat title.
+const conversationTitleSchema = z.object({
+  title: z
+    .string()
+    .min(1)
+    .max(80)
+    .describe("A concise 3-6 word title for the conversation."),
+});
+
+/**
+ * Drafts a short, human-readable title for a chat session from its opening
+ * message. The caller decides how to apply the result; failures throw so the
+ * conversation keeps its deterministic fallback title.
+ */
+export async function generateConversationTitle(
+  firstMessage: string
+): Promise<string> {
+  const prompt = firstMessage.trim();
+  if (!prompt) {
+    throw new Error("Conversation prompt is empty");
+  }
+
+  if (!isAiConfigured()) {
+    throw new Error("AI title generation is not configured");
+  }
+
+  try {
+    const { output } = await generateText({
+      model: await getLanguageModel("conversation-title"),
+      output: Output.object({ schema: conversationTitleSchema }),
+      system:
+        "You title chat sessions. Given the user's opening message, write a concise 3-6 word title that captures the topic. Use title case, no surrounding quotes, and no trailing punctuation.",
+      prompt: `Draft a title for a chat that begins with this message:\n\n${prompt}`,
+    });
+
+    return output.title.trim();
+  } catch (error) {
+    // Log provider details server-side, but return a user-safe message.
+    console.error("Error generating conversation title:", error);
+    throw new Error("Failed to generate conversation title.");
   }
 }
