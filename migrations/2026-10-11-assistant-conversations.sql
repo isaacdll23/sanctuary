@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS assistant_conversations (
 );
 
 CREATE INDEX IF NOT EXISTS assistant_conversations_user_updated_idx
-  ON assistant_conversations (user_id, updated_at DESC);
+  ON assistant_conversations (user_id, updated_at);
 
 CREATE TABLE IF NOT EXISTS assistant_messages (
   id integer PRIMARY KEY GENERATED ALWAYS AS IDENTITY,

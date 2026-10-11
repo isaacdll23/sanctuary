@@ -134,7 +134,11 @@ export const financeAccountBalanceSnapshotsTable = pgTable(
       foreignColumns: [financePaymentAccountsTable.id],
       name: "fabs_account_id_fk",
     }).onDelete("cascade"),
-    unique("finance_account_balance_snapshots_account_date_unique").on(table.accountId, table.balanceDate),
+    // Column order is deliberately descending by column name: drizzle-kit's
+    // introspection sorts composite unique constraints that way, and push
+    // diffs order-sensitively, so any other order is dropped and re-added on
+    // every run (which aborts on the "truncate?" prompt for a non-empty table).
+    unique("finance_account_balance_snapshots_account_date_unique").on(table.balanceDate, table.accountId),
     index("finance_account_balance_snapshots_user_id_idx").on(table.userId),
   ]
 );
@@ -430,9 +434,10 @@ export const assistantMessagesTable = pgTable(
       foreignColumns: [assistantConversationsTable.id],
       name: "assistant_messages_conversation_id_fk",
     }).onDelete("cascade"),
+    // Descending by column name; see the note on the balance-snapshots unique.
     unique("assistant_messages_conversation_message_unique").on(
-      table.conversationId,
-      table.messageId
+      table.messageId,
+      table.conversationId
     ),
     index("assistant_messages_conversation_idx").on(
       table.conversationId,
