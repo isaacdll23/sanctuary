@@ -472,6 +472,17 @@ cmd_verify() {
       exited:0) ok "migrate exited 0" ;;
       *) warn "migrate state: $state"; VERIFY_FAILURES=$((VERIFY_FAILURES + 1)) ;;
     esac
+    # drizzle-kit push exits 0 even when it aborts on an interactive prompt, so
+    # trust the logs as well as the exit code.
+    if migrate_logs=$(ssh_run "cd $STACK_DIR && docker compose logs $MIGRATE_SERVICE --tail 40 2>&1"); then
+      if printf '%s' "$migrate_logs" | grep -qE 'Interactive prompts require|Error:'; then
+        warn "migrate logs contain an error despite exit 0:"
+        printf '%s\n' "$migrate_logs" | grep -E 'Interactive prompts require|Error:' | tail -3 | sed 's/^/    /' >&2
+        VERIFY_FAILURES=$((VERIFY_FAILURES + 1))
+      else
+        ok "migrate logs clean"
+      fi
+    fi
   else
     warn "migrate container not found (has up -d run for this tag?)"
     VERIFY_FAILURES=$((VERIFY_FAILURES + 1))

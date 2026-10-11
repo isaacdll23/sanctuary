@@ -1,4 +1,5 @@
 import {
+  foreignKey,
   index,
   integer,
   pgTable,
@@ -117,15 +118,22 @@ export const financeAccountBalanceSnapshotsTable = pgTable(
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     userId: integer("user_id").notNull().references(() => usersTable.id),
-    accountId: integer("account_id")
-      .notNull()
-      .references(() => financePaymentAccountsTable.id, { onDelete: "cascade" }),
+    accountId: integer("account_id").notNull(),
     balanceDate: date("balance_date").notNull(),
     balanceCents: integer("balance_cents").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
+    // Postgres truncates identifiers at 63 chars; the auto-generated name for
+    // this FK is 75, so drizzle-kit could never match the stored name and
+    // recreated the constraint (and the UNIQUE below) on every push. Name it
+    // explicitly and keep it short.
+    foreignKey({
+      columns: [table.accountId],
+      foreignColumns: [financePaymentAccountsTable.id],
+      name: "fabs_account_id_fk",
+    }).onDelete("cascade"),
     unique("finance_account_balance_snapshots_account_date_unique").on(table.accountId, table.balanceDate),
     index("finance_account_balance_snapshots_user_id_idx").on(table.userId),
   ]
@@ -339,9 +347,7 @@ export const dayPlannerGoogleSyncMappingTable = pgTable(
     userId: integer()
       .notNull()
       .references(() => usersTable.id),
-    dayPlanSectionId: uuid()
-      .notNull()
-      .references(() => dayPlanSectionsTable.id),
+    dayPlanSectionId: uuid().notNull(),
     googleEventId: varchar({ length: 255 }).notNull(),
     googleCalendarId: varchar({ length: 255 }).notNull(),
     localLastModified: timestamp(),
@@ -352,7 +358,15 @@ export const dayPlannerGoogleSyncMappingTable = pgTable(
     conflictResolution: googleCalendarConflictResolutionEnum(),
     createdAt: timestamp().defaultNow().notNull(),
     updatedAt: timestamp().defaultNow().notNull(),
-  }
+  },
+  (table) => [
+    // Auto-generated name is 72 chars and gets truncated by Postgres.
+    foreignKey({
+      columns: [table.dayPlanSectionId],
+      foreignColumns: [dayPlanSectionsTable.id],
+      name: "dpg_section_id_fk",
+    }),
+  ]
 );
 
 // Calendar Preferences Table
@@ -403,17 +417,19 @@ export const assistantMessagesTable = pgTable(
   "assistant_messages",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    conversationId: varchar("conversation_id", { length: 64 })
-      .notNull()
-      .references(() => assistantConversationsTable.id, {
-        onDelete: "cascade",
-      }),
+    conversationId: varchar("conversation_id", { length: 64 }).notNull(),
     messageId: varchar("message_id", { length: 64 }).notNull(),
     role: varchar({ length: 20 }).notNull(),
     parts: jsonb().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
+    // Auto-generated name is 64 chars and gets truncated by Postgres.
+    foreignKey({
+      columns: [table.conversationId],
+      foreignColumns: [assistantConversationsTable.id],
+      name: "assistant_messages_conversation_id_fk",
+    }).onDelete("cascade"),
     unique("assistant_messages_conversation_message_unique").on(
       table.conversationId,
       table.messageId
