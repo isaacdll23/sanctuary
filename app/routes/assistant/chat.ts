@@ -79,7 +79,7 @@ export async function action({ request }: Route.ActionArgs) {
     return errorResponse("Invalid chat messages.", 400);
   }
 
-  const { conversationId } = parsed.data;
+  const { conversationId, reasoningEffort } = parsed.data;
 
   // Save the user's turn before streaming so it survives a stopped or failed
   // response. Ownership is enforced here; the assistant turn below reuses the
@@ -93,6 +93,7 @@ export async function action({ request }: Route.ActionArgs) {
     userId: user.id,
     timeZone: user.timeZone,
     model: await getLanguageModel("assistant"),
+    reasoningEffort,
     now: new Date(),
   });
 

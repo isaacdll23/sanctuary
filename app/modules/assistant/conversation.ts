@@ -14,6 +14,24 @@ export const MAX_CONVERSATION_TITLE_LENGTH = 255;
 /** Max characters of the first user message kept as the conversation title. */
 const TITLE_PREVIEW_LENGTH = 60;
 
+/**
+ * Reasoning effort levels the assistant exposes. Kept to a small, portable set
+ * so the choice stays meaningful across the OpenAI-compatible models the
+ * assistant may be configured with.
+ */
+export const REASONING_EFFORTS = ["low", "medium", "high"] as const;
+
+export type ReasoningEffort = (typeof REASONING_EFFORTS)[number];
+
+export const DEFAULT_REASONING_EFFORT: ReasoningEffort = "medium";
+
+export const reasoningEffortSchema = z.enum(REASONING_EFFORTS);
+
+/** Narrows an untrusted value (e.g. a form or storage value) to an effort. */
+export function isReasoningEffort(value: unknown): value is ReasoningEffort {
+  return reasoningEffortSchema.safeParse(value).success;
+}
+
 export const chatRequestSchema = z.object({
   conversationId: z
     .string()
@@ -21,6 +39,7 @@ export const chatRequestSchema = z.object({
     .max(MAX_CONVERSATION_ID_LENGTH)
     .regex(CONVERSATION_ID_PATTERN),
   messages: z.array(z.unknown()).min(1).max(200),
+  reasoningEffort: reasoningEffortSchema.default(DEFAULT_REASONING_EFFORT),
 });
 
 export type ChatRequest = z.infer<typeof chatRequestSchema>;

@@ -2,6 +2,11 @@ import { useMemo, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, generateId, type UIMessage } from "ai";
 import { useNavigate, useRevalidator } from "react-router";
+import type { ReasoningEffort } from "~/modules/assistant/conversation";
+import {
+  loadReasoningEffort,
+  saveReasoningEffort,
+} from "~/utils/assistantPreferences";
 import { AssistantHeader } from "./AssistantHeader";
 import { AssistantEmptyState } from "./AssistantEmptyState";
 import { AssistantConversation } from "./AssistantConversation";
@@ -32,6 +37,9 @@ export function AssistantChat({
   const navigate = useNavigate();
   const revalidator = useRevalidator();
   const [chatId] = useState(() => conversationId ?? generateId());
+  const [reasoningEffort, setReasoningEffort] = useState<ReasoningEffort>(() =>
+    loadReasoningEffort()
+  );
 
   const transport = useMemo(
     () =>
@@ -60,6 +68,17 @@ export function AssistantChat({
   const isBusy = status === "submitted" || status === "streaming";
   const hasConversation = messages.length > 0;
 
+  function handleReasoningEffortChange(effort: ReasoningEffort) {
+    setReasoningEffort(effort);
+    saveReasoningEffort(effort);
+  }
+
+  // The effort is sent per message rather than baked into the transport, so a
+  // mid-thread change applies to the next reply without recreating the chat.
+  function send(text: string) {
+    void sendMessage({ text }, { body: { reasoningEffort } });
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col text-gray-100">
       <AssistantHeader title={title} onOpenSidebar={onOpenSidebar} />
@@ -69,7 +88,7 @@ export function AssistantChat({
           <AssistantConversation messages={messages} status={status} />
         ) : (
           <AssistantEmptyState
-            onSelect={(text) => sendMessage({ text })}
+            onSelect={send}
             disabled={!aiConfigured || isBusy}
           />
         )}
@@ -91,9 +110,11 @@ export function AssistantChat({
         )}
 
         <AssistantComposer
-          onSend={(text) => sendMessage({ text })}
+          onSend={send}
           onStop={stop}
           isBusy={isBusy}
+          reasoningEffort={reasoningEffort}
+          onReasoningEffortChange={handleReasoningEffortChange}
           disabled={!aiConfigured}
           disabledReason={
             aiConfigured

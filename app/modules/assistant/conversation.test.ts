@@ -3,8 +3,10 @@ import { describe, it } from "node:test";
 import type { UIMessage } from "ai";
 import {
   chatRequestSchema,
+  DEFAULT_REASONING_EFFORT,
   deriveConversationTitle,
   firstUserMessageText,
+  isReasoningEffort,
 } from "./conversation";
 
 function message(role: UIMessage["role"], text: string): UIMessage {
@@ -71,6 +73,36 @@ describe("chatRequestSchema", () => {
     assert.equal(result.success, true);
   });
 
+  it("defaults the reasoning effort when it is omitted", () => {
+    const result = chatRequestSchema.safeParse({
+      conversationId: "AbC123",
+      messages: [{ id: "1", role: "user", parts: [] }],
+    });
+    assert.equal(result.success, true);
+    if (!result.success) return;
+    assert.equal(result.data.reasoningEffort, DEFAULT_REASONING_EFFORT);
+  });
+
+  it("accepts a supported reasoning effort", () => {
+    const result = chatRequestSchema.safeParse({
+      conversationId: "AbC123",
+      messages: [{ id: "1", role: "user", parts: [] }],
+      reasoningEffort: "high",
+    });
+    assert.equal(result.success, true);
+    if (!result.success) return;
+    assert.equal(result.data.reasoningEffort, "high");
+  });
+
+  it("rejects an unsupported reasoning effort", () => {
+    const result = chatRequestSchema.safeParse({
+      conversationId: "AbC123",
+      messages: [{ id: "1", role: "user", parts: [] }],
+      reasoningEffort: "turbo",
+    });
+    assert.equal(result.success, false);
+  });
+
   it("rejects ids with unsafe characters", () => {
     const result = chatRequestSchema.safeParse({
       conversationId: "../etc/passwd",
@@ -85,5 +117,16 @@ describe("chatRequestSchema", () => {
       messages: [],
     });
     assert.equal(result.success, false);
+  });
+});
+
+describe("isReasoningEffort", () => {
+  it("accepts known efforts and rejects anything else", () => {
+    assert.equal(isReasoningEffort("low"), true);
+    assert.equal(isReasoningEffort("medium"), true);
+    assert.equal(isReasoningEffort("high"), true);
+    assert.equal(isReasoningEffort("max"), false);
+    assert.equal(isReasoningEffort(null), false);
+    assert.equal(isReasoningEffort(undefined), false);
   });
 });

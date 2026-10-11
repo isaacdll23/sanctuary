@@ -1,6 +1,19 @@
-import { ToolLoopAgent, type LanguageModel } from "ai";
+import {
+  ToolLoopAgent,
+  type LanguageModel,
+  type ToolLoopAgentSettings,
+} from "ai";
 import { getReferenceDateKey } from "~/modules/finance/paySchedule";
+import {
+  DEFAULT_REASONING_EFFORT,
+  type ReasoningEffort,
+} from "./conversation";
 import { createFinanceTools } from "./financeTools.server";
+
+/** Provider options shape accepted by the agent, derived from the AI SDK. */
+type AssistantProviderOptions = NonNullable<
+  ToolLoopAgentSettings["providerOptions"]
+>;
 
 export interface AssistantAgentOptions {
   /** Authenticated user; tools read only this user's data. */
@@ -9,7 +22,20 @@ export interface AssistantAgentOptions {
   timeZone: string;
   /** Resolved language model, supplied by the caller. */
   model: LanguageModel;
+  /** How much deliberation the model should spend on the reply. */
+  reasoningEffort?: ReasoningEffort;
   now?: Date;
+}
+
+/**
+ * Translates the user's effort choice into the OpenAI provider option the AI
+ * SDK forwards to the API. Isolated so the mapping is testable without
+ * constructing an agent.
+ */
+export function assistantProviderOptions(
+  reasoningEffort: ReasoningEffort
+): AssistantProviderOptions {
+  return { openai: { reasoningEffort } };
 }
 
 export interface AssistantInstructionOptions {
@@ -88,6 +114,7 @@ export function createAssistantAgent({
   userId,
   timeZone,
   model,
+  reasoningEffort = DEFAULT_REASONING_EFFORT,
   now = new Date(),
 }: AssistantAgentOptions) {
   const asOfDate = getReferenceDateKey(timeZone, now);
@@ -97,5 +124,6 @@ export function createAssistantAgent({
     model,
     instructions: buildAssistantInstructions({ timeZone, now, asOfDate }),
     tools: createFinanceTools({ userId, asOfDate }),
+    providerOptions: assistantProviderOptions(reasoningEffort),
   });
 }

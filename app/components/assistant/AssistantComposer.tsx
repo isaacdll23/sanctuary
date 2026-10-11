@@ -3,11 +3,15 @@ import {
   PaperAirplaneIcon,
   StopIcon,
 } from "@heroicons/react/24/outline";
+import type { ReasoningEffort } from "~/modules/assistant/conversation";
+import { AssistantReasoningSelect } from "./AssistantReasoningSelect";
 
 interface AssistantComposerProps {
   onSend: (text: string) => void;
   onStop: () => void;
   isBusy: boolean;
+  reasoningEffort: ReasoningEffort;
+  onReasoningEffortChange: (effort: ReasoningEffort) => void;
   disabled?: boolean;
   disabledReason?: string;
 }
@@ -18,6 +22,8 @@ export function AssistantComposer({
   onSend,
   onStop,
   isBusy,
+  reasoningEffort,
+  onReasoningEffortChange,
   disabled = false,
   disabledReason,
 }: AssistantComposerProps) {
@@ -96,10 +102,17 @@ export function AssistantComposer({
           </button>
         )}
       </div>
-      <p id="assistant-composer-hint" className="mt-2 px-2 text-xs text-gray-500">
-        {disabledReason ??
-          "The assistant can read your finance data. Press Enter to send, Shift+Enter for a new line."}
-      </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-2">
+        <p id="assistant-composer-hint" className="text-xs text-gray-500">
+          {disabledReason ??
+            "The assistant can read your finance data. Press Enter to send, Shift+Enter for a new line."}
+        </p>
+        <AssistantReasoningSelect
+          value={reasoningEffort}
+          onChange={onReasoningEffortChange}
+          disabled={disabled}
+        />
+      </div>
     </form>
   );
 }
