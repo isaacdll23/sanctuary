@@ -32,7 +32,6 @@ export default function SidebarLink({
         getSidebarItemClasses({ isActive, isCollapsed, className })
       }
       {...rest}
-      title={isCollapsed ? label : undefined}
     >
       {Icon && (
         <Icon

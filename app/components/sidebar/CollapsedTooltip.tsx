@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface CollapsedTooltipProps {
   label: string;
@@ -6,27 +7,65 @@ interface CollapsedTooltipProps {
   isCollapsed: boolean;
 }
 
+interface TooltipPosition {
+  top: number;
+  left: number;
+}
+
+/**
+ * Labels an icon-only nav item when the sidebar is collapsed. The tooltip is
+ * portaled to `document.body` and positioned with `position: fixed` so the
+ * nav's `overflow-y-auto` container cannot clip it.
+ */
 export default function CollapsedTooltip({
   label,
   children,
   isCollapsed,
 }: CollapsedTooltipProps) {
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [position, setPosition] = useState<TooltipPosition | null>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   if (!isCollapsed) {
     return <>{children}</>;
   }
 
+  function showTooltip() {
+    const rect = anchorRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setPosition({ top: rect.top + rect.height / 2, left: rect.right + 8 });
+  }
+
+  function hideTooltip() {
+    setPosition(null);
+  }
+
   return (
-    <div className="relative group z-0">
+    <div
+      ref={anchorRef}
+      className="relative"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onFocus={showTooltip}
+      onBlur={hideTooltip}
+    >
       {children}
-      <div
-        className="absolute left-14 top-1/2 -translate-y-1/2 px-2 py-1 text-sm font-medium text-white bg-gray-900 dark:bg-gray-700 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-40"
-        role="tooltip"
-      >
-        {label}
-        <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-900 dark:border-r-gray-700" />
-      </div>
+      {position &&
+        createPortal(
+          <div
+            role="tooltip"
+            style={{
+              position: "fixed",
+              top: position.top,
+              left: position.left,
+              transform: "translateY(-50%)",
+            }}
+            className="z-50 whitespace-nowrap rounded-md bg-gray-700 px-2 py-1 text-sm font-medium text-white shadow-md pointer-events-none"
+          >
+            {label}
+            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-700" />
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { NavLink } from "react-router";
 import SidebarLink from "./SidebarLink";
@@ -21,7 +22,13 @@ interface CollapsibleNavItemProps {
   parentIcon: React.ElementType;
   children: ChildItem[];
   isCollapsed?: boolean;
+  isActive?: boolean;
   onClick?: () => void;
+}
+
+interface MenuPosition {
+  top: number;
+  left: number;
 }
 
 export default function CollapsibleNavItem({
@@ -29,10 +36,12 @@ export default function CollapsibleNavItem({
   parentIcon: ParentIcon,
   children,
   isCollapsed = false,
+  isActive = false,
   onClick,
 }: CollapsibleNavItemProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const buttonId = useId();
@@ -42,7 +51,17 @@ export default function CollapsibleNavItem({
   };
 
   const toggleMenu = () => {
-    setIsMenuOpen((value) => !value);
+    setIsMenuOpen((value) => {
+      if (value) {
+        setMenuPosition(null);
+        return false;
+      }
+      const rect = buttonRef.current?.getBoundingClientRect();
+      if (rect) {
+        setMenuPosition({ top: rect.top, left: rect.right + 4 });
+      }
+      return true;
+    });
   };
 
   // Close menu when clicking outside
@@ -90,11 +109,10 @@ export default function CollapsibleNavItem({
           ref={buttonRef}
           onClick={isCollapsed ? toggleMenu : toggleExpand}
           className={getSidebarItemClasses({
-            isActive: false,
+            isActive,
             isCollapsed,
             className: "w-full",
           })}
-          title={isCollapsed ? parentLabel : undefined}
           aria-expanded={isCollapsed ? isMenuOpen : isExpanded}
           aria-label={
             isCollapsed
@@ -142,38 +160,53 @@ export default function CollapsibleNavItem({
         </div>
       )}
 
-      {/* Dropdown menu when sidebar is collapsed */}
-      {isCollapsed && isMenuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute left-14 top-0 z-50 mt-0 min-w-max bg-gray-900 rounded-md shadow-lg border border-gray-700 py-1 pointer-events-auto"
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby={buttonId}
-        >
-          {children.map((child) => {
-            const ChildIcon = child.icon;
-            return (
-              <NavLink
-                key={child.to}
-                to={child.to}
-                onClick={handleChildClick}
-                className={({ isActive }) =>
-                  `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
-                    isActive
-                      ? "bg-gray-800 text-gray-100"
-                      : "text-gray-300 hover:bg-gray-800"
-                  }`
-                }
-                role="menuitem"
-              >
-                {ChildIcon && <ChildIcon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />}
-                <span>{child.label}</span>
-              </NavLink>
-            );
-          })}
-        </div>
-      )}
+      {/* Dropdown menu when sidebar is collapsed. Portaled to the body so the
+          nav's overflow container does not clip it. */}
+      {isCollapsed &&
+        isMenuOpen &&
+        menuPosition &&
+        createPortal(
+          <div
+            ref={menuRef}
+            style={{
+              position: "fixed",
+              top: menuPosition.top,
+              left: menuPosition.left,
+            }}
+            className="z-50 min-w-max rounded-md border border-gray-700 bg-gray-900 py-1 shadow-lg"
+            role="menu"
+            aria-orientation="vertical"
+            aria-labelledby={buttonId}
+          >
+            {children.map((child) => {
+              const ChildIcon = child.icon;
+              return (
+                <NavLink
+                  key={child.to}
+                  to={child.to}
+                  onClick={handleChildClick}
+                  className={({ isActive: childIsActive }) =>
+                    `flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors duration-150 ${
+                      childIsActive
+                        ? "bg-indigo-500/10 text-indigo-300"
+                        : "text-gray-300 hover:bg-gray-800"
+                    }`
+                  }
+                  role="menuitem"
+                >
+                  {ChildIcon && (
+                    <ChildIcon
+                      className="h-5 w-5 flex-shrink-0"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span>{child.label}</span>
+                </NavLink>
+              );
+            })}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

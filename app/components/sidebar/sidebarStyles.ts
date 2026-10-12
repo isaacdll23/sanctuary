@@ -1,11 +1,11 @@
 export const sidebarItemBaseClasses =
-  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 group relative border-l-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900";
+  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 group relative border-l-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900";
 
 export const sidebarItemActiveClasses =
-  "bg-cyan-500/10 text-cyan-400 border-l-cyan-500";
+  "bg-indigo-500/10 text-indigo-300 border-l-indigo-500";
 
 export const sidebarItemInactiveClasses =
-  "text-gray-400 hover:bg-gray-900 hover:text-gray-200 border-l-transparent";
+  "text-gray-300 hover:bg-gray-800/70 hover:text-gray-100 border-l-transparent";
 
 export function getSidebarItemClasses({
   isActive,

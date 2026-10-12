@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useLocation } from "react-router";
 import SidebarLink from "./SidebarLink";
 import SidebarSection from "./SidebarSection";
 import CollapsibleNavItem from "./CollapsibleNavItem";
@@ -11,6 +12,7 @@ import {
 import { platformAvailableFeatureIds } from "~/modules/featureFlags";
 import {
   adminNavSection,
+  isNavItemActive,
   isNavItemVisible,
   navSections,
   type NavItemDef,
@@ -65,6 +67,7 @@ export default function Sidebar({
   enabledFeatures = platformAvailableFeatureIds(),
 }: SidebarProps) {
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+  const { pathname } = useLocation();
   const accessiblePagesSet = useMemo(
     () => new Set(accessiblePages),
     [accessiblePages]
@@ -94,6 +97,7 @@ export default function Sidebar({
           parentIcon={item.icon}
           children={item.children}
           isCollapsed={isSidebarCollapsed}
+          isActive={isNavItemActive(item, pathname)}
           onClick={onItemClick}
         />
       );
@@ -160,7 +164,7 @@ export default function Sidebar({
           {/* Desktop Collapse/Expand Button */}
           <button
             onClick={toggleDesktopCollapse}
-            className="p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 transition-colors duration-150"
+            className="p-2 rounded-md text-gray-400 hover:text-gray-100 hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 transition-colors duration-150"
             aria-label={
               isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
             }

@@ -29,8 +29,8 @@ function getTabClasses(isActive: boolean) {
   return [
     "flex min-h-[56px] flex-1 flex-col items-center justify-center rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors",
     isActive
-      ? "bg-cyan-500/10 text-cyan-400"
-      : "text-gray-400 hover:bg-gray-900 hover:text-gray-200",
+      ? "bg-indigo-500/10 text-indigo-300"
+      : "text-gray-300 hover:bg-gray-800/70 hover:text-gray-100",
   ].join(" ");
 }
 
@@ -38,7 +38,7 @@ function getSheetLinkClasses(isActive: boolean) {
   return [
     "flex min-h-[44px] items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
     isActive
-      ? "bg-cyan-500/10 text-cyan-400"
+      ? "bg-indigo-500/10 text-indigo-300"
       : "text-gray-300 hover:bg-gray-900 hover:text-gray-100",
   ].join(" ");
 }
