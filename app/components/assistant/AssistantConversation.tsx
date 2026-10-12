@@ -16,6 +16,7 @@ import {
   type ChatStatus,
   type UIMessage,
 } from "ai";
+import { hasReasoningText } from "./reasoning";
 
 /** Friendly labels for the assistant's read tools. */
 const TOOL_LABELS: Record<string, string> = {
@@ -307,6 +308,11 @@ export function AssistantConversation({
                 }
 
                 if (isReasoningUIPart(part)) {
+                  // Providers can emit a reasoning part that carries only
+                  // encrypted state with no summary text; skip it so the block
+                  // never renders empty.
+                  if (!hasReasoningText(part.text)) return null;
+
                   return (
                     <ReasoningBlock
                       key={key}

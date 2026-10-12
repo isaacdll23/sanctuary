@@ -54,6 +54,16 @@ replies…", "Most thorough, slower to answer") and is tinted by depth
   during render. Reading `localStorage` while rendering makes the server and
   client markup disagree (React hydration error #418).
 
+## Reasoning block
+
+The model's reasoning renders as a collapsible "Thought process" block
+(`ReasoningBlock`) whenever the provider emits a reasoning part with summary
+text. Providers may also emit reasoning parts that carry only opaque, encrypted
+state and no summary (for example, an OpenAI reasoning item kept for
+continuation). Those are persisted so the model can reuse them, but
+`hasReasoningText` in `app/components/assistant/reasoning.ts` filters them out
+of the transcript so the block never appears empty.
+
 ## Markdown
 
 Assistant replies render through `react-markdown` with `remark-gfm` so tables,
