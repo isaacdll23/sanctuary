@@ -223,7 +223,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={() => void copy()}
-      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-gray-500 transition-colors hover:bg-white/[0.06] hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+      className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-gray-400 transition-colors hover:bg-white/[0.06] hover:text-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
     >
       {copied ? (
         <CheckIcon aria-hidden="true" className="h-3.5 w-3.5" />
@@ -239,145 +239,178 @@ export function AssistantConversation({
   messages,
   status,
 }: AssistantConversationProps) {
-  const endRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [atBottom, setAtBottom] = useState(true);
+  const atBottomRef = useRef(true);
 
+  // Follow new content only while the user is already reading the end; a
+  // reader who has scrolled up must not be yanked back down on every chunk.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages]);
+    if (!atBottomRef.current) return;
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, status]);
+
+  function handleScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 96;
+    atBottomRef.current = near;
+    setAtBottom(near);
+  }
+
+  function jumpToLatest() {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }
 
   const streaming = status === "streaming";
 
   return (
-    <section
-      className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto"
-      aria-label="Conversation"
-    >
-      {messages.map((message, messageIndex) => {
-        const isLastMessage = messageIndex === messages.length - 1;
-        const messageStreaming =
-          streaming && isLastMessage && message.role === "assistant";
-        const text = message.role === "assistant" ? messageText(message) : "";
+    <div className="relative flex min-h-0 flex-1 flex-col">
+      <section
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto"
+        aria-label="Conversation"
+      >
+        {messages.map((message, messageIndex) => {
+          const isLastMessage = messageIndex === messages.length - 1;
+          const messageStreaming =
+            streaming && isLastMessage && message.role === "assistant";
+          const text = message.role === "assistant" ? messageText(message) : "";
 
-        return (
-          <article
-            key={message.id}
-            className={
-              message.role === "user" ? "flex justify-end" : "flex justify-start"
-            }
-          >
-            <div
+          return (
+            <article
+              key={message.id}
               className={
-                message.role === "user"
-                  ? "max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600/90 px-4 py-2.5 text-sm text-white shadow-sm shadow-black/20"
-                  : "w-full max-w-3xl space-y-3 text-sm text-gray-200"
+                message.role === "user" ? "flex justify-end" : "flex justify-start"
               }
             >
-              <h2 className="sr-only">
-                {message.role === "user" ? "You" : "Assistant"}
-              </h2>
-              {message.parts.map((part, index) => {
-                const key = `${message.id}-${index}`;
+              <div
+                className={
+                  message.role === "user"
+                    ? "max-w-[85%] rounded-2xl rounded-br-sm bg-indigo-600/90 px-4 py-2.5 text-sm text-white shadow-sm shadow-black/20"
+                    : "w-full max-w-3xl space-y-3 text-sm text-gray-200"
+                }
+              >
+                <h2 className="sr-only">
+                  {message.role === "user" ? "You" : "Assistant"}
+                </h2>
+                {message.parts.map((part, index) => {
+                  const key = `${message.id}-${index}`;
 
-                if (part.type === "text") {
-                  if (message.role === "user") {
+                  if (part.type === "text") {
+                    if (message.role === "user") {
+                      return (
+                        <p key={key} className="whitespace-pre-wrap">
+                          {part.text}
+                        </p>
+                      );
+                    }
+                    const isLastTextPart =
+                      !message.parts
+                        .slice(index + 1)
+                        .some((candidate) => candidate.type === "text");
                     return (
-                      <p key={key} className="whitespace-pre-wrap">
-                        {part.text}
-                      </p>
-                    );
-                  }
-                  const isLastTextPart =
-                    !message.parts
-                      .slice(index + 1)
-                      .some((candidate) => candidate.type === "text");
-                  return (
-                    <div
-                      key={key}
-                      className={[
-                        "assistant-prose prose prose-sm prose-invert max-w-none prose-p:my-2 prose-pre:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:mb-2 prose-headings:mt-4 prose-table:text-sm",
-                        messageStreaming && isLastTextPart
-                          ? "assistant-prose--streaming"
-                          : "",
-                      ].join(" ")}
-                    >
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {part.text}
-                      </ReactMarkdown>
-                    </div>
-                  );
-                }
-
-                if (isReasoningUIPart(part)) {
-                  // Providers can emit a reasoning part that carries only
-                  // encrypted state with no summary text; skip it so the block
-                  // never renders empty.
-                  if (!hasReasoningText(part.text)) return null;
-
-                  return (
-                    <ReasoningBlock
-                      key={key}
-                      text={part.text}
-                      streaming={part.state === "streaming"}
-                    />
-                  );
-                }
-
-                if (isToolUIPart(part)) {
-                  const toolName = getToolName(part);
-                  const label = toolLabel(toolName);
-                  const failed = part.state === "output-error";
-                  const done = part.state === "output-available";
-                  const receipt =
-                    part.state === "output-available" &&
-                    WRITE_TOOLS.has(toolName)
-                      ? readWriteReceipt(part.output)
-                      : null;
-
-                  if (receipt) {
-                    return receipt.ok ? (
-                      <WriteSuccess key={key} receipt={receipt} />
-                    ) : (
-                      <WriteFailure key={key} error={receipt.error} />
+                      <div
+                        key={key}
+                        className={[
+                          "assistant-prose prose prose-sm prose-invert max-w-none prose-p:my-2 prose-pre:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:mb-2 prose-headings:mt-4 prose-table:text-sm",
+                          messageStreaming && isLastTextPart
+                            ? "assistant-prose--streaming"
+                            : "",
+                        ].join(" ")}
+                      >
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {part.text}
+                        </ReactMarkdown>
+                      </div>
                     );
                   }
 
-                  return (
-                    <ToolActivity
-                      key={key}
-                      label={label}
-                      failed={failed}
-                      done={done}
-                    />
-                  );
-                }
+                  if (isReasoningUIPart(part)) {
+                    // Providers can emit a reasoning part that carries only
+                    // encrypted state with no summary text; skip it so the block
+                    // never renders empty.
+                    if (!hasReasoningText(part.text)) return null;
 
-                return null;
-              })}
+                    return (
+                      <ReasoningBlock
+                        key={key}
+                        text={part.text}
+                        streaming={part.state === "streaming"}
+                      />
+                    );
+                  }
 
-              {message.role === "assistant" && text && (
-                <div className="flex justify-end">
-                  <CopyButton text={text} />
-                </div>
-              )}
-            </div>
-          </article>
-        );
-      })}
+                  if (isToolUIPart(part)) {
+                    const toolName = getToolName(part);
+                    const label = toolLabel(toolName);
+                    const failed = part.state === "output-error";
+                    const done = part.state === "output-available";
+                    const receipt =
+                      part.state === "output-available" &&
+                      WRITE_TOOLS.has(toolName)
+                        ? readWriteReceipt(part.output)
+                        : null;
 
-      {status === "submitted" && (
-        <p
-          className="flex items-center gap-2 text-xs text-gray-400"
-          role="status"
+                    if (receipt) {
+                      return receipt.ok ? (
+                        <WriteSuccess key={key} receipt={receipt} />
+                      ) : (
+                        <WriteFailure key={key} error={receipt.error} />
+                      );
+                    }
+
+                    return (
+                      <ToolActivity
+                        key={key}
+                        label={label}
+                        failed={failed}
+                        done={done}
+                      />
+                    );
+                  }
+
+                  return null;
+                })}
+
+                {message.role === "assistant" && text && (
+                  <div className="flex justify-end">
+                    <CopyButton text={text} />
+                  </div>
+                )}
+              </div>
+            </article>
+          );
+        })}
+
+        {status === "submitted" && (
+          <p
+            className="flex items-center gap-2 text-xs text-gray-400"
+            role="status"
+          >
+            <span
+              aria-hidden="true"
+              className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400"
+            />
+            Thinking…
+          </p>
+        )}
+
+      </section>
+
+      {!atBottom && messages.length > 0 && (
+        <button
+          type="button"
+          onClick={jumpToLatest}
+          className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-full border border-white/[0.1] bg-gray-900/85 px-3 py-1.5 text-xs font-medium text-gray-200 shadow-lg shadow-black/30 backdrop-blur transition-colors hover:bg-gray-800/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
-          <span
-            aria-hidden="true"
-            className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400"
-          />
-          Thinking…
-        </p>
+          Jump to latest
+        </button>
       )}
-
-      <div ref={endRef} />
-    </section>
+    </div>
   );
 }

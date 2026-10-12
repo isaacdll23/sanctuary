@@ -35,13 +35,13 @@ export function AssistantSidebar({
           type="button"
           aria-label="Close conversations"
           onClick={onClose}
-          className="fixed inset-0 z-30 bg-black/50 md:hidden"
+          className="fixed inset-0 z-50 bg-black/50 md:hidden"
         />
       )}
       <aside
         aria-label="Conversations"
         className={[
-          "fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/[0.07] bg-gray-950/95 backdrop-blur-md transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:bg-transparent",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-white/[0.07] bg-gray-950/95 backdrop-blur-md transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:bg-transparent",
           mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         ].join(" ")}
       >
@@ -64,9 +64,9 @@ export function AssistantSidebar({
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-4">
+        <nav className="min-h-0 flex-1 overflow-y-auto px-2 pb-[calc(1rem+var(--safe-area-inset-bottom))]">
           {conversations.length === 0 ? (
-            <p className="px-3 py-6 text-center text-xs text-gray-500">
+            <p className="px-3 py-6 text-center text-xs text-gray-400">
               Your chats will appear here.
             </p>
           ) : (
@@ -120,7 +120,7 @@ function ConversationListItem({
             defaultValue={conversation.title}
             maxLength={MAX_CONVERSATION_TITLE_LENGTH}
             aria-label="Conversation title"
-            className="min-w-0 flex-1 rounded-md bg-transparent px-2 py-1 text-sm text-gray-100 focus:outline-none"
+            className="min-w-0 flex-1 rounded-md bg-transparent px-2 py-1 text-sm text-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           />
           <button
             type="submit"
@@ -147,7 +147,7 @@ function ConversationListItem({
         onClick={onNavigate}
         className={({ isActive }) =>
           [
-            "block truncate rounded-lg py-2 pl-3 pr-16 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+            "block truncate rounded-lg py-2 pl-3 pr-28 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 md:pr-20",
             isActive || active
               ? "bg-indigo-500/10 text-white shadow-[inset_2px_0_0_var(--color-indigo-400)]"
               : "text-gray-400 hover:bg-white/[0.04] hover:text-gray-100",
@@ -156,12 +156,14 @@ function ConversationListItem({
       >
         {conversation.title}
       </NavLink>
-      <div className="absolute inset-y-0 right-1 flex items-center gap-0.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+      {/* Always visible on touch (no hover to reveal it); revealed on hover or
+          keyboard focus on pointer devices. */}
+      <div className="absolute inset-y-0 right-0.5 flex items-center gap-0.5 opacity-100 transition-opacity md:pointer-events-none md:opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:focus-within:pointer-events-auto md:focus-within:opacity-100">
         <button
           type="button"
           onClick={() => setEditing(true)}
           aria-label={`Rename ${conversation.title}`}
-          className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-white/[0.08] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 md:h-auto md:w-auto md:p-1.5"
         >
           <PencilSquareIcon className="h-4 w-4" aria-hidden="true" />
         </button>
@@ -186,7 +188,7 @@ function ConversationListItem({
             type="submit"
             disabled={deleting}
             aria-label={`Delete ${conversation.title}`}
-            className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-red-500/20 hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-500/20 hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 md:h-auto md:w-auto md:p-1.5"
           >
             <TrashIcon className="h-4 w-4" aria-hidden="true" />
           </button>

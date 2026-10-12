@@ -80,7 +80,7 @@ export function AssistantComposer({
           placeholder={
             disabled ? "Chat is unavailable…" : "Ask about your finances…"
           }
-          className="max-h-40 min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-gray-100 placeholder:text-gray-500 focus:outline-none disabled:cursor-not-allowed"
+          className="max-h-[160px] min-h-[44px] flex-1 resize-none bg-transparent px-2 py-2 text-sm text-gray-100 placeholder:text-gray-400 focus:outline-none disabled:cursor-not-allowed"
         />
         {isBusy ? (
           <button
@@ -105,7 +105,7 @@ export function AssistantComposer({
       <div className="mt-2 flex flex-wrap items-end justify-between gap-x-4 gap-y-3 px-2">
         <p
           id="assistant-composer-hint"
-          className="max-w-md text-xs leading-relaxed text-gray-500"
+          className="max-w-md text-xs leading-relaxed text-gray-400"
         >
           {disabledReason ??
             "The assistant can read your finance data. Press Enter to send, Shift+Enter for a new line."}

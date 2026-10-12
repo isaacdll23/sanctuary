@@ -122,7 +122,7 @@ export function AssistantReasoningPicker({
       </div>
       <p
         aria-live="polite"
-        className="sr-only text-[11px] leading-none text-gray-500 sm:not-sr-only"
+        className="sr-only text-xs leading-none text-gray-400 sm:not-sr-only"
       >
         {selected.hint}
       </p>

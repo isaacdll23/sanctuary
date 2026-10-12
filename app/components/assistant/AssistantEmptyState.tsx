@@ -5,7 +5,8 @@ import {
   TagIcon,
 } from "@heroicons/react/24/outline";
 
-/** Starter questions that map onto the assistant's finance tools. */
+/** Starter prompts. They deliberately include a write so the assistant's
+ *  ability to change data is visible on first run, not just its reading. */
 const EXAMPLE_REQUESTS = [
   {
     text: "How much do I spend each month?",
@@ -18,7 +19,7 @@ const EXAMPLE_REQUESTS = [
     tint: "text-emerald-300 group-hover:border-emerald-400/40",
   },
   {
-    text: "When is my next payday, and what's left after bills?",
+    text: "Log my checking account balance",
     Icon: BanknotesIcon,
     tint: "text-violet-300 group-hover:border-violet-400/40",
   },
@@ -39,16 +40,17 @@ export function AssistantEmptyState({
         <SparklesIcon className="h-7 w-7 text-indigo-300" aria-hidden="true" />
       </div>
       <h2 className="text-lg font-medium text-gray-100">
-        Ask about your finances
+        Ask about your finances — or change them
       </h2>
       <p className="mt-2 max-w-md text-sm text-gray-400">
-        I can read your income and recurring expenses. Start with one of these,
-        or type your own question below.
+        I can read your income, expenses, and accounts, and add, update, or
+        remove them for you. Every change comes back with a confirmation, so
+        you always see what happened.
       </p>
 
       <div className="mt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-500">
-          Try asking
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-gray-400">
+          Start here
         </p>
         <ul className="mt-3 flex max-w-xl flex-wrap justify-center gap-2">
           {EXAMPLE_REQUESTS.map(({ text, Icon, tint }) => (

@@ -15,8 +15,10 @@
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-  /* Slimmer global density */
-  --spacing: 0.22rem;
+  /* Slimmer global density. Expressed so it stays ~3.08px now that the root
+     font-size is the browser default 16px (0.1925rem * 16 = 3.08px), matching
+     the density the app had when 1rem was pinned to 14px. */
+  --spacing: 0.1925rem;
 
   /* Tighter radii */
   --radius-xs: 0.125rem;
@@ -37,7 +39,7 @@
   --color-gray-100: #dde1e7;
   --color-gray-200: #b9bec8;
   --color-gray-300: #9098a6;
-  --color-gray-400: #71798a;
+  --color-gray-400: #767e90;
   --color-gray-500: #575f70;
   --color-gray-600: #424857;
   --color-gray-700: #2d313d;
@@ -184,10 +186,17 @@ body {
   padding: 0;
   min-height: 100dvh;
   font-family: var(--font-sans);
-  font-size: 14px;
   line-height: 1.35;
   background-color: var(--color-gray-950);
   color: var(--color-gray-100);
+}
+
+/* The 14px body role from DESIGN.md. It lives on `body`, never `html`, so 1rem
+   stays the browser default 16px and Tailwind's rem ramp resolves as
+   documented: text-sm = 14px body, text-xs = 12px label. Pinning html to 14px
+   silently shrank every text-* step by 14/16 (body rendered at 12.25px). */
+body {
+  font-size: 0.875rem;
 }
 
 @supports not (height: 100dvh) {

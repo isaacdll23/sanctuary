@@ -33,12 +33,12 @@ export function AssistantHeader({ title, onOpenSidebar }: AssistantHeaderProps) 
             <h1 className="truncate text-lg font-semibold text-gray-50">
               {title}
             </h1>
-            <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] font-medium text-indigo-200">
+            <span className="shrink-0 rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-200">
               Preview
             </span>
           </div>
           <p className="text-sm text-gray-400">
-            Chat with an AI agent that can read your Sanctuary data.
+            An AI agent that can read and change your Sanctuary data.
           </p>
         </div>
       </div>
