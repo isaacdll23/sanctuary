@@ -64,6 +64,7 @@ export default function PushNotificationsSection({
   pushSubscriptionCount,
 }: PushNotificationsSectionProps) {
   const fetcher = useFetcher<PushActionResult>();
+  const reminderFetcher = useFetcher<PushActionResult>();
   const [support, setSupport] = useState<SupportState>({ kind: "checking" });
   const [subscription, setSubscription] = useState<SubscriptionState>({
     kind: "unknown",
@@ -220,6 +221,12 @@ export default function PushNotificationsSection({
     }
   }
 
+  function handleRunTaskReminders() {
+    const formData = new FormData();
+    formData.set("intent", "runTaskReminders");
+    reminderFetcher.submit(formData, { method: "post" });
+  }
+
   function handleSendTest() {
     setStatus(null);
     const formData = new FormData();
@@ -229,6 +236,10 @@ export default function PushNotificationsSection({
 
   const isSubscribed = subscription.kind === "subscribed";
   const isBlocked = permission === "denied";
+  const isReminderRunPending = reminderFetcher.state !== "idle";
+  const reminderRunResult = isPushActionResult(reminderFetcher.data)
+    ? reminderFetcher.data
+    : null;
 
   return (
     <section aria-labelledby="push-notifications-heading">
@@ -374,6 +385,35 @@ export default function PushNotificationsSection({
               Test notifications are limited to one per 10 seconds.
             </p>
           )}
+
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4">
+            <p className="mb-1 font-medium text-gray-700 dark:text-gray-200">
+              Task reminders
+            </p>
+            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+              A task reminder is delivered once, when its reminder time passes
+              and the task is still open. The server checks every minute; run the
+              check now to verify without waiting.
+            </p>
+            <button
+              type="button"
+              onClick={handleRunTaskReminders}
+              disabled={isReminderRunPending}
+              className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {isReminderRunPending ? "Checking…" : "Run task reminders now"}
+            </button>
+            {reminderRunResult && (
+              <p
+                role={reminderRunResult.success ? "status" : "alert"}
+                className={`mt-3 text-sm ${
+                  reminderRunResult.success ? "text-emerald-400" : "text-red-400"
+                }`}
+              >
+                {reminderRunResult.message}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </section>

@@ -18,12 +18,13 @@ feature as unconfigured. Nothing else in the app depends on it.
 | Settings UI | Settings → Notifications tab (`app/components/settings/PushNotificationsSection.tsx`) | Detects support, iOS install state, permission and subscription state; subscribes/unsubscribes; sends a test. |
 | Settings mutations | `app/routes/settings.tsx` action | Intents `pushSubscribe`, `pushUnsubscribe`, `pushTest`, all behind `pageAccessAction("settings")`. |
 | Renewal endpoint | `app/routes/push-subscription.ts` (`POST /push/subscription`) | Session-authenticated JSON endpoint the service worker uses when the browser rotates a subscription. Returns 204/400/401. |
+| Task reminders | `app/modules/services/TaskReminderService.ts`, `app/modules/services/TaskReminderScheduler.server.ts` | Claims due `tasks` reminders atomically and pushes them once; see `docs/task-reminders.md`. |
 | Service worker | `public/sw.js` | `push` → `showNotification`, `notificationclick` → focus/open, `pushsubscriptionchange` → re-subscribe and POST the new subscription. Pages are still never cached. |
 
 Delivery only happens when a server-side caller invokes
 `sendPushToUser(userId, { title, body, url })`. Today that is the manual
-"Send test notification" button; the task-reminder dispatcher is intentionally
-not part of this feature.
+"Send test notification" button and the task-reminder dispatcher, which is
+documented separately in [`docs/task-reminders.md`](./task-reminders.md).
 
 ### Delivery behavior
 

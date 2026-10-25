@@ -94,6 +94,28 @@ export const action = pageAccessAction("settings", async (user, request) => {
     return handleNavigationPreferencesAction(request);
   }
 
+  if (intent === "runTaskReminders") {
+    const { dispatchDueTaskReminders } = await import(
+      "~/modules/services/TaskReminderService"
+    );
+
+    try {
+      const summary = await dispatchDueTaskReminders();
+      return {
+        success: true,
+        message: summary.skipped
+          ? "Task reminders did not run: push notifications are not configured on this server."
+          : `Task reminders checked: ${summary.claimed} due, ${summary.sent} delivered, ${summary.failed} not delivered.`,
+      };
+    } catch (error) {
+      console.error("Task reminder dispatch failed:", error);
+      return {
+        success: false,
+        message: "Could not run task reminders. Check the server logs.",
+      };
+    }
+  }
+
   if (
     intent === "pushSubscribe" ||
     intent === "pushUnsubscribe" ||

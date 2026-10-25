@@ -47,7 +47,9 @@ export const tasksTable = pgTable("tasks", {
   completedAt: timestamp(),
   category: varchar({ length: 255 }),
   reminderDate: timestamp(), // When to send reminder
-  reminderSent: integer().default(0), // 0 = not sent, 1 = sent
+  reminderSent: integer().default(0), // 0 = not sent, 1 = claimed/terminal (see TaskReminderService)
+  reminderSentAt: timestamp(), // When the reminder push was delivered
+  reminderFailedAt: timestamp(), // Last dispatch attempt that delivered nothing
   createdAt: timestamp().defaultNow().notNull(),
 });
 

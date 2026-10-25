@@ -38,6 +38,18 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
+  // First server-rendered request boots the in-process task-reminder interval
+  // (exactly once per process; see TaskReminderScheduler.server.ts). Startup is
+  // best-effort and must never break rendering.
+  try {
+    const { ensureTaskReminderSchedulerStarted } = await import(
+      "~/modules/services/TaskReminderScheduler.server"
+    );
+    ensureTaskReminderSchedulerStarted();
+  } catch (error) {
+    console.error("Could not start the task-reminder scheduler:", error);
+  }
+
   try {
     let isAuthenticated = await isSessionCreated(request);
     let isAdmin = false;
