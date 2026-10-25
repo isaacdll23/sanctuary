@@ -1,4 +1,4 @@
-import * as webpush from "web-push";
+import * as webPushModule from "web-push";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "~/db";
 import { pushSubscriptionsTable } from "~/db/schema";
@@ -36,20 +36,87 @@ function readVapidConfig(): VapidConfig | null {
   return { publicKey, privateKey, subject };
 }
 
+type PushTarget = {
+  endpoint: string;
+  keys: { p256dh: string; auth: string };
+};
+
+type WebPushApi = {
+  setVapidDetails(subject: string, publicKey: string, privateKey: string): void;
+  sendNotification(
+    target: PushTarget,
+    payload: string,
+    options: { TTL: number }
+  ): Promise<unknown>;
+};
+
+/**
+ * `web-push` is CommonJS. Under Node's ESM interop its real exports are only
+ * guaranteed on the default export — named-export detection does not see the
+ * properties `module.exports` assigns through a helper object, so
+ * `import * as webpush` can have `setVapidDetails: undefined` in the
+ * externalized production build. Some bundlers instead hoist the exports onto
+ * the namespace. Accept either shape, explicitly, without asserting types.
+ */
+function resolveWebPushApi(): WebPushApi | null {
+  const candidates: unknown[] = [Reflect.get(webPushModule, "default"), webPushModule];
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== "object" || candidate === null) continue;
+
+    const setVapidDetails: unknown = Reflect.get(candidate, "setVapidDetails");
+    const sendNotification: unknown = Reflect.get(candidate, "sendNotification");
+    if (typeof setVapidDetails !== "function" || typeof sendNotification !== "function") {
+      continue;
+    }
+
+    return {
+      setVapidDetails: (subject, publicKey, privateKey) => {
+        void Reflect.apply(setVapidDetails, candidate, [subject, publicKey, privateKey]);
+      },
+      sendNotification: (target, payload, options) => {
+        const result: unknown = Reflect.apply(sendNotification, candidate, [
+          target,
+          payload,
+          options,
+        ]);
+        // Adopt the promise without leaking the CJS call site's `any` return.
+        return Promise.resolve(result);
+      },
+    };
+  }
+
+  return null;
+}
+
+let cachedWebPushApi: WebPushApi | null | undefined;
+
+function getWebPushApi(): WebPushApi | null {
+  if (cachedWebPushApi === undefined) {
+    cachedWebPushApi = resolveWebPushApi();
+  }
+  return cachedWebPushApi;
+}
+
 let configuredPublicKey: string | null = null;
 
 /**
  * Applies VAPID details once per key pair. Throws only when web-push rejects
  * the key material; callers catch that and report "not configured".
  */
-function configureWebPush(config: VapidConfig): void {
+function configureWebPush(api: WebPushApi, config: VapidConfig): void {
   if (configuredPublicKey === config.publicKey) return;
-  webpush.setVapidDetails(config.subject, config.publicKey, config.privateKey);
+  api.setVapidDetails(config.subject, config.publicKey, config.privateKey);
   configuredPublicKey = config.publicKey;
 }
 
+/**
+ * True only when both VAPID keys are present and the `web-push` module
+ * exposes callable send/VAPID functions. The module check keeps a broken
+ * interop from masquerading as a working configuration in the UI.
+ */
 export function isPushConfigured(): boolean {
-  return readVapidConfig() !== null;
+  return readVapidConfig() !== null && getWebPushApi() !== null;
 }
 
 export function getVapidPublicKey(): string | null {
@@ -178,11 +245,20 @@ export async function sendPushToUser(
     return summary;
   }
 
+  const api = getWebPushApi();
+  if (!api) {
+    console.error(
+      "[PushNotificationService] send skipped: web-push module is not usable " +
+        "(no callable setVapidDetails/sendNotification exports)"
+    );
+    return summary;
+  }
+
   try {
-    configureWebPush(config);
+    configureWebPush(api, config);
   } catch (error) {
     console.error(
-      "[PushNotificationService] invalid VAPID configuration:",
+      "[PushNotificationService] send skipped: invalid VAPID configuration:",
       error instanceof Error ? error.message : "unknown error"
     );
     return summary;
@@ -195,7 +271,7 @@ export async function sendPushToUser(
 
   for (const subscription of subscriptions) {
     try {
-      await webpush.sendNotification(
+      await api.sendNotification(
         {
           endpoint: subscription.endpoint,
           keys: { p256dh: subscription.p256dh, auth: subscription.auth },
@@ -322,8 +398,19 @@ export async function handlePushSettingsAction({
   }
 
   if (intent === "pushTest") {
-    if (!isPushConfigured()) {
+    if (!readVapidConfig()) {
       return { success: false, message: "Push notifications are not configured." };
+    }
+
+    if (!getWebPushApi()) {
+      console.error(
+        "[PushNotificationService] push test unavailable: VAPID keys are set but the " +
+          "web-push module is not usable (missing callable exports)"
+      );
+      return {
+        success: false,
+        message: "Push notifications are unavailable on this server.",
+      };
     }
 
     const slot = beginPushTest(userId);
