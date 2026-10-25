@@ -19,6 +19,13 @@ import {
   getNavigationPreferencesForUser,
   handleNavigationPreferencesAction,
 } from "~/modules/services/NavigationPreferencesService";
+import {
+  countPushSubscriptionsForUser,
+  getVapidPublicKey,
+  handlePushSettingsAction,
+  isPushConfigured,
+} from "~/modules/services/PushNotificationService";
+import PushNotificationsSection from "~/components/settings/PushNotificationsSection";
 
 export const meta = () => {
   return [{ title: "Settings" }];
@@ -38,10 +45,12 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
   const googleOAuthEnabled = isGoogleOAuthConfigured();
   const oauthUrl = googleOAuthEnabled ? getGoogleOAuthUrl() : null;
 
-  const [accessiblePages, navigationPreferences] = await Promise.all([
-    getUserAccessiblePages(user.id),
-    getNavigationPreferencesForUser(user.id),
-  ]);
+  const [accessiblePages, navigationPreferences, pushSubscriptionCount] =
+    await Promise.all([
+      getUserAccessiblePages(user.id),
+      getNavigationPreferencesForUser(user.id),
+      countPushSubscriptionsForUser(user.id),
+    ]);
 
   // Effective pinned tabs: stored order minus pages the user cannot access.
   const accessiblePageSet = new Set(accessiblePages);
@@ -58,10 +67,13 @@ export const loader = pageAccessLoader("settings", async (user, request) => {
     featureSettings: getFeatureSettingsForUser(user),
     accessiblePages,
     mobileTabIds,
+    vapidPublicKey: getVapidPublicKey(),
+    pushConfigured: isPushConfigured(),
+    pushSubscriptionCount,
   };
 });
 
-export const action = pageAccessAction("settings", async (_user, request) => {
+export const action = pageAccessAction("settings", async (user, request) => {
   // Clone the request so we can read the body to check intent
   const clonedRequest = request.clone();
   const formData = await clonedRequest.formData();
@@ -80,6 +92,15 @@ export const action = pageAccessAction("settings", async (_user, request) => {
 
   if (intent === "updateMobileTabs") {
     return handleNavigationPreferencesAction(request);
+  }
+
+  if (
+    intent === "pushSubscribe" ||
+    intent === "pushUnsubscribe" ||
+    intent === "pushTest"
+  ) {
+    formData.set("userAgent", request.headers.get("user-agent") ?? "");
+    return handlePushSettingsAction({ userId: user.id, formData });
   } else if (intent.startsWith("calendar") || intent.startsWith("update") || intent.startsWith("disconnect") || intent.startsWith("manualSync") || intent === "resolveSyncConflict") {
     const isCalendarViewPreference = intent === "updateCalendarPreferences";
     if (!isCalendarViewPreference && !isGoogleOAuthConfigured()) {
@@ -131,11 +152,26 @@ type LoaderData = {
   featureSettings: FeatureSetting[];
   accessiblePages: string[];
   mobileTabIds: string[];
+  vapidPublicKey: string | null;
+  pushConfigured: boolean;
+  pushSubscriptionCount: number;
 };
 
 export default function Settings() {
   const loaderData = useLoaderData<LoaderData>();
-  const { user, googleCalendarAccount, calendarPreferences, oauthUrl, googleOAuthEnabled, featureSettings, accessiblePages, mobileTabIds } = loaderData;
+  const {
+    user,
+    googleCalendarAccount,
+    calendarPreferences,
+    oauthUrl,
+    googleOAuthEnabled,
+    featureSettings,
+    accessiblePages,
+    mobileTabIds,
+    vapidPublicKey,
+    pushConfigured,
+    pushSubscriptionCount,
+  } = loaderData;
   const { activeTab, setActiveTab } = useSettingsTabNavigation();
 
   return (
@@ -162,6 +198,13 @@ export default function Settings() {
               label: navItemLabelById.get(pageId) ?? pageId,
             }))}
             initialTabIds={mobileTabIds}
+          />
+        )}
+        {activeTab === "notifications" && (
+          <PushNotificationsSection
+            vapidPublicKey={vapidPublicKey}
+            pushConfigured={pushConfigured}
+            pushSubscriptionCount={pushSubscriptionCount}
           />
         )}
         {activeTab === "calendar" && (

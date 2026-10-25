@@ -32,6 +32,8 @@ export default [
   ]),
   route("admin", "routes/admin/admin.tsx"),
   route("settings", "routes/settings.tsx"),
+  // Service-worker push subscription renewal (JSON, POST-only).
+  route("push/subscription", "routes/push-subscription.ts"),
   route("auth/login", "routes/auth/login.tsx"),
   route("auth/logout", "routes/auth/logout.tsx"),
   route("auth/register", "routes/auth/register.tsx"),

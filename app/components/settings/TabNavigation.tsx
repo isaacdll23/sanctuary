@@ -1,12 +1,15 @@
 interface TabNavigationProps {
-  activeTab: "profile" | "features" | "navigation" | "calendar";
-  onTabChange: (tab: "profile" | "features" | "navigation" | "calendar") => void;
+  activeTab: "profile" | "features" | "navigation" | "notifications" | "calendar";
+  onTabChange: (
+    tab: "profile" | "features" | "navigation" | "notifications" | "calendar"
+  ) => void;
 }
 
 const tabs = [
   { id: "profile", label: "Profile" },
   { id: "features", label: "Features" },
   { id: "navigation", label: "Navigation" },
+  { id: "notifications", label: "Notifications" },
   { id: "calendar", label: "Calendar" },
 ] as const;
 

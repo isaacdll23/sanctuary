@@ -7,7 +7,7 @@
  *  - Make the app installable (Android/Chrome requires a fetch handler).
  *  - Serve a self-contained "you're offline" screen when a navigation cannot
  *    reach the network, instead of the browser's raw error page.
- *  - Provide push/notification handlers so iOS web push can be enabled later.
+ *  - Provide push/notification handlers for server-delivered Web Push.
  *
  * Everything except same-origin GET navigations passes through untouched.
  * Bump CACHE_VERSION whenever the precache list changes to evict old caches.
@@ -62,8 +62,8 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Web push scaffolding (unused until the server sends pushes; iOS requires
-// an installed PWA plus a user-gesture permission request to subscribe).
+// Web push (iOS requires an installed PWA plus a user-gesture permission
+// request to subscribe; see docs/push-notifications.md).
 self.addEventListener("push", (event) => {
   let payload = {};
   try {
@@ -97,6 +97,29 @@ self.addEventListener("notificationclick", (event) => {
         }
       }
       await self.clients.openWindow(target.href);
+    })()
+  );
+});
+
+// The browser rotates a push subscription occasionally. Re-subscribe with the
+// old subscription's applicationServerKey and hand the new one to the app so
+// the server row is replaced instead of silently going stale.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  const applicationServerKey = event.oldSubscription?.options?.applicationServerKey;
+  if (!applicationServerKey) return;
+
+  event.waitUntil(
+    (async () => {
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey,
+      });
+      await fetch("/push/subscription", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription.toJSON()),
+      });
     })()
   );
 });
