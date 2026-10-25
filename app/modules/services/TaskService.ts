@@ -93,8 +93,15 @@ async function updateTaskDetails(
       title: title.trim(),
       description: description?.trim() || null,
       category: category?.trim() || null,
+      // Rescheduling starts a fresh reminder lifecycle: the previous outcome
+      // columns must not describe this new schedule.
       ...(reminderDate
-        ? { reminderDate: new Date(reminderDate), reminderSent: 0 }
+        ? {
+            reminderDate: new Date(reminderDate),
+            reminderSent: 0,
+            reminderSentAt: null,
+            reminderFailedAt: null,
+          }
         : {}),
     })
     .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
@@ -118,6 +125,8 @@ async function setTaskReminder(
     .set({
       reminderDate: new Date(reminderDate),
       reminderSent: 0,
+      reminderSentAt: null,
+      reminderFailedAt: null,
     })
     .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
 
