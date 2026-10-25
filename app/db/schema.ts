@@ -446,3 +446,29 @@ export const assistantMessagesTable = pgTable(
     ),
   ]
 );
+
+// Web Push Tables
+
+/**
+ * One row per browser push subscription. `endpoint` is globally unique at the
+ * push service, so a re-subscribe upserts on it; `user_id` still scopes reads,
+ * sends, and deletes. `failure_count` lets the delivery path demote (and the
+ * pruning path remove) endpoints that keep failing.
+ */
+export const pushSubscriptionsTable = pgTable(
+  "push_subscriptions",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => usersTable.id, { onDelete: "cascade" }),
+    endpoint: varchar({ length: 2048 }).notNull().unique(),
+    p256dh: varchar({ length: 255 }).notNull(),
+    auth: varchar({ length: 255 }).notNull(),
+    userAgent: varchar("user_agent", { length: 512 }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    lastUsedAt: timestamp("last_used_at"),
+    failureCount: integer("failure_count").default(0).notNull(),
+  },
+  (table) => [index("push_subscriptions_user_idx").on(table.userId)]
+);

@@ -44,6 +44,7 @@
 - **Tasks:** `app/routes/tasks/tasks.tsx` and `app/modules/services/TaskService.ts`.
 - **Day Planner:** `app/routes/day-planner.tsx` with components in `app/components/day-planner/` and logic in `app/modules/services/DayPlannerService.ts`.
 - **Finance & Expenses:** `app/routes/finance/**` with `ExpenseService.ts`, `IncomeService.ts`, and `SharedBudgetService.ts`.
+- **Web Push:** `app/modules/services/PushNotificationService.ts` with the settings tab in `app/components/settings/PushNotificationsSection.tsx` and notes in `docs/push-notifications.md`.
 - **Assistant:** `app/routes/assistant/**` with components in `app/components/assistant/`, agent/tools in `app/modules/assistant/`, and UI design notes in `docs/assistant-ui.md`.
 
 ## Before Finishing Changes
