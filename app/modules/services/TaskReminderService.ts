@@ -7,6 +7,7 @@ import {
   DEFAULT_TASK_REMINDER_BATCH_SIZE,
   normalizeClaimedReminders,
   parseReminderBatchSize,
+  REMINDER_CLAIM_GRACE_MS,
   type ClaimedReminder,
 } from "~/modules/taskReminders";
 import {
@@ -20,10 +21,10 @@ import {
  * A due reminder is a task with `reminder_sent = 0`, a `reminder_date` at or
  * before now, and no `completed_at`. Tasks are claimed in one atomic
  * `UPDATE ... WHERE reminder_sent = 0 RETURNING` statement, so overlapping
- * runs (interval tick + manual run, or a restart mid-run) can never deliver the
- * same reminder twice: Postgres re-checks the `reminder_sent = 0` predicate on
- * the locked row version, and only the first statement to update a row gets it
- * back in `RETURNING`.
+ * runs (interval tick + manual run) can never deliver the same reminder twice:
+ * Postgres re-checks the `reminder_sent = 0` predicate on the locked row
+ * version, and only the first statement to update a row gets it back in
+ * `RETURNING`.
  *
  * The claim statement locks the selected rows with `FOR UPDATE SKIP LOCKED`,
  * which is what actually makes concurrent runs safe: a second dispatcher skips
@@ -31,9 +32,34 @@ import {
  * outer `reminder_sent = 0` predicate re-checks the row version after the lock,
  * so a row that changed in between is never claimed twice.
  *
+ * That guarantee is at-most-once, not at-least-once. A crash between the claim
+ * and `recordDelivered`/`recordFailed` leaves `reminder_sent = 1` with both
+ * outcome columns `NULL`: the reminder is lost and invisible, and it is never
+ * re-sent. `reconcileOrphanedReminderClaims` records those orphans as failed
+ * (once they are older than the grace window) so the loss is visible, but it
+ * deliberately does not re-send. Restart safety therefore means "no duplicate
+ * delivery", never "the reminder is durable".
+ *
  * Only counts and task/user ids are logged; endpoints, keys, and email
  * addresses never are.
  */
+
+type TaskColumnName =
+  | "id"
+  | "userId"
+  | "title"
+  | "reminderSent"
+  | "reminderDate"
+  | "reminderSentAt"
+  | "reminderFailedAt"
+  | "completedAt";
+
+/**
+ * `tasks` columns are camelCase in the database (the schema does not map them),
+ * so raw SQL identifiers are emitted through the column definitions instead of
+ * being hard-coded here.
+ */
+const column = (name: TaskColumnName) => sql.identifier(tasksTable[name].name);
 
 export type TaskReminderDispatchSummary = {
   /** Reminders claimed by this run (at most `batchSize`). */
@@ -65,12 +91,6 @@ export async function claimDueTaskReminders(
   now: Date
 ): Promise<ClaimedReminder[]> {
   const boundedBatchSize = boundReminderBatchSize(batchSize);
-
-  // `tasks` columns are camelCase in the database (the schema does not map
-  // them), so identifiers are emitted through the column definitions instead of
-  // being hard-coded here.
-  const column = (name: "id" | "userId" | "title" | "reminderSent" | "reminderDate" | "completedAt") =>
-    sql.identifier(tasksTable[name].name);
 
   const result = await db.execute<{
     id: number;
@@ -113,6 +133,50 @@ async function recordFailed(taskId: number, userId: number, at: Date) {
     .update(tasksTable)
     .set({ reminderFailedAt: at })
     .where(and(eq(tasksTable.id, taskId), eq(tasksTable.userId, userId)));
+}
+
+export type ReminderReconcileResult = {
+  /** Claims that had no recorded outcome and were marked failed. */
+  reconciled: number;
+};
+
+/**
+ * Marks claims orphaned by a crash between the atomic claim and the outcome
+ * write as failed.
+ *
+ * This is bookkeeping only: `reminder_sent` stays `1`, so nothing is re-sent
+ * and the at-most-once guarantee is unchanged. Without it those rows keep
+ * `"reminderSentAt"` and `"reminderFailedAt"` both `NULL` and the lost reminder
+ * is invisible. Runs once per process start, before any tick can create new
+ * claims, and only logs the count.
+ */
+export async function reconcileOrphanedReminderClaims(
+  options: { now?: Date; graceMs?: number } = {}
+): Promise<ReminderReconcileResult> {
+  const now = options.now ?? new Date();
+  const graceMs = options.graceMs ?? REMINDER_CLAIM_GRACE_MS;
+  const cutoff = new Date(now.getTime() - graceMs);
+
+  const result = await db.execute<{ id: number }>(sql`
+    UPDATE ${tasksTable} AS t
+    SET ${column("reminderFailedAt")} = ${now}
+    WHERE t.${column("reminderSent")} = 1
+      AND t.${column("reminderSentAt")} IS NULL
+      AND t.${column("reminderFailedAt")} IS NULL
+      AND t.${column("reminderDate")} IS NOT NULL
+      AND t.${column("reminderDate")} <= ${cutoff}
+    RETURNING t.${column("id")} AS id
+  `);
+
+  const reconciled = result.rows.length;
+  if (reconciled > 0) {
+    console.warn(
+      "[TaskReminderService] reconciled orphaned reminder claims (no outcome recorded, not re-sent)",
+      { reconciled }
+    );
+  }
+
+  return { reconciled: reconciled };
 }
 
 function emptySummary(reason: string | null): TaskReminderDispatchSummary {

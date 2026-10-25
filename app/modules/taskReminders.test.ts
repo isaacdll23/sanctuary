@@ -5,11 +5,13 @@ import {
   DEFAULT_TASK_REMINDER_INTERVAL_MS,
   MAX_TASK_REMINDER_BATCH_SIZE,
   MIN_TASK_REMINDER_INTERVAL_MS,
+  REMINDER_CLAIM_GRACE_MS,
   TASK_REMINDER_TITLE,
   TASK_REMINDER_URL,
   boundReminderBatchSize,
   buildTaskReminderPayload,
   decideReminderScheduler,
+  isOrphanedReminderClaim,
   isTaskReminderDue,
   normalizeClaimedReminders,
   parseReminderBatchSize,
@@ -113,6 +115,72 @@ describe("selectDueTaskReminders", () => {
     assert.deepEqual(
       candidates.map((candidate) => candidate.id),
       before
+    );
+  });
+});
+
+describe("isOrphanedReminderClaim", () => {
+  it("flags a claimed reminder with no outcome once the grace window passed", () => {
+    const reminderDate = new Date(now.getTime() - REMINDER_CLAIM_GRACE_MS - 1);
+    assert.equal(
+      isOrphanedReminderClaim(
+        { reminderDate, reminderSentAt: null, reminderFailedAt: null },
+        now
+      ),
+      true
+    );
+  });
+
+  it("leaves a claim inside the grace window alone", () => {
+    const reminderDate = new Date(now.getTime() - REMINDER_CLAIM_GRACE_MS + 1_000);
+    assert.equal(
+      isOrphanedReminderClaim(
+        { reminderDate, reminderSentAt: null, reminderFailedAt: null },
+        now
+      ),
+      false
+    );
+  });
+
+  it("ignores reminders that already recorded an outcome", () => {
+    const reminderDate = new Date(now.getTime() - REMINDER_CLAIM_GRACE_MS * 10);
+    const at = new Date(now.getTime() - 60_000);
+
+    assert.equal(
+      isOrphanedReminderClaim(
+        { reminderDate, reminderSentAt: at, reminderFailedAt: null },
+        now
+      ),
+      false
+    );
+    assert.equal(
+      isOrphanedReminderClaim(
+        { reminderDate, reminderSentAt: null, reminderFailedAt: at },
+        now
+      ),
+      false
+    );
+  });
+
+  it("ignores reminders without a reminder date and honours a custom window", () => {
+    assert.equal(
+      isOrphanedReminderClaim(
+        { reminderDate: null, reminderSentAt: null, reminderFailedAt: null },
+        now
+      ),
+      false
+    );
+    assert.equal(
+      isOrphanedReminderClaim(
+        {
+          reminderDate: new Date(now.getTime() - 5_000),
+          reminderSentAt: null,
+          reminderFailedAt: null,
+        },
+        now,
+        1_000
+      ),
+      true
     );
   });
 });

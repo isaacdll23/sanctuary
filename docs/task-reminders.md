@@ -24,6 +24,10 @@ and it only reads and writes the `tasks` table.
   per-task URL).
 - Reminders fire **once**. After the atomic claim the task is terminal for that
   reminder even if the device had no subscription or the push service failed.
+- Rescheduling a reminder (editing the task with a reminder date, or
+  `setTaskReminder`) resets `"reminderSent"` to `0` **and** clears
+  `"reminderSentAt"` / `"reminderFailedAt"`, so the outcome columns never
+  describe an earlier schedule.
 
 ## Pieces
 
@@ -31,7 +35,7 @@ and it only reads and writes the `tasks` table.
 | --- | --- | --- |
 | Pure rules | `app/modules/taskReminders.ts` | Due check, batch selection/ordering, batch-size and interval parsing, payload shape, scheduler start guard. No I/O. |
 | Dispatcher | `app/modules/services/TaskReminderService.ts` | Atomic claim, per-task delivery, outcome bookkeeping, counts. |
-| Scheduler | `app/modules/services/TaskReminderScheduler.server.ts` | Starts the in-process interval exactly once, skips overlapping ticks. |
+| Scheduler | `app/modules/services/TaskReminderScheduler.server.ts` | Starts the in-process interval exactly once, skips overlapping ticks, runs the one-shot orphan reconcile. |
 | Start hook | `app/root.tsx` loader | First server-rendered request calls `ensureTaskReminderSchedulerStarted()`. |
 | Manual run | Settings → Notifications → "Run task reminders now" (`app/routes/settings.tsx`, intent `runTaskReminders`) | Session + `pageAccess("settings")`, runs one batch immediately and returns counts. |
 | Bookkeeping | `tasks."reminderSentAt"`, `tasks."reminderFailedAt"` | When a push was delivered, and when an attempt delivered nothing. |
@@ -54,7 +58,9 @@ process — no cron sidecar, no host crontab.
   and logged, and the timer is `unref`'d, so a slow database or push service can
   never block or crash boot.
 - Ticks never overlap: if a run is still in flight, the next tick is skipped.
-  A restart mid-run is safe — see the claim below.
+- A restart mid-run can never duplicate a reminder (the claim is atomic), but
+  it can lose one that was claimed just before the crash; the start path
+  reconciles those orphans — see "Crash window" below.
 - `TASK_REMINDER_BATCH_SIZE` bounds one run (default `50`, hard maximum `200`).
 
 ## Idempotency and concurrency
@@ -93,8 +99,38 @@ Double-send is impossible because:
 A reminder whose push could not be delivered is still claimed (so it cannot be
 re-sent forever) and `"reminderFailedAt"` records the attempt; a successful
 delivery sets `"reminderSentAt"` and clears `"reminderFailedAt"`. To retry,
-re-set the reminder in the task UI. Logs contain counts and task/user ids only —
-never endpoints, VAPID keys, or email addresses.
+re-set the reminder in the task UI (which also clears both outcome columns).
+Logs contain counts, task/user ids, and the reconcile count only — never
+endpoints, VAPID keys, or email addresses.
+
+### Crash window (at-most-once, not at-least-once)
+
+The claim prevents duplicates; it does **not** make delivery durable. If the
+process dies between the claim and the `recordDelivered` / `recordFailed` write,
+the row keeps `"reminderSent" = 1` with `"reminderSentAt"` and
+`"reminderFailedAt"` both `NULL`: that reminder was never sent and is never
+retried.
+
+To keep that loss visible instead of silent, the scheduler start path calls
+`reconcileOrphanedReminderClaims()` once per process (fire-and-forget, so it
+cannot delay boot). It selects claimed reminders whose reminder date is older
+than the 10-minute grace window and whose outcome columns are both `NULL`, sets
+`"reminderFailedAt" = now()`, and logs the count only:
+
+```sql
+UPDATE tasks AS t
+SET "reminderFailedAt" = now()
+WHERE t."reminderSent" = 1
+  AND t."reminderSentAt" IS NULL
+  AND t."reminderFailedAt" IS NULL
+  AND t."reminderDate" IS NOT NULL
+  AND t."reminderDate" <= now() - interval '10 minutes'
+RETURNING t."id";
+```
+
+It never re-sends, so duplicate delivery remains impossible. The grace window
+is mirrored by the pure predicate `isOrphanedReminderClaim` in
+`app/modules/taskReminders.ts`, which is unit tested.
 
 ## Verifying
 
@@ -107,8 +143,9 @@ never endpoints, VAPID keys, or email addresses.
   "reminderSentAt", "reminderFailedAt" FROM tasks WHERE "reminderDate" IS NOT
   NULL ORDER BY "reminderDate";`
 - **Logs:** the dispatcher logs one `[TaskReminderService] dispatch summary` line
-  per non-empty run and `[TaskReminderScheduler] started {intervalMs}` once at
-  boot.
+  per non-empty run, `[TaskReminderScheduler] started {intervalMs}` once at
+  boot, and `reconciled orphaned reminder claims {reconciled}` only when a
+  previous crash left claims without an outcome.
 - **Local:** use `skills/sanctuary-local-testing/SKILL.md`, set
   `TASK_REMINDER_INTERVAL_MS` (or keep the default), create a task with a
   reminder a minute in the past, and use the manual run button. Push delivery

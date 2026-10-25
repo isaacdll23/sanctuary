@@ -131,6 +131,37 @@ export function buildTaskReminderPayload(task: Pick<ReminderTask, "title">): {
   };
 }
 
+/**
+ * Grace window after a claim before a still-outcome-less reminder is treated as
+ * orphaned (the process crashed between the claim and the outcome write).
+ */
+export const REMINDER_CLAIM_GRACE_MS = 10 * 60_000;
+
+/** Outcome columns of a claimed reminder, used to spot orphaned claims. */
+export type ReminderClaimOutcome = {
+  reminderDate: Date | null;
+  reminderSentAt: Date | null;
+  reminderFailedAt: Date | null;
+};
+
+/**
+ * True for a claimed reminder that never recorded an outcome and is older than
+ * the grace window — i.e. the process died between the claim and
+ * `recordDelivered`/`recordFailed`. These are marked failed (never re-sent) so
+ * the loss is visible instead of silent. Mirrors the reconciliation predicate
+ * in `TaskReminderService.reconcileOrphanedReminderClaims`, which computes the
+ * same cutoff from `now - graceMs`.
+ */
+export function isOrphanedReminderClaim(
+  task: ReminderClaimOutcome,
+  now: Date,
+  graceMs: number = REMINDER_CLAIM_GRACE_MS
+): boolean {
+  if (task.reminderDate === null) return false;
+  if (task.reminderSentAt !== null || task.reminderFailedAt !== null) return false;
+  return task.reminderDate.getTime() <= now.getTime() - graceMs;
+}
+
 /** One claimed reminder returned by the claim statement's `RETURNING` clause. */
 export type ClaimedReminder = {
   id: number;

@@ -3,7 +3,10 @@ import {
   type ReminderSchedulerDecision,
 } from "~/modules/taskReminders";
 import { isPushConfigured } from "~/modules/services/PushNotificationService";
-import { dispatchDueTaskReminders } from "~/modules/services/TaskReminderService";
+import {
+  dispatchDueTaskReminders,
+  reconcileOrphanedReminderClaims,
+} from "~/modules/services/TaskReminderService";
 
 /**
  * In-process scheduler for task reminders.
@@ -15,9 +18,15 @@ import { dispatchDueTaskReminders } from "~/modules/services/TaskReminderService
  *
  * It never blocks or crashes boot: starting is synchronous and error-free, each
  * tick is wrapped, and the timer is `unref`'d so it cannot hold the process
- * open. Overlapping ticks are skipped, and a restart in the middle of a run is
- * safe because delivery only happens after the atomic claim in
- * `TaskReminderService` (see `claimDueTaskReminders`).
+ * open. Overlapping ticks are skipped.
+ *
+ * Restarts are safe against duplicates but not against loss: delivery only
+ * happens after the atomic claim in `TaskReminderService` (see
+ * `claimDueTaskReminders`), so a reminder is never sent twice, but a crash
+ * between the claim and the outcome write leaves a claimed reminder with both
+ * outcome columns `NULL` that is never re-sent. The start path calls
+ * `reconcileOrphanedReminderClaims` once to mark those orphans as failed so
+ * they are visible.
  */
 
 export type ReminderSchedulerStartDecision = ReminderSchedulerDecision;
@@ -94,6 +103,14 @@ export function ensureTaskReminderSchedulerStarted(): boolean {
 
   console.log("[TaskReminderScheduler] started", {
     intervalMs: decision.intervalMs,
+  });
+
+  // One-shot, non-blocking: record claims orphaned by a crash before this start
+  // so the loss is visible. Never re-sends, and never delays boot.
+  void reconcileOrphanedReminderClaims().catch((error: unknown) => {
+    console.error("[TaskReminderScheduler] orphaned-claim reconcile failed", {
+      error: error instanceof Error ? error.message : "unknown error",
+    });
   });
 
   return true;
