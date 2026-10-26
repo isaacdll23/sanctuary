@@ -18,7 +18,7 @@ export default function TabNavigation({
   onTabChange,
 }: TabNavigationProps) {
   return (
-    <div className="flex gap-4 border-b border-gray-200 dark:border-gray-700 mb-8">
+    <div className="mb-8 flex flex-wrap gap-x-4 gap-y-1 border-b border-gray-200 dark:border-gray-700 sm:flex-nowrap">
       {tabs.map((tab) => (
         <button
           key={tab.id}
